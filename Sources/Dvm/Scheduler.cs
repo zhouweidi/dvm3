@@ -5,9 +5,9 @@ using System.Threading;
 
 namespace Dvm
 {
-	class Scheduler
+	class Scheduler : DisposableObject
 	{
-		CancellationToken m_cancelToken;
+		CancellationTokenSource m_cts;
 		VirtualProcessor[] m_virtualProcessors;
 		Thread m_thread;
 
@@ -20,7 +20,7 @@ namespace Dvm
 
 		#region VirtualProcessor
 
-		class VirtualProcessor //: IDisposable
+		class VirtualProcessor : DisposableObject
 		{
 			Scheduler m_scheduler;
 			CancellationToken m_cancelToken;
@@ -36,6 +36,13 @@ namespace Dvm
 
 				m_thread = new Thread(ThreadEntry);
 				m_thread.Start();
+			}
+
+			protected override void DisposeManaged()
+			{
+				m_tickSignal.Dispose();
+
+				base.DisposeManaged();
 			}
 
 			public void TriggerTick()
@@ -70,6 +77,11 @@ namespace Dvm
 							throw new InvalidOperationException("TickTask is not the same one as the previous vipo");
 					}
 				}
+			}
+
+			public void JoinThread()
+			{
+				m_thread.Join();
 			}
 
 			public Queue<TickTask> TickTasks
@@ -116,7 +128,7 @@ namespace Dvm
 
 		public Scheduler(int virtualProcessors, CancellationToken cancelToken)
 		{
-			m_cancelToken = cancelToken;
+			m_cts = CancellationTokenSource.CreateLinkedTokenSource(cancelToken);
 
 			// Create all vp
 			m_virtualProcessors = new VirtualProcessor[virtualProcessors];
@@ -131,15 +143,38 @@ namespace Dvm
 			m_thread.Start();
 		}
 
+		protected override void DisposeUnmanaged()
+		{
+			m_cts.Cancel();
+
+			for (int i = 0; i < m_virtualProcessors.Length; i++)
+				m_virtualProcessors[i].JoinThread();
+
+			m_thread.Join();
+
+			base.DisposeUnmanaged();
+		}
+
+		protected override void DisposeManaged()
+		{
+			for (int i = 0; i < m_virtualProcessors.Length; i++)
+				m_virtualProcessors[i].Dispose();
+
+			m_tickTaskQueue.Dispose();
+			m_cts.Dispose();
+
+			base.DisposeManaged();
+		}
+
 		void ThreadEntry()
 		{
 			for (; ; )
 			{
-				var freeVP = m_free.Take(m_cancelToken);
+				var freeVP = m_free.Take(m_cts.Token);
 
 				for (; ; )
 				{
-					var tickTask = m_tickTaskQueue.Take(m_cancelToken);
+					var tickTask = m_tickTaskQueue.Take(m_cts.Token);
 
 					if (RunTickTaskOnVP(freeVP, tickTask))
 						break;
@@ -194,6 +229,14 @@ namespace Dvm
 			m_free.Return(vp);
 			return null;
 
+		}
+
+		public void AddTickTask(TickTask tickTask)
+		{
+			if (tickTask == null)
+				throw new ArgumentNullException(nameof(tickTask));
+
+			m_tickTaskQueue.Add(tickTask);
 		}
 	}
 }

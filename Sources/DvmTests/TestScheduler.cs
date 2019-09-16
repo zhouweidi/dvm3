@@ -1,0 +1,37 @@
+using Dvm;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Threading;
+
+namespace DvmTest
+{
+	[TestClass]
+	public class TestScheduler
+	{
+		Scheduler m_scheduler;
+		CancellationTokenSource m_cts;
+
+		[TestInitialize]
+		public void Initialize()
+		{
+			m_cts = new CancellationTokenSource();
+			m_scheduler = new Scheduler(4, m_cts.Token);
+		}
+
+		[TestCleanup]
+		public void Cleanup()
+		{
+			m_cts.Cancel();
+			m_scheduler.Dispose();
+
+			DisposableObject.SafeDispose(ref m_cts);
+
+			m_scheduler = null;
+		}
+
+		[TestMethod]
+		public void TestMethod1()
+		{
+			//m_scheduler.
+		}
+	}
+}
