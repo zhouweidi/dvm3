@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Dvm
 {
@@ -12,6 +10,8 @@ namespace Dvm
 	public class Vipo
 	{
 		internal void Tick(TickTask tickTask)
-		{ }
+		{
+			Console.WriteLine("Vipo ticks");
+		}
 	}
 }

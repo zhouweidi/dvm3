@@ -5,7 +5,7 @@ using System.Threading;
 namespace DvmTests
 {
 	[TestClass]
-	public class TestSchedulerLifeScope
+	public class TestSchedulerLifeScope : TestBase
 	{
 		[TestMethod]
 		public void Normal()
@@ -48,11 +48,6 @@ namespace DvmTests
 
 				Sleep();
 			}
-		}
-
-		static void Sleep()
-		{
-			Thread.Sleep(500);
 		}
 	}
 }
