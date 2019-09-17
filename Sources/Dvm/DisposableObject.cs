@@ -23,14 +23,14 @@ namespace Dvm
 			get { return m_disposed != 0; }
 		}
 
-		void Dispose(bool callFromDisposeMethod)
+		void Dispose(bool explicitCall)
 		{
 			int disposed = Interlocked.CompareExchange(ref m_disposed, 1, 0);
 			if (disposed == 0)
 			{
-				DisposeUnmanaged();
+				DisposeUnmanaged(explicitCall);
 
-				if (callFromDisposeMethod)
+				if (explicitCall)
 				{
 					DisposeManaged();
 
@@ -42,7 +42,7 @@ namespace Dvm
 		protected virtual void DisposeManaged()
 		{ }
 
-		protected virtual void DisposeUnmanaged()
+		protected virtual void DisposeUnmanaged(bool explicitCall)
 		{ }
 
 		protected void CheckDisposed()
@@ -79,7 +79,7 @@ namespace Dvm
 			return false;
 		}
 
-		public static bool TrySafeDispose<T>(T obj)
+		public static bool TryDispose(object obj)
 		{
 			var d = obj as IDisposable;
 			if (d != null)
@@ -91,7 +91,7 @@ namespace Dvm
 			return false;
 		}
 
-		public static bool TrySafeDispose<T>(ref T obj)
+		public static bool TryDispose<T>(ref T obj)
 		{
 			var d = obj as IDisposable;
 			if (d != null)
@@ -118,7 +118,7 @@ namespace Dvm
 			}
 		}
 
-		public static void TrySafeDispose<T>(IEnumerable<T> objects)
+		public static void TryDispose<T>(IEnumerable<T> objects)
 		{
 			if (objects != null)
 			{

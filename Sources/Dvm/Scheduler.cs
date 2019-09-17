@@ -28,13 +28,14 @@ namespace Dvm
 			ManualResetEventSlim m_tickSignal = new ManualResetEventSlim(false);
 			Queue<TickTask> m_tasks = new Queue<TickTask>();
 
-			public VirtualProcessor(Scheduler scheduler, CancellationToken cancelToken)
+			public VirtualProcessor(Scheduler scheduler, CancellationToken cancelToken, int index)
 			{
 				m_scheduler = scheduler;
 
 				m_cancelToken = cancelToken;
 
 				m_thread = new Thread(ThreadEntry);
+				m_thread.Name = $"DVM-VP{index}";
 				m_thread.Start();
 			}
 
@@ -51,6 +52,16 @@ namespace Dvm
 			}
 
 			void ThreadEntry()
+			{
+				try
+				{
+					ThreadRun();
+				}
+				catch(OperationCanceledException)
+				{ }
+			}
+
+			void ThreadRun()
 			{
 				for (; ; )
 				{
@@ -79,9 +90,9 @@ namespace Dvm
 				}
 			}
 
-			public void JoinThread()
+			public Thread Thread
 			{
-				m_thread.Join();
+				get { return m_thread; }
 			}
 
 			public Queue<TickTask> TickTasks
@@ -133,26 +144,37 @@ namespace Dvm
 			// Create all vp
 			m_virtualProcessors = new VirtualProcessor[virtualProcessors];
 			for (int i = 0; i < virtualProcessors; i++)
-				m_virtualProcessors[i] = new VirtualProcessor(this, cancelToken);
+				m_virtualProcessors[i] = new VirtualProcessor(this, m_cts.Token, i);
 
 			// Add vp into free set
 			m_free = new FreeVPSet(m_virtualProcessors);
 
 			// Create schedule thread
 			m_thread = new Thread(ThreadEntry);
+			m_thread.Name = "DVM-Kernel";
 			m_thread.Start();
 		}
 
-		protected override void DisposeUnmanaged()
+		protected override void DisposeUnmanaged(bool explicitCall)
 		{
-			m_cts.Cancel();
+			if (explicitCall)
+			{
+				m_cts.Cancel();
 
-			for (int i = 0; i < m_virtualProcessors.Length; i++)
-				m_virtualProcessors[i].JoinThread();
+				for (int i = 0; i < m_virtualProcessors.Length; i++)
+					m_virtualProcessors[i].Thread.Join();
 
-			m_thread.Join();
+				m_thread.Join();
+			}
+			else
+			{
+				for (int i = 0; i < m_virtualProcessors.Length; i++)
+					m_virtualProcessors[i].Thread.Abort();
 
-			base.DisposeUnmanaged();
+				m_thread.Abort();
+			}
+
+			base.DisposeUnmanaged(explicitCall);
 		}
 
 		protected override void DisposeManaged()
@@ -167,6 +189,16 @@ namespace Dvm
 		}
 
 		void ThreadEntry()
+		{
+			try
+			{
+				ThreadRun();
+			}
+			catch (OperationCanceledException)
+			{ }
+		}
+
+		void ThreadRun()
 		{
 			for (; ; )
 			{

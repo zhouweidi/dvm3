@@ -2,7 +2,7 @@ using Dvm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading;
 
-namespace DvmTest
+namespace DvmTests
 {
 	[TestClass]
 	public class TestScheduler
