@@ -57,7 +57,7 @@ namespace Dvm
 				{
 					ThreadRun();
 				}
-				catch(OperationCanceledException)
+				catch (OperationCanceledException)
 				{ }
 			}
 
