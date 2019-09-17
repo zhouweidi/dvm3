@@ -21,11 +21,9 @@ namespace DvmTests
 		public void Cleanup()
 		{
 			m_cts.Cancel();
-			m_scheduler.Dispose();
 
+			DisposableObject.SafeDispose(ref m_scheduler);
 			DisposableObject.SafeDispose(ref m_cts);
-
-			m_scheduler = null;
 		}
 
 		[TestMethod]

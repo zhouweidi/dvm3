@@ -8,7 +8,7 @@ namespace DvmTests
 	public class TestSchedulerLifeScope
 	{
 		[TestMethod]
-		public void TestLifeScope()
+		public void Normal()
 		{
 			using (var cts = new CancellationTokenSource())
 			using (var scheduler = new Scheduler(4, cts.Token))
@@ -18,7 +18,16 @@ namespace DvmTests
 		}
 
 		[TestMethod]
-		public void TestLifeScope_ExplicitCancel()
+		public void NoCancellationToken()
+		{
+			using (var scheduler = new Scheduler(4, CancellationToken.None))
+			{
+				Sleep();
+			}
+		}
+
+		[TestMethod]
+		public void ExplicitCancel()
 		{
 			using (var cts = new CancellationTokenSource())
 			using (var scheduler = new Scheduler(4, cts.Token))
@@ -29,9 +38,21 @@ namespace DvmTests
 			}
 		}
 
+		[TestMethod]
+		public void ExplicitCancelImmediately()
+		{
+			using (var cts = new CancellationTokenSource())
+			using (var scheduler = new Scheduler(4, cts.Token))
+			{
+				cts.Cancel();
+
+				Sleep();
+			}
+		}
+
 		static void Sleep()
 		{
-			Thread.Sleep(1000);
+			Thread.Sleep(500);
 		}
 	}
 }
