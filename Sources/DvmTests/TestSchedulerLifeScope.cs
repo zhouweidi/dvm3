@@ -11,30 +11,49 @@ namespace DvmTests
 		public void Normal()
 		{
 			using (var cts = new CancellationTokenSource())
-			using (var scheduler = new Scheduler(4, cts.Token))
 			{
-				Sleep();
+				var scheduler = new Scheduler(4, cts.Token);
+				using (scheduler)
+				{
+					Assert.AreEqual(scheduler.State, SchedulerState.Running);
+					Sleep();
+				}
+
+				Assert.AreEqual(scheduler.State, SchedulerState.Stopped);
+				Assert.IsNull(scheduler.Exception);
 			}
 		}
 
 		[TestMethod]
 		public void NoCancellationToken()
 		{
-			using (var scheduler = new Scheduler(4, CancellationToken.None))
+			var scheduler = new Scheduler(4, CancellationToken.None);
+			using (scheduler)
 			{
+				Assert.AreEqual(scheduler.State, SchedulerState.Running);
 				Sleep();
 			}
+
+			Assert.AreEqual(scheduler.State, SchedulerState.Stopped);
+			Assert.IsNull(scheduler.Exception);
 		}
 
 		[TestMethod]
 		public void ExplicitCancel()
 		{
 			using (var cts = new CancellationTokenSource())
-			using (var scheduler = new Scheduler(4, cts.Token))
 			{
-				Sleep();
+				var scheduler = new Scheduler(4, cts.Token);
+				using (scheduler)
+				{
+					Assert.AreEqual(scheduler.State, SchedulerState.Running);
 
-				cts.Cancel();
+					Sleep();
+					cts.Cancel();
+				}
+
+				Assert.AreEqual(scheduler.State, SchedulerState.Stopped);
+				Assert.IsNull(scheduler.Exception);
 			}
 		}
 
@@ -42,11 +61,18 @@ namespace DvmTests
 		public void ExplicitCancelImmediately()
 		{
 			using (var cts = new CancellationTokenSource())
-			using (var scheduler = new Scheduler(4, cts.Token))
 			{
-				cts.Cancel();
+				var scheduler = new Scheduler(4, cts.Token);
+				using (scheduler)
+				{
+					Assert.AreEqual(scheduler.State, SchedulerState.Running);
 
-				Sleep();
+					cts.Cancel();
+					Sleep();
+				}
+
+				Assert.AreEqual(scheduler.State, SchedulerState.Stopped);
+				Assert.IsNull(scheduler.Exception);
 			}
 		}
 	}

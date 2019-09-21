@@ -5,6 +5,11 @@ using System.Threading;
 
 namespace Dvm
 {
+	public enum SchedulerState
+	{
+		Running, StopRequested, Stopped
+	}
+
 	class Scheduler : DisposableObject
 	{
 		CancellationTokenSource m_cts;
@@ -17,6 +22,9 @@ namespace Dvm
 
 		object m_workingsLock = new object();
 		Dictionary<Vipo, VirtualProcessor> m_workings = new Dictionary<Vipo, VirtualProcessor>();
+
+		SchedulerState m_state = SchedulerState.Running;
+		volatile Exception m_exception;
 
 		#region VirtualProcessor
 
@@ -59,6 +67,10 @@ namespace Dvm
 				}
 				catch (OperationCanceledException)
 				{ }
+				catch (Exception e)
+				{
+					m_scheduler.Error(e);
+				}
 			}
 
 			void ThreadRun()
@@ -157,6 +169,8 @@ namespace Dvm
 
 		protected override void DisposeUnmanaged(bool explicitCall)
 		{
+			m_state = SchedulerState.StopRequested;
+
 			if (explicitCall)
 			{
 				m_cts.Cancel();
@@ -173,6 +187,8 @@ namespace Dvm
 
 				m_thread.Abort();
 			}
+
+			m_state = SchedulerState.Stopped;
 
 			base.DisposeUnmanaged(explicitCall);
 		}
@@ -196,6 +212,21 @@ namespace Dvm
 			}
 			catch (OperationCanceledException)
 			{ }
+			catch (Exception e)
+			{
+				Error(e);
+			}
+		}
+
+		public event Action<Exception> OnError;
+
+		void Error(Exception exception)
+		{
+			if (exception == null)
+				throw new ArgumentNullException(nameof(exception));
+
+			if (Interlocked.CompareExchange(ref m_exception, exception, null) == null)
+				OnError?.Invoke(exception);
 		}
 
 		void ThreadRun()
@@ -270,5 +301,19 @@ namespace Dvm
 
 			m_tickTaskQueue.Add(tickTask);
 		}
+
+		#region Properties
+
+		public SchedulerState State
+		{
+			get { return m_state; }
+		}
+
+		public Exception Exception
+		{
+			get { return m_exception; }
+		}
+
+		#endregion
 	}
 }

@@ -21,11 +21,18 @@ namespace DvmTests
 		{
 			m_cts = new CancellationTokenSource();
 			m_scheduler = new Scheduler(4, m_cts.Token);
+
+			m_scheduler.OnError += OnError;
+
+			Assert.AreEqual(m_scheduler.State, SchedulerState.Running);
 		}
 
 		[TestCleanup]
 		public void Cleanup()
 		{
+			Assert.IsNull(m_scheduler.Exception);
+			Assert.AreEqual(m_scheduler.State, SchedulerState.Running);
+			
 			m_cts.Cancel();
 
 			DisposableObject.SafeDispose(ref m_scheduler);
@@ -33,6 +40,10 @@ namespace DvmTests
 
 			if (DisposableObject.SafeDispose(ref m_consoleOutput))
 				ResetConsoleOutput();
+		}
+
+		void OnError(Exception e)
+		{
 		}
 
 		#endregion
