@@ -23,14 +23,14 @@ namespace DvmTests
 
 		#region Sleep
 
-		protected static void Sleep(float seconds)
+		protected static void Sleep(double seconds)
 		{
 			Thread.Sleep((int)(seconds * 1000));
 		}
 
 		protected static void Sleep()
 		{
-			Sleep(0.5f);
+			Sleep(0.5);
 		}
 
 		#endregion

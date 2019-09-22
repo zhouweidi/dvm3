@@ -58,7 +58,7 @@ namespace DvmTests
 			m_scheduler.AddTickTask(new TickTask(b));
 			m_scheduler.AddTickTask(new TickTask(a));
 
-			Sleep(1);
+			Sleep();
 
 			var consoleOutput = GetConsoleOutput();
 			Assert.IsTrue(consoleOutput.Contains("Vipo 'a' ticks #1"));
