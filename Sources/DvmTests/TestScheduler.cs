@@ -14,7 +14,6 @@ namespace DvmTests
 
 		Scheduler m_scheduler;
 		CancellationTokenSource m_cts;
-		StringWriter m_consoleOutput;
 
 		[TestInitialize]
 		public void Initialize()
@@ -28,18 +27,17 @@ namespace DvmTests
 		}
 
 		[TestCleanup]
-		public void Cleanup()
+		public override void Cleanup()
 		{
 			Assert.IsNull(m_scheduler.Exception);
 			Assert.AreEqual(m_scheduler.State, SchedulerState.Running);
-			
+
 			m_cts.Cancel();
 
 			DisposableObject.SafeDispose(ref m_scheduler);
 			DisposableObject.SafeDispose(ref m_cts);
 
-			if (DisposableObject.SafeDispose(ref m_consoleOutput))
-				ResetConsoleOutput();
+			base.Cleanup();
 		}
 
 		void OnError(Exception e)
@@ -51,20 +49,21 @@ namespace DvmTests
 		[TestMethod]
 		public void TestMethod1()
 		{
-			m_consoleOutput = HookConsoleOutput();
+			var a = new Vipo("a");
+			var b = new Vipo("b");
 
-			var sb = new StringBuilder();
-			for (int i = 0; i < 2; i++)
-			{
-				Console.Write("World");
-				sb.Append("World");
+			HookConsoleOutput();
 
-				Sleep();
-			}
+			m_scheduler.AddTickTask(new TickTask(a));
+			m_scheduler.AddTickTask(new TickTask(b));
+			m_scheduler.AddTickTask(new TickTask(a));
 
-			Assert.AreEqual(sb.ToString(), m_consoleOutput.ToString());
+			Sleep(1);
 
-			m_scheduler.AddTickTask(new TickTask());
+			var consoleOutput = GetConsoleOutput();
+			Assert.IsTrue(consoleOutput.Contains("Vipo 'a' ticks #1"));
+			Assert.IsTrue(consoleOutput.Contains("Vipo 'a' ticks #2"));
+			Assert.IsTrue(consoleOutput.Contains("Vipo 'b' ticks #1"));
 		}
 	}
 }

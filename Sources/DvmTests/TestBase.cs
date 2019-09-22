@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Dvm;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.IO;
 using System.Threading;
 
@@ -6,25 +8,60 @@ namespace DvmTests
 {
 	public class TestBase
 	{
+		#region Basic
+
+		StringWriter m_consoleOutput;
+
+		[TestCleanup]
+		public virtual void Cleanup()
+		{
+			if (DisposableObject.SafeDispose(ref m_consoleOutput))
+				ResetConsoleOutput();
+		}
+
+		#endregion
+
+		#region Sleep
+
+		protected static void Sleep(float seconds)
+		{
+			Thread.Sleep((int)(seconds * 1000));
+		}
+
 		protected static void Sleep()
 		{
-			Thread.Sleep(500);
+			Sleep(0.5f);
 		}
 
-		protected static StringWriter HookConsoleOutput()
+		#endregion
+
+		#region Console output
+
+		protected void HookConsoleOutput()
 		{
-			var sw = new StringWriter();
-			Console.SetOut(sw);
+			if (m_consoleOutput != null)
+				throw new InvalidOperationException("Console output has been already hooked");
 
-			return sw;
+			m_consoleOutput = new StringWriter();
+			Console.SetOut(m_consoleOutput);
 		}
 
-		protected static void ResetConsoleOutput()
+		void ResetConsoleOutput()
 		{
 			var sw = new StreamWriter(Console.OpenStandardOutput());
 			sw.AutoFlush = true;
 
 			Console.SetOut(sw);
 		}
+
+		protected string GetConsoleOutput()
+		{
+			if (m_consoleOutput == null)
+				throw new InvalidOperationException("Need to hood console output first");
+
+			return m_consoleOutput.ToString();
+		}
+
+		#endregion
 	}
 }
