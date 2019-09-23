@@ -5,12 +5,12 @@ using System.Threading;
 
 namespace Dvm
 {
-	enum SchedulerState
+	public enum SchedulerState
 	{
 		Running, StopRequested, Stopped
 	}
 
-	class Scheduler : DisposableObject
+	public class Scheduler : DisposableObject
 	{
 		CancellationTokenSource m_cts;
 		VirtualProcessor[] m_virtualProcessors;
@@ -27,6 +27,7 @@ namespace Dvm
 		volatile Exception m_exception;
 
 		Dictionary<Vid, Vipo> m_vipos = new Dictionary<Vid, Vipo>();
+		int m_nextVidValue;
 
 		#region VirtualProcessor
 
@@ -82,25 +83,29 @@ namespace Dvm
 					m_tickSignal.Wait(m_cancelToken);
 					m_tickSignal.Reset();
 
-					var task = m_scheduler.GetNextTickTask(this, null);
-					if (task == null)
+					var tickTask = m_scheduler.GetNextTickTask(this, null);
+					if (tickTask == null)
 						throw new InvalidOperationException("No initial tick task found");
 
-					if (task.Vipo == null)
+					if (tickTask.Vipo == null)
 						throw new InvalidOperationException("Unexpected null vipo of a TickTask");
 
-					var vipo = task.Vipo;
+					var vipo = tickTask.Vipo;
 					for (; ; )
 					{
-						vipo.Tick(task);
+						vipo.Tick(tickTask);
 
-						task = m_scheduler.GetNextTickTask(this, vipo);
-						if (task == null)
+						tickTask = m_scheduler.GetNextTickTask(this, vipo);
+						if (tickTask == null)
 							break;
 
-						if (task.Vipo != vipo)
+						if (tickTask.Vipo != vipo)
 							throw new InvalidOperationException("TickTask is not the same one as the previous vipo");
 					}
+
+					var outMessages = vipo.TakeOutMessages();
+					if (outMessages != null)
+						m_scheduler.AddScheduleTask(new DispatchVipoMessages(outMessages));
 				}
 			}
 
@@ -290,10 +295,10 @@ namespace Dvm
 			{
 				switch (scheduleTask)
 				{
-					case DispatchMessages dm:
-						for (int i = 0; i < dm.Messages.Count; i++)
+					case DispatchVipoMessages dvm:
+						for (int i = 0; i < dvm.Messages.Count; i++)
 						{
-							var message = dm.Messages[i];
+							var message = dvm.Messages[i];
 							var tickTask = GetTickTask(message.To);
 
 							tickTask.AddMessage(message);
@@ -396,9 +401,14 @@ namespace Dvm
 			m_scheduleTaskQueue.Add(scheduleTask);
 		}
 
-		public void AddVipo(Vipo vipo)
+		internal void AddVipo(Vipo vipo)
 		{
 			AddScheduleTask(new VipoStartup(vipo));
+		}
+
+		internal Vid CreateVid()
+		{
+			return new Vid(Interlocked.Increment(ref m_nextVidValue));
 		}
 
 		#region Properties

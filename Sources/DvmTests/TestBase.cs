@@ -63,6 +63,8 @@ namespace DvmTests
 			if (m_consoleOutput == null)
 				throw new InvalidOperationException("Need to hood console output first");
 
+			m_consoleOutput.Flush();
+
 			return m_consoleOutput.ToString();
 		}
 

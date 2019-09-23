@@ -5,24 +5,26 @@ using System;
 namespace DvmTests.SchedulerTests
 {
 	[TestClass]
-	public class BasicSchedule : TestSchedulerBase
+	public class MessagesPassing : TestSchedulerBase
 	{
 		[TestMethod]
 		public void AddNewVipos()
 		{
-			var a = new MyVipo(TheScheduler, "a");
-			var b = new MyVipo(TheScheduler, "b");
+			var one = new MyVipo(TheScheduler, "1");
+			var two = new MyVipo(TheScheduler, "2");
 
-			a.Start();
-			b.Start();
+			one.Start();
+			two.Start();
 
 			HookConsoleOutput();
 
 			Sleep();
 
 			var consoleOutput = GetConsoleOutput();
-			Assert.IsTrue(consoleOutput.Contains("MyVipo 'a' ticks #1, messages [VipoStartup]"));
-			Assert.IsTrue(consoleOutput.Contains("MyVipo 'b' ticks #1, messages [VipoStartup]"));
+
+			Assert.IsTrue(consoleOutput.Contains("MyVipo '1' ticks #1, messages [VipoStartup]"));
+			Assert.IsTrue(consoleOutput.Contains("MyVipo '2' ticks #1, messages [VipoStartup]"));
+			Assert.IsTrue(consoleOutput.Contains("MyVipo '2' ticks #2, messages [Other]"));
 		}
 
 		class MyVipo : Vipo
@@ -39,6 +41,9 @@ namespace DvmTests.SchedulerTests
 				++m_tickedCount;
 
 				Console.WriteLine($"MyVipo '{Name}' ticks #{m_tickedCount}, messages [{string.Join(',', tickTask.Messages)}]");
+
+				if (Vid == new Vid(1))
+					SendMessage(new Message(Vid, new Vid(2)));
 			}
 		}
 	}

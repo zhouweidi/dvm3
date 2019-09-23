@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace Dvm
 {
-	class TickTask
+	public class TickTask
 	{
 		List<Message> m_messages = new List<Message>();
 
@@ -28,16 +28,11 @@ namespace Dvm
 
 	public struct Vid
 	{
-		static volatile int s_allocator = 1;
-
 		int m_value;
 
-		public static Vid Create()
+		internal Vid(int value)
 		{
-			return new Vid()
-			{
-				m_value = Interlocked.Increment(ref s_allocator)
-			};
+			m_value = value;
 		}
 
 		public override int GetHashCode()
@@ -49,6 +44,28 @@ namespace Dvm
 		{
 			return m_value.ToString();
 		}
+
+		public override bool Equals(Object obj)
+		{
+			if (!(obj is Vid))
+			{
+				return false;
+			}
+
+			Vid vid = (Vid)obj;
+
+			return vid.m_value == m_value;
+		}
+
+		public static bool operator ==(Vid x, Vid y)
+		{
+			return x.m_value == y.m_value;
+		}
+
+		public static bool operator !=(Vid x, Vid y)
+		{
+			return x.m_value != y.m_value;
+		}
 	}
 
 	public class Message
@@ -57,29 +74,69 @@ namespace Dvm
 
 		public Vid From { get; private set; }
 		public Vid To { get; private set; }
+
+		Message()
+		{
+		}
+
+		public Message(Vid from, Vid to)
+		{
+			From = from;
+			To = to;
+		}
+
+		public override string ToString()
+		{
+			return ReferenceEquals(this, VipoStartup) ? "VipoStartup" : "Other";
+		}
 	}
 
-	public class Vipo
+	public abstract class Vipo
 	{
+		Scheduler m_scheduler;
 		Vid m_vid;
 		string m_name;
-		int m_tickedCount;
+		List<Message> m_outMessages = new List<Message>();
 
-		public Vipo(string name)
+		public Vipo(Scheduler scheduler, string name)
 		{
-			m_vid = Vid.Create();
+			m_scheduler = scheduler;
+			m_vid = scheduler.CreateVid();
 			m_name = name;
 		}
 
-		internal void Tick(TickTask tickTask)
+		public void Start()
 		{
-			++m_tickedCount;
-			Console.WriteLine($"Vipo '{m_name}' ticks #{m_tickedCount}");
+			m_scheduler.AddVipo(this);
+		}
+
+		public abstract void Tick(TickTask tickTask);
+
+		protected void SendMessage(Message message)
+		{
+			m_outMessages.Add(message);
+		}
+
+		public IReadOnlyList<Message> TakeOutMessages()
+		{
+			if (m_outMessages.Count == 0)
+				return null;
+
+			var outMessages = m_outMessages;
+
+			m_outMessages = new List<Message>();
+
+			return outMessages;
 		}
 
 		public Vid Vid
 		{
 			get { return m_vid; }
+		}
+
+		public string Name
+		{
+			get { return m_name; }
 		}
 	}
 }

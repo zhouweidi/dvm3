@@ -6,9 +6,9 @@ namespace Dvm
 	{
 	}
 
-	class DispatchMessages : ScheduleTask
+	class DispatchVipoMessages : ScheduleTask
 	{
-		public DispatchMessages(IReadOnlyList<Message> messages)
+		public DispatchVipoMessages(IReadOnlyList<Message> messages)
 		{
 			Messages = messages;
 		}
