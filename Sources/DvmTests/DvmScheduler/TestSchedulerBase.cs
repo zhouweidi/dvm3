@@ -1,23 +1,21 @@
 using Dvm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.IO;
-using System.Text;
 using System.Threading;
 
-namespace DvmTests
+namespace DvmTests.DvmScheduler
 {
 	[TestClass]
-	public class TestScheduler : TestBase
+	public class TestSchedulerBase : TestBase
 	{
-		#region Basic
-
 		Scheduler m_scheduler;
 		CancellationTokenSource m_cts;
 
 		[TestInitialize]
-		public void Initialize()
+		public override void Initialize()
 		{
+			base.Initialize();
+
 			m_cts = new CancellationTokenSource();
 			m_scheduler = new Scheduler(4, m_cts.Token);
 
@@ -40,30 +38,13 @@ namespace DvmTests
 			base.Cleanup();
 		}
 
-		void OnError(Exception e)
+		protected virtual void OnError(Exception e)
 		{
 		}
 
-		#endregion
-
-		[TestMethod]
-		public void TestMethod1()
+		internal Scheduler TheScheduler
 		{
-			var a = new Vipo("a");
-			var b = new Vipo("b");
-
-			HookConsoleOutput();
-
-			m_scheduler.AddTickTask(new TickTask(a));
-			m_scheduler.AddTickTask(new TickTask(b));
-			m_scheduler.AddTickTask(new TickTask(a));
-
-			Sleep();
-
-			var consoleOutput = GetConsoleOutput();
-			Assert.IsTrue(consoleOutput.Contains("Vipo 'a' ticks #1"));
-			Assert.IsTrue(consoleOutput.Contains("Vipo 'a' ticks #2"));
-			Assert.IsTrue(consoleOutput.Contains("Vipo 'b' ticks #1"));
+			get { return m_scheduler; }
 		}
 	}
 }

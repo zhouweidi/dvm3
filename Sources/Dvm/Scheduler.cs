@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace Dvm
 {
-	public enum SchedulerState
+	enum SchedulerState
 	{
 		Running, StopRequested, Stopped
 	}
@@ -16,7 +16,7 @@ namespace Dvm
 		VirtualProcessor[] m_virtualProcessors;
 		Thread m_thread;
 
-		BlockingCollection<TickTask> m_tickTaskQueue = new BlockingCollection<TickTask>();
+		BlockingCollection<ScheduleTask> m_scheduleTaskQueue = new BlockingCollection<ScheduleTask>();
 
 		FreeVPSet m_free;
 
@@ -25,6 +25,8 @@ namespace Dvm
 
 		SchedulerState m_state = SchedulerState.Running;
 		volatile Exception m_exception;
+
+		Dictionary<Vid, Vipo> m_vipos = new Dictionary<Vid, Vipo>();
 
 		#region VirtualProcessor
 
@@ -198,7 +200,7 @@ namespace Dvm
 			for (int i = 0; i < m_virtualProcessors.Length; i++)
 				m_virtualProcessors[i].Dispose();
 
-			m_tickTaskQueue.Dispose();
+			m_scheduleTaskQueue.Dispose();
 			m_cts.Dispose();
 
 			base.DisposeManaged();
@@ -231,21 +233,113 @@ namespace Dvm
 
 		void ThreadRun()
 		{
+			VirtualProcessor lastFreeVP = null;
+			var stp = new ScheduleTasksProcessor(m_vipos);
+
 			for (; ; )
 			{
-				var freeVP = m_free.Take(m_cts.Token);
-
-				for (; ; )
 				{
-					var tickTask = m_tickTaskQueue.Take(m_cts.Token);
+					var scheduleTask = m_scheduleTaskQueue.Take(m_cts.Token);
 
-					if (RunTickTaskOnVP(freeVP, tickTask))
-						break;
+					do
+					{
+						stp.Process(scheduleTask);
+
+						if (stp.ViposToTick >= m_virtualProcessors.Length)
+							break;
+					}
+					while (m_scheduleTaskQueue.TryTake(out scheduleTask));
 				}
+
+				foreach (var tickTask in stp.TickTasks)
+				{
+					if (lastFreeVP == null)
+						lastFreeVP = m_free.Take(m_cts.Token);
+
+					if (RunTickTaskOnVP(tickTask, lastFreeVP))
+						lastFreeVP = null; // Consumed the VP
+				}
+
+				stp.Reset();
 			}
 		}
 
-		bool RunTickTaskOnVP(VirtualProcessor freeVP, TickTask tickTask)
+		#region ScheduleTasksProcessor
+
+		class ScheduleTasksProcessor
+		{
+			Dictionary<Vid, Vipo> m_vipos;
+			Dictionary<Vid, TickTask> m_tickTasks = new Dictionary<Vid, TickTask>();
+
+			public int ViposToTick
+			{
+				get { return m_tickTasks.Count; }
+			}
+
+			public IEnumerable<TickTask> TickTasks
+			{
+				get { return m_tickTasks.Values; }
+			}
+
+			public ScheduleTasksProcessor(Dictionary<Vid, Vipo> vipos)
+			{
+				m_vipos = vipos;
+			}
+
+			public void Process(ScheduleTask scheduleTask)
+			{
+				switch (scheduleTask)
+				{
+					case DispatchMessages dm:
+						for (int i = 0; i < dm.Messages.Count; i++)
+						{
+							var message = dm.Messages[i];
+							var tickTask = GetTickTask(message.To);
+
+							tickTask.AddMessage(message);
+						}
+						break;
+
+					case VipoStartup vs:
+						{
+							var vid = vs.Vipo.Vid;
+							m_vipos.Add(vid, vs.Vipo);
+
+							var tickTask = GetTickTask(vid);
+							tickTask.AddMessage(Message.VipoStartup);
+						}
+						break;
+
+					default:
+						throw new NotSupportedException($"Unsupported schedule task '{scheduleTask.GetType()}'");
+				}
+			}
+
+			TickTask GetTickTask(Vid vid)
+			{
+				TickTask tickTask;
+				if (!m_tickTasks.TryGetValue(vid, out tickTask))
+				{
+					Vipo vipo;
+					if (!m_vipos.TryGetValue(vid, out vipo))
+						throw new InvalidOperationException($"No vipo '{vid}' found");
+
+					tickTask = new TickTask(vipo);
+					m_tickTasks.Add(vid, tickTask);
+				}
+
+				return tickTask;
+			}
+
+			public void Reset()
+			{
+				m_tickTasks.Clear();
+			}
+		}
+
+		#endregion
+
+		bool RunTickTaskOnVP(TickTask tickTask, VirtualProcessor freeVP)
 		{
 			lock (m_workingsLock)
 			{
@@ -294,12 +388,17 @@ namespace Dvm
 
 		}
 
-		public void AddTickTask(TickTask tickTask)
+		void AddScheduleTask(ScheduleTask scheduleTask)
 		{
-			if (tickTask == null)
-				throw new ArgumentNullException(nameof(tickTask));
+			if (scheduleTask == null)
+				throw new ArgumentNullException(nameof(scheduleTask));
 
-			m_tickTaskQueue.Add(tickTask);
+			m_scheduleTaskQueue.Add(scheduleTask);
+		}
+
+		public void AddVipo(Vipo vipo)
+		{
+			AddScheduleTask(new VipoStartup(vipo));
 		}
 
 		#region Properties

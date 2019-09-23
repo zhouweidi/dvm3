@@ -2,10 +2,10 @@ using Dvm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading;
 
-namespace DvmTests
+namespace DvmTests.DvmScheduler
 {
 	[TestClass]
-	public class TestSchedulerLifeScope : TestBase
+	public class LifeScope : TestBase
 	{
 		[TestMethod]
 		public void Normal()

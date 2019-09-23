@@ -12,6 +12,10 @@ namespace DvmTests
 
 		StringWriter m_consoleOutput;
 
+		[TestInitialize]
+		public virtual void Initialize()
+		{ }
+
 		[TestCleanup]
 		public virtual void Cleanup()
 		{
