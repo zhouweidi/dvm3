@@ -2,7 +2,7 @@ using Dvm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading;
 
-namespace DvmTests.DvmScheduler
+namespace DvmTests.SchedulerTests
 {
 	[TestClass]
 	public class LifeScope : TestBase

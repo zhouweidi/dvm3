@@ -1,7 +1,7 @@
 using Dvm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace DvmTests.DvmScheduler
+namespace DvmTests.SchedulerTests
 {
 	[TestClass]
 	public class BasicSchedule : TestSchedulerBase

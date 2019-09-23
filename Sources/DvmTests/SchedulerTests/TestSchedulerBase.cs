@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Threading;
 
-namespace DvmTests.DvmScheduler
+namespace DvmTests.SchedulerTests
 {
 	[TestClass]
 	public class TestSchedulerBase : TestBase
