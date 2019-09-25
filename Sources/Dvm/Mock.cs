@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace Dvm
 {
@@ -23,48 +22,6 @@ namespace Dvm
 		public IReadOnlyList<Message> Messages
 		{
 			get { return m_messages; }
-		}
-	}
-
-	public struct Vid
-	{
-		int m_value;
-
-		internal Vid(int value)
-		{
-			m_value = value;
-		}
-
-		public override int GetHashCode()
-		{
-			return m_value;
-		}
-
-		public override string ToString()
-		{
-			return m_value.ToString();
-		}
-
-		public override bool Equals(Object obj)
-		{
-			if (!(obj is Vid))
-			{
-				return false;
-			}
-
-			Vid vid = (Vid)obj;
-
-			return vid.m_value == m_value;
-		}
-
-		public static bool operator ==(Vid x, Vid y)
-		{
-			return x.m_value == y.m_value;
-		}
-
-		public static bool operator !=(Vid x, Vid y)
-		{
-			return x.m_value != y.m_value;
 		}
 	}
 
@@ -101,7 +58,7 @@ namespace Dvm
 		public Vipo(Scheduler scheduler, string name)
 		{
 			m_scheduler = scheduler;
-			m_vid = scheduler.CreateVid();
+			m_vid = scheduler.CreateVid(name);
 			m_name = name;
 		}
 

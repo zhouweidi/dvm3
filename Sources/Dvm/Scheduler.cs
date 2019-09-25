@@ -26,8 +26,9 @@ namespace Dvm
 		SchedulerState m_state = SchedulerState.Running;
 		volatile Exception m_exception;
 
-		Dictionary<Vid, Vipo> m_vipos = new Dictionary<Vid, Vipo>();
-		int m_nextVidValue;
+		ConcurrentDictionary<Vid, Vipo> m_vipos = new ConcurrentDictionary<Vid, Vipo>();
+		long m_vidIndex;
+		SpinLock m_vidIndexLock = new SpinLock();
 
 		#region VirtualProcessor
 
@@ -273,7 +274,7 @@ namespace Dvm
 
 		class ScheduleTasksProcessor
 		{
-			Dictionary<Vid, Vipo> m_vipos;
+			ConcurrentDictionary<Vid, Vipo> m_vipos;
 			Dictionary<Vid, TickTask> m_tickTasks = new Dictionary<Vid, TickTask>();
 
 			public int ViposToTick
@@ -286,7 +287,7 @@ namespace Dvm
 				get { return m_tickTasks.Values; }
 			}
 
-			public ScheduleTasksProcessor(Dictionary<Vid, Vipo> vipos)
+			public ScheduleTasksProcessor(ConcurrentDictionary<Vid, Vipo> vipos)
 			{
 				m_vipos = vipos;
 			}
@@ -308,7 +309,8 @@ namespace Dvm
 					case VipoStartup vs:
 						{
 							var vid = vs.Vipo.Vid;
-							m_vipos.Add(vid, vs.Vipo);
+							if (!m_vipos.TryAdd(vid, vs.Vipo))
+								throw new InvalidOperationException($"Vipo {0} already exists, failed to add");
 
 							var tickTask = GetTickTask(vid);
 							tickTask.AddMessage(Message.VipoStartup);
@@ -406,9 +408,30 @@ namespace Dvm
 			AddScheduleTask(new VipoStartup(vipo));
 		}
 
-		internal Vid CreateVid()
+		internal Vid CreateVid(string description)
 		{
-			return new Vid(Interlocked.Increment(ref m_nextVidValue));
+			for (; ; )
+			{
+				ulong index;
+				{
+					bool gotLock = false;
+					try
+					{
+						m_vidIndexLock.Enter(ref gotLock);
+
+						index = Vid.GetNextIndex(ref m_vidIndex);
+					}
+					finally
+					{
+						if (gotLock)
+							m_vidIndexLock.Exit();
+					}
+				}
+
+				var vid = new Vid(1, index, description);
+				if (!m_vipos.ContainsKey(vid))
+					return vid;
+			}
 		}
 
 		#region Properties

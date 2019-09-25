@@ -6,6 +6,7 @@ using System.Threading;
 
 namespace DvmTests
 {
+	[TestClass]
 	public class TestBase
 	{
 		#region Basic
