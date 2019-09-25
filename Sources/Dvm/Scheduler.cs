@@ -388,8 +388,8 @@ namespace Dvm
 
 		ReturnToFree:
 			m_free.Return(vp);
-			return TickTask.Empty;
 
+			return TickTask.Empty;
 		}
 
 		void AddScheduleTask(ScheduleTask scheduleTask)
