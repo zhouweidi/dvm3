@@ -85,7 +85,7 @@ namespace Dvm
 					m_tickSignal.Reset();
 
 					var tickTask = m_scheduler.GetNextTickTask(this, null);
-					if (tickTask == null)
+					if (tickTask.IsEmpty)
 						throw new InvalidOperationException("No initial tick task found");
 
 					if (tickTask.Vipo == null)
@@ -97,7 +97,7 @@ namespace Dvm
 						vipo.Tick(tickTask);
 
 						tickTask = m_scheduler.GetNextTickTask(this, vipo);
-						if (tickTask == null)
+						if (tickTask.IsEmpty)
 							break;
 
 						if (tickTask.Vipo != vipo)
@@ -313,6 +313,7 @@ namespace Dvm
 								throw new InvalidOperationException($"Vipo {0} already exists, failed to add");
 
 							var tickTask = GetTickTask(vid);
+
 							tickTask.AddMessage(Message.VipoStartup);
 						}
 						break;
@@ -391,7 +392,7 @@ namespace Dvm
 
 		ReturnToFree:
 			m_free.Return(vp);
-			return null;
+			return TickTask.Empty;
 
 		}
 

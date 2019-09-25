@@ -8,21 +8,21 @@ namespace Dvm
 
 	class DispatchVipoMessages : ScheduleTask
 	{
+		public IReadOnlyList<Message> Messages { get; private set; }
+
 		public DispatchVipoMessages(IReadOnlyList<Message> messages)
 		{
 			Messages = messages;
 		}
-
-		public IReadOnlyList<Message> Messages { get; private set; }
 	}
 
 	class VipoStartup : ScheduleTask
 	{
+		public Vipo Vipo { get; private set; }
+
 		public VipoStartup(Vipo vipo)
 		{
 			Vipo = vipo;
 		}
-
-		public Vipo Vipo { get; private set; }
 	}
 }

@@ -1,30 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Dvm
 {
-	public class TickTask
-	{
-		List<Message> m_messages = new List<Message>();
-
-		public TickTask(Vipo vipo)
-		{
-			Vipo = vipo;
-		}
-
-		internal void AddMessage(Message message)
-		{
-			m_messages.Add(message);
-		}
-
-		public Vipo Vipo { get; private set; }
-
-		public IReadOnlyList<Message> Messages
-		{
-			get { return m_messages; }
-		}
-	}
-
 	public class Message
 	{
 		public static readonly Message VipoStartup = new Message();
