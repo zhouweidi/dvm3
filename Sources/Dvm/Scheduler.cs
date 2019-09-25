@@ -300,9 +300,7 @@ namespace Dvm
 						for (int i = 0; i < dvm.Messages.Count; i++)
 						{
 							var message = dvm.Messages[i];
-							var tickTask = GetTickTask(message.To);
-
-							tickTask.AddMessage(message);
+							AddTickTaskMessage(message.To, message);
 						}
 						break;
 
@@ -312,9 +310,7 @@ namespace Dvm
 							if (!m_vipos.TryAdd(vid, vs.Vipo))
 								throw new InvalidOperationException($"Vipo {0} already exists, failed to add");
 
-							var tickTask = GetTickTask(vid);
-
-							tickTask.AddMessage(Message.VipoStartup);
+							AddTickTaskMessage(vid, Message.VipoStartup);
 						}
 						break;
 
@@ -323,7 +319,7 @@ namespace Dvm
 				}
 			}
 
-			TickTask GetTickTask(Vid vid)
+			void AddTickTaskMessage(Vid vid, Message message)
 			{
 				TickTask tickTask;
 				if (!m_tickTasks.TryGetValue(vid, out tickTask))
@@ -336,7 +332,7 @@ namespace Dvm
 					m_tickTasks.Add(vid, tickTask);
 				}
 
-				return tickTask;
+				tickTask.AddMessage(message);
 			}
 
 			public void Reset()
