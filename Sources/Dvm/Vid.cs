@@ -35,7 +35,7 @@ namespace Dvm
 
 		#region Initialize
 
-		Vid(ulong data, string description)
+		internal Vid(ulong data, string description)
 		{
 			m_data = data;
 			m_description = description;

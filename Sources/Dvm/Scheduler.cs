@@ -10,7 +10,7 @@ namespace Dvm
 		Running, StopRequested, Stopped
 	}
 
-	public class Scheduler : DisposableObject
+	public sealed class Scheduler : DisposableObject
 	{
 		CancellationTokenSource m_cts;
 		VirtualProcessor[] m_virtualProcessors;
@@ -32,7 +32,7 @@ namespace Dvm
 
 		#region VirtualProcessor
 
-		class VirtualProcessor : DisposableObject
+		internal class VirtualProcessor : DisposableObject
 		{
 			Scheduler m_scheduler;
 			CancellationToken m_cancelToken;
@@ -85,29 +85,48 @@ namespace Dvm
 					m_tickSignal.Reset();
 
 					var tickTask = m_scheduler.GetNextTickTask(this, null);
-					if (tickTask.IsEmpty)
-						throw new InvalidOperationException("No initial tick task found");
-
 					if (tickTask.Vipo == null)
-						throw new InvalidOperationException("Unexpected null vipo of a TickTask");
+						throw new InvalidOperationException("No initial tick task found, expecting non-null vipo of a TickTask");
 
 					var vipo = tickTask.Vipo;
-					for (; ; )
+					SetTickingVid(vipo.Vid);
+
+					try
 					{
-						vipo.Tick(tickTask);
+						for (; ; )
+						{
+							vipo.Tick(tickTask);
 
-						tickTask = m_scheduler.GetNextTickTask(this, vipo);
-						if (tickTask.IsEmpty)
-							break;
+							tickTask = m_scheduler.GetNextTickTask(this, vipo);
 
-						if (tickTask.Vipo != vipo)
-							throw new InvalidOperationException("TickTask is not the same one as the previous vipo");
+							if (tickTask.IsEmpty)
+								break;
+
+							if (tickTask.Vipo != vipo)
+								throw new InvalidOperationException("TickTask is not the same one as the previous vipo");
+						}
+
+						var outMessages = vipo.TakeOutMessages();
+						if (outMessages != null)
+							m_scheduler.AddScheduleTask(new DispatchVipoMessages(outMessages));
 					}
-
-					var outMessages = vipo.TakeOutMessages();
-					if (outMessages != null)
-						m_scheduler.AddScheduleTask(new DispatchVipoMessages(outMessages));
+					finally
+					{
+						SetTickingVid(Vid.Empty);
+					}
 				}
+			}
+
+			static readonly LocalDataStoreSlot TickingVidDataSlot = Thread.GetNamedDataSlot("TickingVid");
+
+			static void SetTickingVid(Vid vid)
+			{
+				Thread.SetData(TickingVidDataSlot, vid.Data);
+			}
+
+			internal static Vid GetTickingVid()
+			{
+				return new Vid((ulong)Thread.GetData(TickingVidDataSlot), null);
 			}
 
 			public Thread Thread
@@ -300,17 +319,47 @@ namespace Dvm
 						for (int i = 0; i < dvm.Messages.Count; i++)
 						{
 							var message = dvm.Messages[i];
-							AddTickTaskMessage(message.To, message);
+
+							var tickTask = GetTickTask(message.To);
+							tickTask.AddMessage(message);
 						}
 						break;
 
-					case VipoStartup vs:
+					case VipoStart vs:
 						{
 							var vid = vs.Vipo.Vid;
 							if (!m_vipos.TryAdd(vid, vs.Vipo))
-								throw new InvalidOperationException($"Vipo {0} already exists, failed to add");
+								throw new InvalidOperationException($"Vipo {vid} already exists, failed to add");
 
-							AddTickTaskMessage(vid, Message.VipoStartup);
+							var tickTask = GetTickTask(vid);
+							tickTask.SetStartRequest();
+						}
+						break;
+
+					case VipoDestroy vd:
+						{
+							var vid = vd.Vipo.Vid;
+
+							var tickTask = GetTickTask(vid);
+							tickTask.SetDestroyRequest();
+
+							Vipo tempVipo;
+							if (!m_vipos.TryRemove(vid, out tempVipo))
+								throw new InvalidOperationException($"Can't remove vipo {vid}");
+
+							if (tempVipo != vd.Vipo)
+								throw new InvalidOperationException($"Unmatched vipo {vid} being removed");
+						}
+						break;
+
+					case VipoSchedule vs:
+						{
+							var vid = vs.Vipo.Vid;
+							if (!m_vipos.ContainsKey(vid))
+								throw new InvalidOperationException($"Vipo {vid} to schedule doesn't exist");
+
+							var tickTask = GetTickTask(vid);
+							tickTask.AddMessage(Message.VipoSchedule);
 						}
 						break;
 
@@ -319,7 +368,7 @@ namespace Dvm
 				}
 			}
 
-			void AddTickTaskMessage(Vid vid, Message message)
+			TickTask GetTickTask(Vid vid)
 			{
 				TickTask tickTask;
 				if (!m_tickTasks.TryGetValue(vid, out tickTask))
@@ -332,7 +381,7 @@ namespace Dvm
 					m_tickTasks.Add(vid, tickTask);
 				}
 
-				tickTask.AddMessage(message);
+				return tickTask;
 			}
 
 			public void Reset()
@@ -386,23 +435,18 @@ namespace Dvm
 					return vp.TickTasks.Dequeue();
 			}
 
-		ReturnToFree:
+			ReturnToFree:
 			m_free.Return(vp);
 
 			return TickTask.Empty;
 		}
 
-		void AddScheduleTask(ScheduleTask scheduleTask)
+		internal void AddScheduleTask(ScheduleTask scheduleTask)
 		{
 			if (scheduleTask == null)
 				throw new ArgumentNullException(nameof(scheduleTask));
 
 			m_scheduleTaskQueue.Add(scheduleTask);
-		}
-
-		internal void AddVipo(Vipo vipo)
-		{
-			AddScheduleTask(new VipoStartup(vipo));
 		}
 
 		internal Vid CreateVid(string description)
@@ -441,6 +485,11 @@ namespace Dvm
 		public Exception Exception
 		{
 			get { return m_exception; }
+		}
+
+		public int ViposCount
+		{
+			get { return m_vipos.Count; }
 		}
 
 		#endregion

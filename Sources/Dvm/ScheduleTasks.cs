@@ -16,11 +16,31 @@ namespace Dvm
 		}
 	}
 
-	class VipoStartup : ScheduleTask
+	class VipoStart : ScheduleTask
 	{
 		public Vipo Vipo { get; private set; }
 
-		public VipoStartup(Vipo vipo)
+		public VipoStart(Vipo vipo)
+		{
+			Vipo = vipo;
+		}
+	}
+
+	class VipoDestroy : ScheduleTask
+	{
+		public Vipo Vipo { get; private set; }
+
+		public VipoDestroy(Vipo vipo)
+		{
+			Vipo = vipo;
+		}
+	}
+
+	class VipoSchedule : ScheduleTask
+	{
+		public Vipo Vipo { get; private set; }
+
+		public VipoSchedule(Vipo vipo)
 		{
 			Vipo = vipo;
 		}
