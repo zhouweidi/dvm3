@@ -131,7 +131,7 @@ namespace Dvm
 				if (!tickTask.StartRequest && tickTask.Messages.Count == 0)
 					throw new KernelFault();
 
-				OnTick(tickTask.Messages);
+				OnTick(tickTask);
 
 				// OnDestroy
 				if (tickTask.DestroyRequest)
@@ -224,7 +224,7 @@ namespace Dvm
 		protected virtual void OnDestroy()
 		{ }
 
-		protected abstract void OnTick(IReadOnlyList<Message> messages);
+		protected abstract void OnTick(TickTask tickTask);
 
 		protected virtual bool OnError(Exception e)
 		{

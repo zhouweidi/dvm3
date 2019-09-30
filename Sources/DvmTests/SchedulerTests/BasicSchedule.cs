@@ -35,11 +35,11 @@ namespace DvmTests.SchedulerTests
 			{
 			}
 
-			protected override void OnTick(IReadOnlyList<Message> messages)
+			protected override void OnTick(TickTask tickTask)
 			{
 				++m_tickedCount;
 
-				Console.WriteLine($"MyVipo '{Name}' ticks #{m_tickedCount}, messages [{string.Join(',', messages)}]");
+				Console.WriteLine($"MyVipo '{Name}' ticks #{m_tickedCount}, messages [{string.Join(',', tickTask.Messages)}]");
 			}
 		}
 	}

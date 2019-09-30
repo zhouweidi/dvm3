@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Dvm
 {
-	sealed class TickTask
+	public sealed class TickTask
 	{
 		static readonly Message[] NoMessages = new Message[0];
 
@@ -42,7 +42,7 @@ namespace Dvm
 			m_requests |= Requests.Destroy;
 		}
 
-		public Vipo Vipo
+		internal Vipo Vipo
 		{
 			get { return m_vipo; }
 		}
