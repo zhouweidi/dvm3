@@ -85,8 +85,10 @@ namespace Dvm
 					m_tickSignal.Reset();
 
 					var tickTask = m_scheduler.GetNextTickTask(this, null);
+					if (tickTask == null)
+						throw new KernelFault("No initial tick task found");
 					if (tickTask.Vipo == null)
-						throw new InvalidOperationException("No initial tick task found, expecting non-null vipo of a TickTask");
+						throw new KernelFault("Expecting non-null vipo of a TickTask");
 
 					var vipo = tickTask.Vipo;
 					SetTickingVid(vipo.Vid);
@@ -99,9 +101,8 @@ namespace Dvm
 
 							tickTask = m_scheduler.GetNextTickTask(this, vipo);
 
-							if (tickTask.IsEmpty)
+							if (tickTask == null)
 								break;
-
 							if (tickTask.Vipo != vipo)
 								throw new InvalidOperationException("TickTask is not the same one as the previous vipo");
 						}
@@ -435,10 +436,10 @@ namespace Dvm
 					return vp.TickTasks.Dequeue();
 			}
 
-			ReturnToFree:
+		ReturnToFree:
 			m_free.Return(vp);
 
-			return TickTask.Empty;
+			return null;
 		}
 
 		internal void AddScheduleTask(ScheduleTask scheduleTask)

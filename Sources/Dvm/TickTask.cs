@@ -3,12 +3,10 @@ using System.Collections.Generic;
 
 namespace Dvm
 {
-	public struct TickTask
+	sealed class TickTask
 	{
-		internal static readonly TickTask Empty = new TickTask();
-
 		readonly Vipo m_vipo;
-		readonly List<Message> m_messages;
+		List<Message> m_messages;
 		Requests m_requests;
 
 		[Flags]
@@ -22,12 +20,13 @@ namespace Dvm
 		internal TickTask(Vipo vipo)
 		{
 			m_vipo = vipo;
-			m_messages = new List<Message>();
-			m_requests = Requests.None;
 		}
 
 		internal void AddMessage(Message message)
 		{
+			if (m_messages == null)
+				m_messages = new List<Message>();
+
 			m_messages.Add(message);
 		}
 
@@ -51,9 +50,9 @@ namespace Dvm
 			get { return m_messages; }
 		}
 
-		internal bool IsEmpty
+		public bool AnyRequest
 		{
-			get { return m_vipo == null; }
+			get { return m_requests != Requests.None; }
 		}
 
 		public bool StartRequest
@@ -64,11 +63,6 @@ namespace Dvm
 		public bool DestroyRequest
 		{
 			get { return (m_requests & Requests.Destroy) != 0; }
-		}
-
-		public bool AnyRequest
-		{
-			get { return m_requests != Requests.None; }
 		}
 	}
 }
