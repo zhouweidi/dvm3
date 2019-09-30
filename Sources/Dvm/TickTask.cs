@@ -5,6 +5,8 @@ namespace Dvm
 {
 	sealed class TickTask
 	{
+		static readonly Message[] NoMessages = new Message[0];
+
 		readonly Vipo m_vipo;
 		List<Message> m_messages;
 		Requests m_requests;
@@ -47,7 +49,7 @@ namespace Dvm
 
 		public IReadOnlyList<Message> Messages
 		{
-			get { return m_messages; }
+			get { return m_messages == null ? (IReadOnlyList<Message>)NoMessages : m_messages; }
 		}
 
 		public bool AnyRequest
