@@ -13,8 +13,8 @@ namespace Dvm
 	{
 		readonly Scheduler m_scheduler;
 		readonly Vid m_vid;
-		CallState m_startCall = CallState.NotRequested;
-		CallState m_destroyCall = CallState.NotRequested;
+		CallState m_startCallState = CallState.NotRequested;
+		CallState m_destroyCallState = CallState.NotRequested;
 		SpinLock m_stateLock = new SpinLock();
 		List<Message> m_outMessages;
 
@@ -33,10 +33,10 @@ namespace Dvm
 		{
 			CheckStates(() =>
 			{
-				switch (m_startCall)
+				switch (m_startCallState)
 				{
 					case CallState.NotRequested:
-						m_startCall = CallState.Requested;
+						m_startCallState = CallState.Requested;
 						break;
 
 					case CallState.Requested:
@@ -44,7 +44,7 @@ namespace Dvm
 						throw new InvalidOperationException("Can only start an unstarted vipo");
 				}
 
-				switch (m_destroyCall)
+				switch (m_destroyCallState)
 				{
 					case CallState.NotRequested:
 						break;
@@ -62,7 +62,7 @@ namespace Dvm
 		{
 			CheckStates(() =>
 			{
-				switch (m_startCall)
+				switch (m_startCallState)
 				{
 					case CallState.NotRequested:
 						throw new InvalidOperationException("Can't destroy an unstarted vipo");
@@ -72,10 +72,10 @@ namespace Dvm
 						break;
 				}
 
-				switch (m_destroyCall)
+				switch (m_destroyCallState)
 				{
 					case CallState.NotRequested:
-						m_destroyCall = CallState.Requested;
+						m_destroyCallState = CallState.Requested;
 						break;
 
 					case CallState.Requested:
@@ -91,7 +91,7 @@ namespace Dvm
 		{
 			CheckStates(() =>
 			{
-				switch (m_startCall)
+				switch (m_startCallState)
 				{
 					case CallState.NotRequested:
 						throw new InvalidOperationException("Can't schedule an unstarted vipo");
@@ -101,7 +101,7 @@ namespace Dvm
 						break;
 				}
 
-				switch (m_destroyCall)
+				switch (m_destroyCallState)
 				{
 					case CallState.NotRequested:
 						break;
@@ -124,7 +124,7 @@ namespace Dvm
 				{
 					OnStart();
 
-					m_startCall = CallState.Done;
+					m_startCallState = CallState.Done;
 				}
 
 				// OnTick
@@ -138,7 +138,7 @@ namespace Dvm
 				{
 					OnDestroy();
 
-					m_destroyCall = CallState.Done;
+					m_destroyCallState = CallState.Done;
 				}
 			}
 			catch (Exception e) when (OnError(e))
@@ -151,7 +151,7 @@ namespace Dvm
 			if (Scheduler.VirtualProcessor.GetTickingVid() != m_vid)
 				throw new InvalidOperationException("SendMessage is only allowed to call in OnTick");
 
-			switch (m_startCall)
+			switch (m_startCallState)
 			{
 				case CallState.NotRequested:
 					throw new KernelFault();
@@ -161,7 +161,7 @@ namespace Dvm
 					break;
 			}
 
-			switch (m_destroyCall)
+			switch (m_destroyCallState)
 			{
 				case CallState.NotRequested:
 				case CallState.Requested:
@@ -256,7 +256,7 @@ namespace Dvm
 			{
 				VipoStage vs;
 
-				switch (m_startCall)
+				switch (m_startCallState)
 				{
 					case CallState.NotRequested:
 					default:
@@ -272,7 +272,7 @@ namespace Dvm
 						break;
 				}
 
-				switch (m_destroyCall)
+				switch (m_destroyCallState)
 				{
 					case CallState.NotRequested:
 						break;
