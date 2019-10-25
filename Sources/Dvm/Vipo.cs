@@ -29,90 +29,119 @@ namespace Dvm
 			m_vid = scheduler.CreateVid(name);
 		}
 
+		#region Check states
+
+		bool LockCallStates(Func<bool> check)
+		{
+			bool gotLock = false;
+			try
+			{
+				m_statesLock.Enter(ref gotLock);
+
+				return check();
+			}
+			finally
+			{
+				if (gotLock)
+					m_statesLock.Exit();
+			}
+		}
+
+		#endregion
+
 		public void Start() // Can be called in any thread
 		{
-			CheckStates(() =>
-			{
-				switch (m_startCallState)
-				{
-					case CallState.NotRequested:
-						m_startCallState = CallState.Requested;
-						break;
+			var r = LockCallStates(() =>
+			 {
+				 switch (m_startCallState)
+				 {
+					 case CallState.NotRequested:
+						 m_startCallState = CallState.Requested;
+						 break;
 
-					case CallState.Requested:
-					case CallState.Done:
-						throw new InvalidOperationException("Can only start an unstarted vipo");
-				}
+					 case CallState.Requested:
+					 case CallState.Done:
+						 throw new InvalidOperationException("Can only start an unstarted vipo");
+				 }
 
-				switch (m_destroyCallState)
-				{
-					case CallState.NotRequested:
-						break;
+				 switch (m_destroyCallState)
+				 {
+					 case CallState.NotRequested:
+						 break;
 
-					case CallState.Requested:
-					case CallState.Done:
-						throw new KernelFault();
-				}
+					 case CallState.Requested:
+					 case CallState.Done:
+						 throw new KernelFault();
+				 }
 
+				 return true;
+			 });
+
+			if (r)
 				m_scheduler.AddScheduleTask(new VipoStart(this));
-			});
 		}
 
 		public void Destroy() // Can be called in any thread
 		{
-			CheckStates(() =>
-			{
-				switch (m_startCallState)
-				{
-					case CallState.NotRequested:
-						throw new InvalidOperationException("Can't destroy an unstarted vipo");
+			var r = LockCallStates(() =>
+			 {
+				 switch (m_startCallState)
+				 {
+					 case CallState.NotRequested:
+						 throw new InvalidOperationException("Can't destroy an unstarted vipo");
 
-					case CallState.Requested:
-					case CallState.Done:
-						break;
-				}
+					 case CallState.Requested:
+					 case CallState.Done:
+						 break;
+				 }
 
-				switch (m_destroyCallState)
-				{
-					case CallState.NotRequested:
-						m_destroyCallState = CallState.Requested;
-						break;
+				 switch (m_destroyCallState)
+				 {
+					 case CallState.NotRequested:
+						 m_destroyCallState = CallState.Requested;
+						 break;
 
-					case CallState.Requested:
-					case CallState.Done:
-						return; // Ignore destroy calls on a destroyed vipo
-				}
+					 case CallState.Requested:
+					 case CallState.Done:
+						 return false; // Ignore destroy calls on a destroyed vipo
+				 }
 
+				 return true;
+			 });
+
+			if (r)
 				m_scheduler.AddScheduleTask(new VipoDestroy(this));
-			});
 		}
 
 		public void Schedule() // Can be called in any thread
 		{
-			CheckStates(() =>
-			{
-				switch (m_startCallState)
-				{
-					case CallState.NotRequested:
-						throw new InvalidOperationException("Can't schedule an unstarted vipo");
+			var r = LockCallStates(() =>
+			 {
+				 switch (m_startCallState)
+				 {
+					 case CallState.NotRequested:
+						 throw new InvalidOperationException("Can't schedule an unstarted vipo");
 
-					case CallState.Requested:
-					case CallState.Done:
-						break;
-				}
+					 case CallState.Requested:
+					 case CallState.Done:
+						 break;
+				 }
 
-				switch (m_destroyCallState)
-				{
-					case CallState.NotRequested:
-						break;
+				 switch (m_destroyCallState)
+				 {
+					 case CallState.NotRequested:
+						 break;
 
-					case CallState.Requested:
-					case CallState.Done:
-						return; // Ignore schedule calls on a destroy-requested or destroyed vipo
-				}
+					 case CallState.Requested:
+					 case CallState.Done:
+						 return false; // Ignore schedule calls on a destroy-requested or destroyed vipo
+				 }
 
+				 return true;
+			 });
+
+			if (r)
 				m_scheduler.AddScheduleTask(new VipoSchedule(this));
-			});
 		}
 
 		internal void Tick(TickTask tickTask)
@@ -128,8 +157,8 @@ namespace Dvm
 				}
 
 				// OnTick
-				if (!tickTask.StartRequest && tickTask.Messages.Count == 0)
-					throw new KernelFault();
+				if (!tickTask.AnyRequest && tickTask.Messages.Count == 0)
+					throw new KernelFault("No message for tick while no special request set");
 
 				OnTick(tickTask);
 
@@ -151,6 +180,13 @@ namespace Dvm
 			if (Scheduler.VirtualProcessor.GetTickingVid() != m_vid)
 				throw new InvalidOperationException("SendMessage is only allowed to call in OnTick");
 
+			if (message.To.IsEmpty)
+				throw new InvalidOperationException("Can't send message to an empty vid");
+
+			if (message.To == Vid)
+				throw new InvalidOperationException("Can't send message to self");
+
+			// No lock needed while running in VP thread
 			switch (m_startCallState)
 			{
 				case CallState.NotRequested:
@@ -164,8 +200,10 @@ namespace Dvm
 			switch (m_destroyCallState)
 			{
 				case CallState.NotRequested:
-				case CallState.Requested:
 					break;
+
+				case CallState.Requested:
+					throw new InvalidOperationException("Can't call SendMessage after Destroy called");
 
 				case CallState.Done:
 					throw new KernelFault();
@@ -183,7 +221,6 @@ namespace Dvm
 				return null;
 
 			var outMessages = m_outMessages;
-
 			m_outMessages = null;
 
 			return outMessages;
@@ -194,34 +231,14 @@ namespace Dvm
 			return "Vipo " + m_vid.ToString();
 		}
 
-		#region Check states
-
-		void CheckStates(Action check)
-		{
-			bool gotLock = false;
-			try
-			{
-				m_statesLock.Enter(ref gotLock);
-
-				check();
-			}
-			finally
-			{
-				if (gotLock)
-					m_statesLock.Exit();
-			}
-		}
-
-		#endregion
-
-		#region Handler
+		#region Event handlers
 
 		// All handlers are called on VirtualProcessor
 
 		protected virtual void OnStart()
 		{ }
 
-		protected virtual void OnDestroy()
+		protected virtual void OnDestroy() // When it is being called, the vipo has already been removed from Scheduler::m_vipos
 		{ }
 
 		protected abstract void OnTick(TickTask tickTask);
