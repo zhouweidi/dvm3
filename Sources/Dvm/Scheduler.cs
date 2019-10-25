@@ -46,9 +46,7 @@ namespace Dvm
 
 				m_cancelToken = cancelToken;
 
-				m_thread = new Thread(ThreadEntry);
-				m_thread.Name = $"DVM-VP{index}";
-				m_thread.Start();
+				m_thread = m_scheduler.CreateThread($"DVM-VP{index}", VPThread);
 			}
 
 			protected override void DisposeManaged()
@@ -63,21 +61,7 @@ namespace Dvm
 				m_tickSignal.Set();
 			}
 
-			void ThreadEntry()
-			{
-				try
-				{
-					ThreadRun();
-				}
-				catch (OperationCanceledException)
-				{ }
-				catch (Exception e)
-				{
-					m_scheduler.Error(e);
-				}
-			}
-
-			void ThreadRun()
+			void VPThread()
 			{
 				for (; ; )
 				{
@@ -103,8 +87,9 @@ namespace Dvm
 
 							if (tickTask == null)
 								break;
+
 							if (tickTask.Vipo != vipo)
-								throw new InvalidOperationException("TickTask is not the same one as the previous vipo");
+								throw new KernelFault("TickTask is not the same one as the previous vipo");
 						}
 
 						var outMessages = vipo.TakeOutMessages();
@@ -190,9 +175,16 @@ namespace Dvm
 			m_free = new FreeVPSet(m_virtualProcessors);
 
 			// Create schedule thread
-			m_thread = new Thread(ThreadEntry);
-			m_thread.Name = "DVM-Kernel";
-			m_thread.Start();
+			m_thread = CreateThread("DVM-Kernel", KernelThread);
+		}
+
+		Thread CreateThread(string name, Action threadRun)
+		{
+			var thread = new Thread(() => ThreadEntry(threadRun));
+			thread.Name = name;
+			thread.Start();
+
+			return thread;
 		}
 
 		protected override void DisposeUnmanaged(bool explicitCall)
@@ -232,23 +224,23 @@ namespace Dvm
 			base.DisposeManaged();
 		}
 
-		void ThreadEntry()
+		void ThreadEntry(Action threadRun)
 		{
 			try
 			{
-				ThreadRun();
+				threadRun();
 			}
 			catch (OperationCanceledException)
 			{ }
 			catch (Exception e)
 			{
-				Error(e);
+				HandleError(e);
 			}
 		}
 
 		public event Action<Exception> OnError;
 
-		void Error(Exception exception)
+		void HandleError(Exception exception)
 		{
 			if (exception == null)
 				throw new ArgumentNullException(nameof(exception));
@@ -257,7 +249,7 @@ namespace Dvm
 				OnError?.Invoke(exception);
 		}
 
-		void ThreadRun()
+		void KernelThread()
 		{
 			VirtualProcessor lastFreeVP = null;
 			var stp = new ScheduleTasksProcessor(m_vipos);
