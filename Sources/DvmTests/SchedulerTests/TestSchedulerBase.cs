@@ -10,6 +10,7 @@ namespace DvmTests.SchedulerTests
 	{
 		Scheduler m_scheduler;
 		CancellationTokenSource m_cts;
+		ManualResetEvent m_exceptionOccured = new ManualResetEvent(false);
 
 		[TestInitialize]
 		public override void Initialize()
@@ -40,6 +41,12 @@ namespace DvmTests.SchedulerTests
 
 		protected virtual void OnError(Exception e)
 		{
+			m_exceptionOccured.Set();
+		}
+
+		protected override void Sleep(double seconds)
+		{
+			Assert.IsFalse(m_exceptionOccured.WaitOne((int)(seconds * 1000)));
 		}
 
 		internal Scheduler TheScheduler

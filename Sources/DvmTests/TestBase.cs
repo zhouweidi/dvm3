@@ -28,12 +28,12 @@ namespace DvmTests
 
 		#region Sleep
 
-		protected static void Sleep(double seconds)
+		protected virtual void Sleep(double seconds)
 		{
 			Thread.Sleep((int)(seconds * 1000));
 		}
 
-		protected static void Sleep()
+		protected void Sleep()
 		{
 			Sleep(0.5);
 		}
