@@ -15,7 +15,7 @@ namespace Dvm
 		readonly Vid m_vid;
 		CallState m_startCallState = CallState.NotRequested;
 		CallState m_destroyCallState = CallState.NotRequested;
-		SpinLock m_stateLock = new SpinLock();
+		SpinLock m_statesLock = new SpinLock();
 		List<Message> m_outMessages;
 
 		enum CallState
@@ -201,14 +201,14 @@ namespace Dvm
 			bool gotLock = false;
 			try
 			{
-				m_stateLock.Enter(ref gotLock);
+				m_statesLock.Enter(ref gotLock);
 
 				check();
 			}
 			finally
 			{
 				if (gotLock)
-					m_stateLock.Exit();
+					m_statesLock.Exit();
 			}
 		}
 
