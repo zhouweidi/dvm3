@@ -1,7 +1,7 @@
 ﻿using Dvm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace DvmTests.OtherTests
+namespace DvmTests.VidTests
 {
 	[TestClass]
 	public class VidAllocation : TestBase

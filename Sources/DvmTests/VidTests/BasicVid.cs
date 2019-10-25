@@ -2,7 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 
-namespace DvmTests.OtherTests
+namespace DvmTests.VidTests
 {
 	[TestClass]
 	public class BasicVid
