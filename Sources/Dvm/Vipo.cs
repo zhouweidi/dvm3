@@ -290,7 +290,7 @@ namespace Dvm
 
 		public string Name
 		{
-			get { return m_vid.Description; }
+			get { return m_vid.Name; }
 		}
 
 		public Exception Exception

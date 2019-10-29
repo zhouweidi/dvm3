@@ -451,7 +451,7 @@ namespace Dvm
 			m_scheduleTaskQueue.Add(scheduleTask);
 		}
 
-		internal Vid CreateVid(string description)
+		internal Vid CreateVid(string name)
 		{
 			for (; ; )
 			{
@@ -471,7 +471,7 @@ namespace Dvm
 					}
 				}
 
-				var vid = new Vid(1, index, description);
+				var vid = new Vid(1, index, name);
 				if (!m_vipos.ContainsKey(vid))
 					return vid;
 			}

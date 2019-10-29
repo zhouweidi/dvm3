@@ -11,7 +11,7 @@ namespace Dvm
 			FullFormat = "f";
 
 		readonly ulong m_data;
-		readonly string m_description;
+		readonly string m_name;
 
 		#region Bits schema
 
@@ -35,13 +35,13 @@ namespace Dvm
 
 		#region Initialize
 
-		internal Vid(ulong data, string description)
+		internal Vid(ulong data, string name)
 		{
 			m_data = data;
-			m_description = description;
+			m_name = name;
 		}
 
-		internal Vid(ushort cid, ulong index, string description)
+		internal Vid(ushort cid, ulong index, string name)
 		{
 			if (cid == 0 || cid > MaxCid)
 				throw new ArgumentException("Invalid Cid component for a Vid", nameof(cid));
@@ -50,7 +50,7 @@ namespace Dvm
 				throw new ArgumentException("Invalid index component for a Vid", nameof(index));
 
 			m_data = (((ulong)cid) << CidBitOffset) | (((ulong)index) << IndexBitOffset);
-			m_description = description;
+			m_name = name;
 		}
 
 		internal static ulong GetNextIndex(ref long index)
@@ -118,19 +118,19 @@ namespace Dvm
 				case null:
 				case ShortFormat:
 					{
-						if (string.IsNullOrEmpty(m_description))
+						if (string.IsNullOrEmpty(m_name))
 							return m_data.ToString("X");
 						else
 							return string.Format("{0}^{1}",
 												  m_data.ToString("X"),
-												  m_description);
+												  m_name);
 
 					}
 
 				case FullFormat:
 					{
-						// <cid>-<index>^<description>
-						if (string.IsNullOrEmpty(m_description))
+						// <cid>-<index>^<name>
+						if (string.IsNullOrEmpty(m_name))
 						{
 							return string.Format("{0}-{1}",
 												  Index.ToString("X"),
@@ -141,7 +141,7 @@ namespace Dvm
 							return string.Format("{0}-{1}^{2}",
 												  Index.ToString("X"),
 												  Cid.ToString("X"),
-												  m_description);
+												  m_name);
 						}
 					}
 
@@ -169,9 +169,9 @@ namespace Dvm
 			get { return (ulong)((m_data >> IndexBitOffset) & MaxIndex); }
 		}
 
-		public string Description
+		public string Name
 		{
-			get { return m_description; }
+			get { return m_name; }
 		}
 
 		public bool IsEmpty

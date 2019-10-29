@@ -17,14 +17,14 @@ namespace DvmTests.VidTests
 			Assert.IsTrue(Vid.Empty.Data == 0);
 			Assert.IsTrue(Vid.Empty.Cid == 0);
 			Assert.IsTrue(Vid.Empty.Index == 0);
-			Assert.IsNull(Vid.Empty.Description);
+			Assert.IsNull(Vid.Empty.Name);
 			Assert.IsTrue(Vid.Empty.IsEmpty);
 
 			var vid = new Vid(1, 2, "abc");
 			Assert.AreEqual(vid.Data, (((ulong)1 << (6 * 8)) | 2));
 			Assert.AreEqual(vid.Cid, 1);
 			Assert.AreEqual(vid.Index, 2ul);
-			Assert.AreEqual(vid.Description, "abc");
+			Assert.AreEqual(vid.Name, "abc");
 			Assert.IsFalse(vid.IsEmpty);
 		}
 
