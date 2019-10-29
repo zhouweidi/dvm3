@@ -92,9 +92,9 @@ namespace DvmTests.VipoTests
 				Console.WriteLine($"MyVipo '{Name}' ticks #{m_tickedCount}, requests '{string.Join('|', requests)}', messages [{string.Join(',', tickTask.Messages)}]");
 			}
 
-			protected override bool OnError(Exception e)
+			protected override void OnError(Exception e)
 			{
-				return base.OnError(e);
+				base.OnError(e);
 			}
 		}
 	}

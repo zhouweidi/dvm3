@@ -48,11 +48,11 @@ namespace Dvm
 	public class SimpleCoroutineVipo : CoroutineVipo
 	{
 		CoroutineFunction m_coroutine;
-		Func<Exception, bool> m_onError;
+		Action<Exception> m_onError;
 
 		public delegate IEnumerator CoroutineFunction(SimpleCoroutineVipo vipo);
 
-		public SimpleCoroutineVipo(CoroutineFunction coroutine, Func<Exception, bool> onError, Scheduler scheduler, string name)
+		public SimpleCoroutineVipo(CoroutineFunction coroutine, Action<Exception> onError, Scheduler scheduler, string name)
 			: base(scheduler, name)
 		{
 			if (coroutine == null)
@@ -62,12 +62,12 @@ namespace Dvm
 			m_onError = onError;
 		}
 
-		protected override bool OnError(Exception e)
+		protected override void OnError(Exception e)
 		{
 			if (m_onError != null)
-				return m_onError(e);
-
-			return base.OnError(e);
+				m_onError(e);
+			else
+				base.OnError(e);
 		}
 
 		protected override IEnumerator Coroutine()

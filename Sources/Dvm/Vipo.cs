@@ -17,6 +17,7 @@ namespace Dvm
 		CallState m_destroyCallState = CallState.NotRequested;
 		SpinLock m_statesLock = new SpinLock();
 		List<Message> m_outMessages;
+		Exception m_exception;
 
 		enum CallState
 		{
@@ -146,6 +147,8 @@ namespace Dvm
 
 		internal void Tick(TickTask tickTask)
 		{
+			bool isCallingDestroy = false;
+
 			try
 			{
 				// OnStart
@@ -165,13 +168,30 @@ namespace Dvm
 				// OnDestroy
 				if (tickTask.DestroyRequest)
 				{
+					isCallingDestroy = true;
 					OnDestroy();
+					isCallingDestroy = false;
 
 					m_destroyCallState = CallState.Done;
 				}
 			}
-			catch (Exception e) when (OnError(e))
+			catch (Exception e)
 			{
+				m_exception = e;
+
+				try
+				{
+					OnError(e);
+
+					if (m_startCallState == CallState.Done && m_destroyCallState != CallState.Done && !isCallingDestroy)
+					{
+						OnDestroy();
+
+						m_destroyCallState = CallState.Done;
+					}
+				}
+				catch
+				{ }
 			}
 		}
 
@@ -238,14 +258,20 @@ namespace Dvm
 		protected virtual void OnStart()
 		{ }
 
-		protected virtual void OnDestroy() // When it is being called, the vipo has already been removed from Scheduler::m_vipos
+		// It's called, when:
+		//	1. The vipo is being destroied, and it has already been removed from Scheduler::m_vipos.
+		//	2. An exception occured in OnStart or OnTick. If OnDestroy raises another exception, it will be ignored and the vipo continues to be destroyied.
+		// Normally, OnDestroy should not raise any exception.
+		protected virtual void OnDestroy()
 		{ }
 
 		protected abstract void OnTick(TickTask tickTask);
 
-		protected virtual bool OnError(Exception e)
+		// It's called when OnStart, OnDestroy or OnTick raises an exception.
+		// If OnError raises another exception, it will be ignored and OnDestroy will be skipped neither.
+		// Normally, OnError should not raise any exception.
+		protected virtual void OnError(Exception e)
 		{
-			return false;
 		}
 
 		#endregion
@@ -265,6 +291,11 @@ namespace Dvm
 		public string Name
 		{
 			get { return m_vid.Description; }
+		}
+
+		public Exception Exception
+		{
+			get { return m_exception; }
 		}
 
 		public VipoStage Stage

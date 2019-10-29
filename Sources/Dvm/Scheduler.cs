@@ -81,10 +81,10 @@ namespace Dvm
 					{
 						for (; ; )
 						{
-							vipo.Tick(tickTask);
+							if (vipo.Exception == null)
+								vipo.Tick(tickTask);
 
 							tickTask = m_scheduler.GetNextTickTask(this, vipo);
-
 							if (tickTask == null)
 								break;
 
@@ -93,8 +93,14 @@ namespace Dvm
 						}
 
 						var outMessages = vipo.TakeOutMessages();
-						if (outMessages != null)
-							m_scheduler.AddScheduleTask(new DispatchVipoMessages(outMessages));
+
+						if (vipo.Exception == null)
+						{
+							if (outMessages != null)
+								m_scheduler.AddScheduleTask(new DispatchVipoMessages(outMessages));
+						}
+						else
+							vipo.Destroy();
 					}
 					finally
 					{
@@ -313,7 +319,7 @@ namespace Dvm
 						{
 							var message = dvm.Messages[i];
 
-							var tickTask = GetTickTask(message.To);
+							var tickTask = GetOrAddTickTask(message.To);
 							tickTask.AddMessage(message);
 						}
 						break;
@@ -324,7 +330,7 @@ namespace Dvm
 							if (!m_vipos.TryAdd(vid, vs.Vipo))
 								throw new InvalidOperationException($"Vipo {vid} already exists, failed to add");
 
-							var tickTask = GetTickTask(vid);
+							var tickTask = GetOrAddTickTask(vid);
 							tickTask.SetStartRequest();
 						}
 						break;
@@ -333,8 +339,11 @@ namespace Dvm
 						{
 							var vid = vd.Vipo.Vid;
 
-							var tickTask = GetTickTask(vid);
-							tickTask.SetDestroyRequest();
+							if (vd.Vipo.Exception == null)
+							{
+								var tickTask = GetOrAddTickTask(vid);
+								tickTask.SetDestroyRequest();
+							}
 
 							Vipo tempVipo;
 							if (!m_vipos.TryRemove(vid, out tempVipo))
@@ -351,7 +360,7 @@ namespace Dvm
 							if (!m_vipos.ContainsKey(vid))
 								throw new InvalidOperationException($"Vipo {vid} to schedule doesn't exist");
 
-							var tickTask = GetTickTask(vid);
+							var tickTask = GetOrAddTickTask(vid);
 							tickTask.AddMessage(Message.VipoSchedule);
 						}
 						break;
@@ -361,7 +370,7 @@ namespace Dvm
 				}
 			}
 
-			TickTask GetTickTask(Vid vid)
+			TickTask GetOrAddTickTask(Vid vid)
 			{
 				TickTask tickTask;
 				if (!m_tickTasks.TryGetValue(vid, out tickTask))
