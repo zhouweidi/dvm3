@@ -70,9 +70,9 @@ namespace Dvm
 
 					var tickTask = m_scheduler.GetNextTickTask(this, null);
 					if (tickTask == null)
-						throw new KernelFault("No initial tick task found");
+						throw new KernelFaultException("No initial tick task found");
 					if (tickTask.Vipo == null)
-						throw new KernelFault("Expecting non-null vipo of a TickTask");
+						throw new KernelFaultException("Expecting non-null vipo of a TickTask");
 
 					var vipo = tickTask.Vipo;
 					SetTickingVid(vipo.Vid);
@@ -89,7 +89,7 @@ namespace Dvm
 								break;
 
 							if (tickTask.Vipo != vipo)
-								throw new KernelFault("TickTask is not the same one as the previous vipo");
+								throw new KernelFaultException("TickTask is not the same one as the previous vipo");
 						}
 
 						var outMessages = vipo.TakeOutMessages();
@@ -153,7 +153,7 @@ namespace Dvm
 
 				VirtualProcessor vp;
 				if (!m_set.TryTake(out vp))
-					throw new InvalidOperationException("Failed to take a free virtual processor");
+					throw new KernelFaultException("Failed to take a free virtual processor");
 
 				return vp;
 			}
@@ -328,7 +328,7 @@ namespace Dvm
 						{
 							var vid = vs.Vipo.Vid;
 							if (!m_vipos.TryAdd(vid, vs.Vipo))
-								throw new InvalidOperationException($"Vipo {vid} already exists, failed to add");
+								throw new KernelFaultException($"Vipo {vid} already exists, failed to add");
 
 							var tickTask = GetOrAddTickTask(vid);
 							tickTask.SetStartRequest();
@@ -347,10 +347,10 @@ namespace Dvm
 
 							Vipo tempVipo;
 							if (!m_vipos.TryRemove(vid, out tempVipo))
-								throw new InvalidOperationException($"Can't remove vipo {vid}");
+								throw new KernelFaultException($"Can't remove vipo {vid}");
 
 							if (tempVipo != vd.Vipo)
-								throw new InvalidOperationException($"Unmatched vipo {vid} being removed");
+								throw new KernelFaultException($"Unmatched vipo {vid} being removed");
 						}
 						break;
 
@@ -358,7 +358,7 @@ namespace Dvm
 						{
 							var vid = vs.Vipo.Vid;
 							if (!m_vipos.ContainsKey(vid))
-								throw new InvalidOperationException($"Vipo {vid} to schedule doesn't exist");
+								throw new KernelFaultException($"Vipo {vid} to schedule doesn't exist");
 
 							var tickTask = GetOrAddTickTask(vid);
 							tickTask.AddMessage(Message.VipoSchedule);
@@ -366,7 +366,7 @@ namespace Dvm
 						break;
 
 					default:
-						throw new NotSupportedException($"Unsupported schedule task '{scheduleTask.GetType()}'");
+						throw new KernelFaultException($"Unsupported schedule task '{scheduleTask.GetType()}'");
 				}
 			}
 
@@ -377,7 +377,7 @@ namespace Dvm
 				{
 					Vipo vipo;
 					if (!m_vipos.TryGetValue(vid, out vipo))
-						throw new InvalidOperationException($"No vipo '{vid}' found");
+						throw new KernelFaultException($"No vipo '{vid}' found");
 
 					tickTask = new TickTask(vipo);
 					m_tickTasks.Add(vid, tickTask);
@@ -427,7 +427,7 @@ namespace Dvm
 				if (vp.TickTasks.Count == 0)
 				{
 					if (vipo == null)
-						throw new InvalidOperationException("Unexected null vipo");
+						throw new KernelFaultException("Unexected null vipo");
 
 					m_workings.Remove(vipo);
 

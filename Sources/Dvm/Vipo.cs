@@ -72,7 +72,7 @@ namespace Dvm
 
 					 case CallState.Requested:
 					 case CallState.Done:
-						 throw new KernelFault();
+						 throw new KernelFaultException();
 				 }
 
 				 return true;
@@ -161,7 +161,7 @@ namespace Dvm
 
 				// OnTick
 				if (!tickTask.AnyRequest && tickTask.Messages.Count == 0)
-					throw new KernelFault("No message for tick while no special request set");
+					throw new KernelFaultException("No message for tick while no special request set");
 
 				OnTick(tickTask);
 
@@ -201,16 +201,16 @@ namespace Dvm
 				throw new InvalidOperationException("SendMessage is only allowed to call in OnTick");
 
 			if (message.To.IsEmpty)
-				throw new InvalidOperationException("Can't send message to an empty vid");
+				throw new ArgumentException("Can't send message to an empty vid", nameof(message));
 
 			if (message.To == Vid)
-				throw new InvalidOperationException("Can't send message to self");
+				throw new ArgumentException("Can't send message to self", nameof(message));
 
 			// No lock needed while running in VP thread
 			switch (m_startCallState)
 			{
 				case CallState.NotRequested:
-					throw new KernelFault();
+					throw new KernelFaultException();
 
 				case CallState.Requested:
 				case CallState.Done:
@@ -226,7 +226,7 @@ namespace Dvm
 					throw new InvalidOperationException("Can't call SendMessage after Destroy called");
 
 				case CallState.Done:
-					throw new KernelFault();
+					throw new KernelFaultException();
 			}
 
 			if (m_outMessages == null)

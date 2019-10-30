@@ -24,16 +24,4 @@ namespace Dvm
 			return ReferenceEquals(this, VipoSchedule) ? "VipoSchedule" : "Other";
 		}
 	}
-
-	public class KernelFault : Exception
-	{
-		public KernelFault()
-		{
-		}
-
-		public KernelFault(string message)
-			: base(message)
-		{
-		}
-	}
 }
