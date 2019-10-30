@@ -14,4 +14,20 @@ namespace Dvm
 		{
 		}
 	}
+
+	public class VipoFaultException : KernelFaultException
+	{
+		public Vid Vid { get; private set; }
+
+		public VipoFaultException(Vid vid)
+		{
+			Vid = vid;
+		}
+
+		public VipoFaultException(Vid vid, string message)
+			: base(message)
+		{
+			Vid = vid;
+		}
+	}
 }

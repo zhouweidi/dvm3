@@ -72,7 +72,7 @@ namespace Dvm
 
 					 case CallState.Requested:
 					 case CallState.Done:
-						 throw new KernelFaultException($"Unexpected {nameof(m_destroyCallState)} in Vipo.Start");
+						 throw new VipoFaultException(m_vid, $"Unexpected {nameof(m_destroyCallState)} in Vipo.Start");
 				 }
 
 				 return true;
@@ -148,7 +148,7 @@ namespace Dvm
 		internal void Tick(TickTask tickTask)
 		{
 			if (!tickTask.AnyRequest && tickTask.Messages.Count == 0)
-				throw new KernelFaultException("No message/request to tick");
+				throw new VipoFaultException(m_vid, "No message/request to tick");
 
 			bool isCallingDestroy = false;
 
@@ -210,7 +210,7 @@ namespace Dvm
 			switch (m_startCallState)
 			{
 				case CallState.NotRequested:
-					throw new KernelFaultException($"Unexpected {nameof(m_startCallState)} in Vipo.SendMessage");
+					throw new VipoFaultException(m_vid, $"Unexpected {nameof(m_startCallState)} in Vipo.SendMessage");
 
 				case CallState.Requested:
 				case CallState.Done:
@@ -223,10 +223,8 @@ namespace Dvm
 					break;
 
 				case CallState.Requested:
-					throw new InvalidOperationException("Can't call SendMessage after Destroy called");
-
 				case CallState.Done:
-					throw new KernelFaultException($"Unexpected {nameof(m_destroyCallState)} in Vipo.SendMessage");
+					throw new InvalidOperationException("Can't call SendMessage after Destroy called");
 			}
 
 			if (m_outMessages == null)
