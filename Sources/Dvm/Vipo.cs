@@ -104,7 +104,7 @@ namespace Dvm
 
 					 case CallState.Requested:
 					 case CallState.Done:
-						 return false; // Ignore destroy calls on a destroyed vipo
+						 return false; // Ignore subsequent destroy calls on a requeted vipo
 				 }
 
 				 return true;
