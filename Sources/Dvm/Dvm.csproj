@@ -4,18 +4,4 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="DesignCodes\Schedule.cs" />
-    <Compile Remove="DesignCodes\Schedule2.cs" />
-    <Compile Remove="DesignCodes\TickControl.cs" />
-    <Compile Remove="DesignCodes\Vipo.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="DesignCodes\Schedule.cs" />
-    <None Include="DesignCodes\Schedule2.cs" />
-    <None Include="DesignCodes\TickControl.cs" />
-    <None Include="DesignCodes\Vipo.cs" />
-  </ItemGroup>
-
 </Project>
