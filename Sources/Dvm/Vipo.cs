@@ -62,7 +62,7 @@ namespace Dvm
 
 					 case CallState.Requested:
 					 case CallState.Done:
-						 throw new InvalidOperationException("Can only start an unstarted vipo");
+						 throw new InvalidOperationException("Can't start a started vipo");
 				 }
 
 				 switch (m_destroyCallState)
@@ -72,7 +72,7 @@ namespace Dvm
 
 					 case CallState.Requested:
 					 case CallState.Done:
-						 throw new KernelFaultException();
+						 throw new KernelFaultException($"Unexpected {nameof(m_destroyCallState)} in Vipo.Start");
 				 }
 
 				 return true;
@@ -147,6 +147,9 @@ namespace Dvm
 
 		internal void Tick(TickTask tickTask)
 		{
+			if (!tickTask.AnyRequest && tickTask.Messages.Count == 0)
+				throw new KernelFaultException("No message/request to tick");
+
 			bool isCallingDestroy = false;
 
 			try
@@ -160,9 +163,6 @@ namespace Dvm
 				}
 
 				// OnTick
-				if (!tickTask.AnyRequest && tickTask.Messages.Count == 0)
-					throw new KernelFaultException("No message for tick while no special request set");
-
 				OnTick(tickTask);
 
 				// OnDestroy
@@ -198,19 +198,19 @@ namespace Dvm
 		public void SendMessage(Message message) // Can be called only in VP thread
 		{
 			if (Scheduler.VirtualProcessor.GetTickingVid() != m_vid)
-				throw new InvalidOperationException("SendMessage is only allowed to call in OnTick");
+				throw new InvalidOperationException("It is not allowed to call SendMessage out of OnTick");
 
 			if (message.To.IsEmpty)
-				throw new ArgumentException("Can't send message to an empty vid", nameof(message));
+				throw new ArgumentException("Can't SendMessage to an empty vid", nameof(message));
 
 			if (message.To == Vid)
-				throw new ArgumentException("Can't send message to self", nameof(message));
+				throw new ArgumentException("Can't SendMessage to self", nameof(message));
 
 			// No lock needed while running in VP thread
 			switch (m_startCallState)
 			{
 				case CallState.NotRequested:
-					throw new KernelFaultException();
+					throw new KernelFaultException($"Unexpected {nameof(m_startCallState)} in Vipo.SendMessage");
 
 				case CallState.Requested:
 				case CallState.Done:
@@ -226,7 +226,7 @@ namespace Dvm
 					throw new InvalidOperationException("Can't call SendMessage after Destroy called");
 
 				case CallState.Done:
-					throw new KernelFaultException();
+					throw new KernelFaultException($"Unexpected {nameof(m_destroyCallState)} in Vipo.SendMessage");
 			}
 
 			if (m_outMessages == null)
