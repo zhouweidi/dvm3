@@ -26,6 +26,9 @@ namespace Dvm
 
 		protected Vipo(Scheduler scheduler, string name)
 		{
+			if (scheduler == null)
+				throw new ArgumentNullException(nameof(scheduler));
+
 			m_scheduler = scheduler;
 			m_vid = scheduler.CreateVid(name);
 		}

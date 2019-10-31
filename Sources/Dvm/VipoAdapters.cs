@@ -8,6 +8,14 @@ namespace Dvm
 	{
 	}
 
+	public class NullYieldInstruction : VipoFaultException
+	{
+		public NullYieldInstruction(Vid vid, string message)
+			: base(vid, message)
+		{
+		}
+	}
+
 	class ReceiveInstruction : YieldInstruction
 	{
 		public Func<Message, bool> Filter { get; private set; }
@@ -70,7 +78,7 @@ namespace Dvm
 					if (m_enumerator.MoveNext())
 					{
 						if (!(m_enumerator.Current is YieldInstruction))
-							throw new VipoFaultException(Vid, "Yield return a non-YieldInstruction"); // 使用特定异常类表示这种情况
+							throw new NullYieldInstruction(Vid, "Yield return a non-YieldInstruction");
 
 						switch (m_enumerator.Current)
 						{
@@ -79,7 +87,7 @@ namespace Dvm
 								break;
 
 							case null:
-								throw new VipoFaultException(Vid, "The yield instruction is null");
+								throw new VipoFaultException(Vid, "The yield instruction cannot be null");
 
 							default:
 								throw new VipoFaultException(Vid, "Unsupported yield instruction");
@@ -105,19 +113,32 @@ namespace Dvm
 
 		protected abstract IEnumerator Coroutine();
 
+		#region Primitives
+
 		public YieldInstruction Receive(Action<Message> handler)
 		{
+			if (handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
 			return new ReceiveInstruction(null, handler);
 		}
 
 		public YieldInstruction Receive(Func<Message, bool> filter, Action<Message> handler)
 		{
+			if (filter == null)
+				throw new ArgumentNullException(nameof(filter));
+			if (handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
 			return new ReceiveInstruction(filter, handler);
 		}
 
 		public YieldInstruction Receive<TMessage>(Action<TMessage> handler)
 			where TMessage : Message
 		{
+			if (handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
 			return new ReceiveInstruction(
 				message => message is TMessage,
 				message => handler((TMessage)message));
@@ -126,10 +147,17 @@ namespace Dvm
 		public YieldInstruction Receive<TMessage>(Func<TMessage, bool> filter, Action<TMessage> handler)
 			where TMessage : Message
 		{
+			if (filter == null)
+				throw new ArgumentNullException(nameof(filter));
+			if (handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
 			return new ReceiveInstruction(
 				message => message is TMessage && filter((TMessage)message),
 				message => handler((TMessage)message));
 		}
+
+		#endregion
 
 		public IReadOnlyList<Message> InMessages
 		{
