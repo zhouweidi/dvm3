@@ -8,9 +8,9 @@ namespace Dvm
 	{
 	}
 
-	public class NullYieldInstruction : VipoFaultException
+	public class BadYieldInstruction : VipoFaultException
 	{
-		public NullYieldInstruction(Vid vid, string message)
+		public BadYieldInstruction(Vid vid, string message)
 			: base(vid, message)
 		{
 		}
@@ -78,7 +78,7 @@ namespace Dvm
 					if (m_enumerator.MoveNext())
 					{
 						if (!(m_enumerator.Current is YieldInstruction))
-							throw new NullYieldInstruction(Vid, "Yield return a non-YieldInstruction");
+							throw new BadYieldInstruction(Vid, "Yield return a non-YieldInstruction");
 
 						switch (m_enumerator.Current)
 						{
@@ -87,10 +87,10 @@ namespace Dvm
 								break;
 
 							case null:
-								throw new VipoFaultException(Vid, "The yield instruction cannot be null");
+								throw new BadYieldInstruction(Vid, "The yield instruction cannot be null");
 
 							default:
-								throw new VipoFaultException(Vid, "Unsupported yield instruction");
+								throw new BadYieldInstruction(Vid, "Unsupported yield instruction");
 						}
 					}
 					else
