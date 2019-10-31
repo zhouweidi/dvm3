@@ -196,6 +196,39 @@ namespace Dvm
 		}
 	}
 
+	public delegate void VoroutineMinorProcedure(VoroutineMinor v);
+
+	public sealed class VoroutineMinor : CoroutineVipo
+	{
+		VoroutineMinorProcedure m_procedure;
+		Action<Exception> m_handleError;
+
+		public VoroutineMinor(VoroutineMinorProcedure procedure, Action<Exception> handleError, Scheduler scheduler, string name)
+			: base(scheduler, name)
+		{
+			if (procedure == null)
+				throw new ArgumentNullException(nameof(procedure));
+
+			m_procedure = procedure;
+			m_handleError = handleError;
+		}
+
+		protected override IEnumerator Coroutine()
+		{
+			m_procedure(this);
+
+			yield break;
+		}
+
+		protected override void OnError(Exception e)
+		{
+			if (m_handleError != null)
+				m_handleError(e);
+			else
+				base.OnError(e);
+		}
+	}
+
 	public static class VoroutineExtension
 	{
 		public static Voroutine CreateVoroutine(this Scheduler scheduler, VoroutineProcedure procedure, string name = null)
@@ -206,6 +239,16 @@ namespace Dvm
 		public static Voroutine CreateVoroutine(this Scheduler scheduler, VoroutineProcedure procedure, Action<Exception> handleError, string name = null)
 		{
 			return new Voroutine(procedure, handleError, scheduler, name);
+		}
+
+		public static VoroutineMinor CreateVoroutineMinor(this Scheduler scheduler, VoroutineMinorProcedure procedure, string name = null)
+		{
+			return new VoroutineMinor(procedure, null, scheduler, name);
+		}
+
+		public static VoroutineMinor CreateVoroutineMinor(this Scheduler scheduler, VoroutineMinorProcedure procedure, Action<Exception> handleError, string name = null)
+		{
+			return new VoroutineMinor(procedure, handleError, scheduler, name);
 		}
 	}
 }

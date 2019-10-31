@@ -20,7 +20,7 @@ namespace DvmTests.VipoTests
 			}
 		}
 
-		public IEnumerator SenderVoroutine(Voroutine v)
+		public void SenderVoroutine(VoroutineMinor v)
 		{
 			Console.WriteLine($"SenderVoroutine '{v.Name}' START");
 
@@ -35,8 +35,6 @@ namespace DvmTests.VipoTests
 			v.SendMessage(new MyMessage(v.Vid, s_vidReceiver2, 2));
 
 			Console.WriteLine($"SenderVoroutine '{v.Name}' END");
-
-			yield break;
 		}
 
 		class ReceiverVipo : CoroutineVipo
@@ -129,7 +127,7 @@ namespace DvmTests.VipoTests
 			s_vidReceiver2 = receiver2.Vid;
 			receiver2.Start();
 
-			var sender = TheScheduler.CreateVoroutine(SenderVoroutine, "Sender");
+			var sender = TheScheduler.CreateVoroutineMinor(SenderVoroutine, "Sender");
 			sender.Start();
 
 			Sleep();
