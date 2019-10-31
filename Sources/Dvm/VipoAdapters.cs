@@ -165,26 +165,28 @@ namespace Dvm
 		}
 	}
 
-	public delegate IEnumerator VoroutineProcedure(Voroutine v);
+	#region Voroutine
 
-	public sealed class Voroutine : CoroutineVipo
+	public delegate IEnumerator Voroutine(CoroutineVipo v);
+
+	sealed class VoroutineObject : CoroutineVipo
 	{
-		VoroutineProcedure m_procedure;
+		Voroutine m_voroutine;
 		Action<Exception> m_handleError;
 
-		public Voroutine(VoroutineProcedure procedure, Action<Exception> handleError, Scheduler scheduler, string name)
+		public VoroutineObject(Voroutine voroutine, Action<Exception> handleError, Scheduler scheduler, string name)
 			: base(scheduler, name)
 		{
-			if (procedure == null)
-				throw new ArgumentNullException(nameof(procedure));
+			if (voroutine == null)
+				throw new ArgumentNullException(nameof(voroutine));
 
-			m_procedure = procedure;
+			m_voroutine = voroutine;
 			m_handleError = handleError;
 		}
 
 		protected override IEnumerator Coroutine()
 		{
-			return m_procedure(this);
+			return m_voroutine(this);
 		}
 
 		protected override void OnError(Exception e)
@@ -196,26 +198,30 @@ namespace Dvm
 		}
 	}
 
-	public delegate void VoroutineMinorProcedure(VoroutineMinor v);
+	#endregion
 
-	public sealed class VoroutineMinor : CoroutineVipo
+	#region MinorVoroutine
+
+	public delegate void MinorVoroutine(CoroutineVipo v);
+
+	sealed class MinorVoroutineObject : CoroutineVipo
 	{
-		VoroutineMinorProcedure m_procedure;
+		MinorVoroutine m_voroutine;
 		Action<Exception> m_handleError;
 
-		public VoroutineMinor(VoroutineMinorProcedure procedure, Action<Exception> handleError, Scheduler scheduler, string name)
+		public MinorVoroutineObject(MinorVoroutine voroutine, Action<Exception> handleError, Scheduler scheduler, string name)
 			: base(scheduler, name)
 		{
-			if (procedure == null)
-				throw new ArgumentNullException(nameof(procedure));
+			if (voroutine == null)
+				throw new ArgumentNullException(nameof(voroutine));
 
-			m_procedure = procedure;
+			m_voroutine = voroutine;
 			m_handleError = handleError;
 		}
 
 		protected override IEnumerator Coroutine()
 		{
-			m_procedure(this);
+			m_voroutine(this);
 
 			yield break;
 		}
@@ -229,26 +235,28 @@ namespace Dvm
 		}
 	}
 
+	#endregion
+
 	public static class VoroutineExtension
 	{
-		public static Voroutine CreateVoroutine(this Scheduler scheduler, VoroutineProcedure procedure, string name = null)
+		public static CoroutineVipo CreateVoroutine(this Scheduler scheduler, Voroutine procedure, string name = null)
 		{
-			return new Voroutine(procedure, null, scheduler, name);
+			return new VoroutineObject(procedure, null, scheduler, name);
 		}
 
-		public static Voroutine CreateVoroutine(this Scheduler scheduler, VoroutineProcedure procedure, Action<Exception> handleError, string name = null)
+		public static CoroutineVipo CreateVoroutine(this Scheduler scheduler, Voroutine procedure, Action<Exception> handleError, string name = null)
 		{
-			return new Voroutine(procedure, handleError, scheduler, name);
+			return new VoroutineObject(procedure, handleError, scheduler, name);
 		}
 
-		public static VoroutineMinor CreateVoroutineMinor(this Scheduler scheduler, VoroutineMinorProcedure procedure, string name = null)
+		public static CoroutineVipo CreateVoroutineMinor(this Scheduler scheduler, MinorVoroutine procedure, string name = null)
 		{
-			return new VoroutineMinor(procedure, null, scheduler, name);
+			return new MinorVoroutineObject(procedure, null, scheduler, name);
 		}
 
-		public static VoroutineMinor CreateVoroutineMinor(this Scheduler scheduler, VoroutineMinorProcedure procedure, Action<Exception> handleError, string name = null)
+		public static CoroutineVipo CreateVoroutineMinor(this Scheduler scheduler, MinorVoroutine procedure, Action<Exception> handleError, string name = null)
 		{
-			return new VoroutineMinor(procedure, handleError, scheduler, name);
+			return new MinorVoroutineObject(procedure, handleError, scheduler, name);
 		}
 	}
 }

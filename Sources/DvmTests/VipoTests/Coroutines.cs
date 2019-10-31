@@ -20,7 +20,7 @@ namespace DvmTests.VipoTests
 			}
 		}
 
-		public void SenderVoroutine(VoroutineMinor v)
+		public void SenderVoroutine(CoroutineVipo v)
 		{
 			Console.WriteLine($"SenderVoroutine '{v.Name}' START");
 
@@ -78,7 +78,7 @@ namespace DvmTests.VipoTests
 			}
 		}
 
-		public IEnumerator ReceiverVoroutine(Voroutine v)
+		public IEnumerator ReceiverVoroutine(CoroutineVipo v)
 		{
 			Console.WriteLine($"ReceiverVoroutine '{v.Name}' START");
 
