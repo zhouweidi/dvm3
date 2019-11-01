@@ -9,6 +9,8 @@ namespace DvmTests.VipoTests
 	[TestClass]
 	public class LifeStages : TestSchedulerBase
 	{
+		#region WholeLifeStages
+
 		[TestMethod]
 		public void WholeLifeStages()
 		{
@@ -97,5 +99,64 @@ namespace DvmTests.VipoTests
 				base.OnError(e);
 			}
 		}
+
+		#endregion
+
+		#region WithoutCallback
+
+		[TestMethod]
+		public void WithoutCallback()
+		{
+			HookConsoleOutput();
+
+			var v = new MyVipoWithoutCallback(TheScheduler, "a");
+			v.Start();
+
+			Sleep();
+
+			v.Schedule();
+
+			Sleep();
+
+			v.Destroy();
+
+			var consoleOutput = GetConsoleOutput();
+			Assert.IsTrue(consoleOutput.Contains("MyVipoWithoutCallback 'a' ticks #1"));
+			Assert.IsTrue(consoleOutput.Contains("MyVipoWithoutCallback 'a' ticks #2"));
+		}
+
+		class MyVipoWithoutCallback : Vipo
+		{
+			int m_tickedCount;
+
+			public MyVipoWithoutCallback(Scheduler scheduler, string name)
+				: base(scheduler, name, CallbackOptions.None)
+			{
+			}
+
+			protected override void OnStart()
+			{
+				Assert.Fail("Unexcepted being called");
+			}
+
+			protected override void OnDestroy()
+			{
+				Assert.Fail("Unexcepted being called");
+			}
+
+			protected override void OnTick(TickTask tickTask)
+			{
+				++m_tickedCount;
+
+				Console.WriteLine($"MyVipoWithoutCallback '{Name}' ticks #{m_tickedCount}");
+			}
+
+			protected override void OnError(Exception e)
+			{
+				Assert.Fail("Unexcepted being called");
+			}
+		}
+
+		#endregion
 	}
 }
