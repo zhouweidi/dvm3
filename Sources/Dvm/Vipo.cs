@@ -13,6 +13,7 @@ namespace Dvm
 	{
 		readonly Scheduler m_scheduler;
 		readonly Vid m_vid;
+		CallbackOptions m_callbackOptions;
 		CallState m_startCallState = CallState.NotRequested;
 		CallState m_destroyCallState = CallState.NotRequested;
 		SpinLock m_statesLock = new SpinLock();
@@ -24,13 +25,23 @@ namespace Dvm
 			NotRequested, Requested, Callbacked
 		}
 
-		protected Vipo(Scheduler scheduler, string name)
+		[Flags]
+		internal protected enum CallbackOptions
+		{
+			None = 0,
+			OnStart = 1,
+			OnDestroy = 2,
+			All = OnStart | OnDestroy,
+		}
+
+		protected Vipo(Scheduler scheduler, string name, CallbackOptions callbackOptions = CallbackOptions.All)
 		{
 			if (scheduler == null)
 				throw new ArgumentNullException(nameof(scheduler));
 
 			m_scheduler = scheduler;
 			m_vid = scheduler.CreateVid(name);
+			m_callbackOptions = callbackOptions;
 		}
 
 		#region Check states
@@ -60,7 +71,7 @@ namespace Dvm
 				 switch (m_startCallState)
 				 {
 					 case CallState.NotRequested:
-						 m_startCallState = CallState.Requested;
+						 m_startCallState = HasCallbackOption(CallbackOptions.OnStart) ? CallState.Requested : CallState.Callbacked;
 						 break;
 
 					 case CallState.Requested:
@@ -102,7 +113,7 @@ namespace Dvm
 				 switch (m_destroyCallState)
 				 {
 					 case CallState.NotRequested:
-						 m_destroyCallState = CallState.Requested;
+						 m_destroyCallState = HasCallbackOption(CallbackOptions.OnDestroy) ? CallState.Requested : CallState.Callbacked;
 						 break;
 
 					 case CallState.Requested:
@@ -250,6 +261,11 @@ namespace Dvm
 		public override string ToString()
 		{
 			return "Vipo " + m_vid.ToString();
+		}
+
+		internal protected bool HasCallbackOption(CallbackOptions option)
+		{
+			return (m_callbackOptions & option) != 0;
 		}
 
 		#region Event handlers

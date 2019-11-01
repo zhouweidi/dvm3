@@ -331,7 +331,8 @@ namespace Dvm
 								throw new KernelFaultException($"Failed to add vipo {vid} which already exists");
 
 							var tickTask = GetOrAddTickTask(vid);
-							tickTask.SetStartRequest();
+							var withCallback = vs.Vipo.HasCallbackOption(Vipo.CallbackOptions.OnStart);
+							tickTask.SetStartRequest(withCallback);
 						}
 						break;
 
@@ -339,7 +340,8 @@ namespace Dvm
 						{
 							var vid = vd.Vipo.Vid;
 
-							if (vd.Vipo.Exception == null)
+							var withCallback = vd.Vipo.HasCallbackOption(Vipo.CallbackOptions.OnDestroy);
+							if (withCallback && vd.Vipo.Exception == null)
 							{
 								var tickTask = GetOrAddTickTask(vid);
 								tickTask.SetDestroyRequest();

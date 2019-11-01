@@ -16,7 +16,8 @@ namespace Dvm
 		{
 			None = 0,
 			Start = 1,
-			Destroy = 2,
+			StartWithoutCallback = 2,
+			Destroy = 4,
 		}
 
 		internal TickTask(Vipo vipo)
@@ -32,9 +33,9 @@ namespace Dvm
 			m_messages.Add(message);
 		}
 
-		internal void SetStartRequest()
+		internal void SetStartRequest(bool withCallback)
 		{
-			m_requests |= Requests.Start;
+			m_requests |= (withCallback ? Requests.Start : Requests.StartWithoutCallback);
 		}
 
 		internal void SetDestroyRequest()

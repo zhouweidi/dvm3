@@ -36,8 +36,8 @@ namespace Dvm
 		bool m_finished;
 		ReceiveInstruction m_receive;
 
-		protected CoroutineVipo(Scheduler scheduler, string name)
-			: base(scheduler, name)
+		protected CoroutineVipo(Scheduler scheduler, string name, CallbackOptions callbackOptions)
+			: base(scheduler, name, callbackOptions)
 		{
 		}
 
@@ -175,7 +175,7 @@ namespace Dvm
 		Action<Exception> m_handleError;
 
 		public VoroutineObject(Voroutine voroutine, Action<Exception> handleError, Scheduler scheduler, string name)
-			: base(scheduler, name)
+			: base(scheduler, name, CallbackOptions.None)
 		{
 			if (voroutine == null)
 				throw new ArgumentNullException(nameof(voroutine));
@@ -210,7 +210,7 @@ namespace Dvm
 		Action<Exception> m_handleError;
 
 		public MinorVoroutineObject(MinorVoroutine voroutine, Action<Exception> handleError, Scheduler scheduler, string name)
-			: base(scheduler, name)
+			: base(scheduler, name, CallbackOptions.None)
 		{
 			if (voroutine == null)
 				throw new ArgumentNullException(nameof(voroutine));

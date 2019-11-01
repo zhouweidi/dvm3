@@ -40,7 +40,7 @@ namespace DvmTests.VipoTests
 		class ReceiverVipo : CoroutineVipo
 		{
 			public ReceiverVipo(Scheduler scheduler, string name)
-				: base(scheduler, name)
+				: base(scheduler, name, CallbackOptions.None)
 			{
 			}
 
@@ -115,7 +115,7 @@ namespace DvmTests.VipoTests
 		static Vid s_vidReceiver2;
 
 		[TestMethod]
-		public void VipoExceptions()
+		public void Basic()
 		{
 			HookConsoleOutput();
 
