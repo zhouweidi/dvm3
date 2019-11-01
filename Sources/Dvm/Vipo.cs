@@ -21,7 +21,7 @@ namespace Dvm
 
 		enum CallState
 		{
-			NotRequested, Requested, Done
+			NotRequested, Requested, Callbacked
 		}
 
 		protected Vipo(Scheduler scheduler, string name)
@@ -64,7 +64,7 @@ namespace Dvm
 						 break;
 
 					 case CallState.Requested:
-					 case CallState.Done:
+					 case CallState.Callbacked:
 						 throw new InvalidOperationException("Can't start a started vipo");
 				 }
 
@@ -74,7 +74,7 @@ namespace Dvm
 						 break;
 
 					 case CallState.Requested:
-					 case CallState.Done:
+					 case CallState.Callbacked:
 						 throw new VipoFaultException(m_vid, $"Unexpected {nameof(m_destroyCallState)} in Vipo.Start");
 				 }
 
@@ -95,7 +95,7 @@ namespace Dvm
 						 throw new InvalidOperationException("Can't destroy an unstarted vipo");
 
 					 case CallState.Requested:
-					 case CallState.Done:
+					 case CallState.Callbacked:
 						 break;
 				 }
 
@@ -106,7 +106,7 @@ namespace Dvm
 						 break;
 
 					 case CallState.Requested:
-					 case CallState.Done:
+					 case CallState.Callbacked:
 						 return false; // Ignore subsequent destroy calls on a requeted vipo
 				 }
 
@@ -127,7 +127,7 @@ namespace Dvm
 						 throw new InvalidOperationException("Can't schedule an unstarted vipo");
 
 					 case CallState.Requested:
-					 case CallState.Done:
+					 case CallState.Callbacked:
 						 break;
 				 }
 
@@ -137,7 +137,7 @@ namespace Dvm
 						 break;
 
 					 case CallState.Requested:
-					 case CallState.Done:
+					 case CallState.Callbacked:
 						 return false; // Ignore schedule calls on a destroy-requested or destroyed vipo
 				 }
 
@@ -162,7 +162,7 @@ namespace Dvm
 				{
 					OnStart();
 
-					m_startCallState = CallState.Done;
+					m_startCallState = CallState.Callbacked;
 				}
 
 				// OnTick
@@ -175,7 +175,7 @@ namespace Dvm
 					OnDestroy();
 					isCallingDestroy = false;
 
-					m_destroyCallState = CallState.Done;
+					m_destroyCallState = CallState.Callbacked;
 				}
 			}
 			catch (Exception e)
@@ -186,11 +186,11 @@ namespace Dvm
 				{
 					OnError(e);
 
-					if (m_startCallState == CallState.Done && m_destroyCallState != CallState.Done && !isCallingDestroy)
+					if (m_startCallState == CallState.Callbacked && m_destroyCallState != CallState.Callbacked && !isCallingDestroy)
 					{
 						OnDestroy();
 
-						m_destroyCallState = CallState.Done;
+						m_destroyCallState = CallState.Callbacked;
 					}
 				}
 				catch
@@ -216,7 +216,7 @@ namespace Dvm
 					throw new VipoFaultException(m_vid, $"Unexpected {nameof(m_startCallState)} in Vipo.SendMessage");
 
 				case CallState.Requested:
-				case CallState.Done:
+				case CallState.Callbacked:
 					break;
 			}
 
@@ -226,7 +226,7 @@ namespace Dvm
 					break;
 
 				case CallState.Requested:
-				case CallState.Done:
+				case CallState.Callbacked:
 					throw new InvalidOperationException("Can't call SendMessage after Destroy called");
 			}
 
@@ -316,7 +316,7 @@ namespace Dvm
 						vs = VipoStage.StartRequested;
 						break;
 
-					case CallState.Done:
+					case CallState.Callbacked:
 						vs = VipoStage.Running;
 						break;
 				}
@@ -330,7 +330,7 @@ namespace Dvm
 						vs = VipoStage.DestroyRequested;
 						break;
 
-					case CallState.Done:
+					case CallState.Callbacked:
 						vs = VipoStage.Destroyed;
 						break;
 				}
