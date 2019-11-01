@@ -34,7 +34,7 @@ namespace Dvm
 			All = OnStart | OnDestroy,
 		}
 
-		protected Vipo(Scheduler scheduler, string name, CallbackOptions callbackOptions = CallbackOptions.All)
+		protected Vipo(Scheduler scheduler, string name, CallbackOptions callbackOptions)
 		{
 			if (scheduler == null)
 				throw new ArgumentNullException(nameof(scheduler));

@@ -45,7 +45,7 @@ namespace DvmTests.VipoTests
 			int m_tickedCount;
 
 			public MyVipo(Scheduler scheduler, string name)
-				: base(scheduler, name)
+				: base(scheduler, name, CallbackOptions.All)
 			{
 				Assert.AreEqual(Stage, VipoStage.NotStarted);
 			}

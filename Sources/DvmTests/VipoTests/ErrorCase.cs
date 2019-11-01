@@ -63,7 +63,7 @@ namespace DvmTests.VipoTests
 			ExceptionPosition m_throwExceptionAt;
 
 			public MyVipo(Scheduler scheduler, ExceptionPosition at)
-				: base(scheduler, at.ToString())
+				: base(scheduler, at.ToString(), CallbackOptions.All)
 			{
 				m_throwExceptionAt = at;
 
