@@ -59,14 +59,14 @@ namespace DvmTests
 			Console.SetOut(sw);
 		}
 
-		protected string GetConsoleOutput()
+		protected string[] GetConsoleOutput()
 		{
 			if (m_consoleOutput == null)
 				throw new InvalidOperationException("Need to hood console output first");
 
 			m_consoleOutput.Flush();
 
-			return m_consoleOutput.ToString();
+			return m_consoleOutput.ToString().Split('\n', '\r');
 		}
 
 		#endregion

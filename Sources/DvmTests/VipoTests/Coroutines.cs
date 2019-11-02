@@ -3,6 +3,7 @@ using DvmTests.SchedulerTests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections;
+using System.Linq;
 
 namespace DvmTests.VipoTests
 {
