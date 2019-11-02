@@ -23,9 +23,9 @@ namespace DvmTests.VipoTests
 
 		#region Basic
 
-		public void SenderVoroutine(CoroutineVipo v, Vid receiver1, Vid receiver2)
+		void SenderVoroutine(CoroutineVipo v, Vid receiver1, Vid receiver2)
 		{
-			Console.WriteLine($"SenderVoroutine '{v.Name}' START");
+			Console.WriteLine($"'{v.Name}' START");
 
 			v.SendMessage(new Message(v.Vid, receiver1));
 			v.SendMessage(new MyMessage(v.Vid, receiver1, 0));
@@ -37,7 +37,7 @@ namespace DvmTests.VipoTests
 			v.SendMessage(new MyMessage(v.Vid, receiver2, 1));
 			v.SendMessage(new MyMessage(v.Vid, receiver2, 2));
 
-			Console.WriteLine($"SenderVoroutine '{v.Name}' END");
+			Console.WriteLine($"'{v.Name}' END");
 		}
 
 		class ReceiverVipo : CoroutineVipo
@@ -49,69 +49,69 @@ namespace DvmTests.VipoTests
 
 			protected override IEnumerator Coroutine()
 			{
-				Console.WriteLine($"ReceiverVipo '{Name}' START");
+				Console.WriteLine($"'{Name}' START");
 
 				yield return Receive(
 					message =>
 					{
-						Console.WriteLine($"ReceiverVipo '{Name}' receives message '{message.GetType().Name}'");
+						Console.WriteLine($"'{Name}' receives message '{message.GetType().Name}'");
 					});
 
 				yield return Receive(
 					message => message is MyMessage,
 					message =>
 					{
-						Console.WriteLine($"ReceiverVipo '{Name}' receives message '{message.GetType().Name}' 0");
+						Console.WriteLine($"'{Name}' receives message '{message.GetType().Name}' 0");
 					});
 
 				yield return Receive<MyMessage>(
 					message =>
 					{
-						Console.WriteLine($"ReceiverVipo '{Name}' receives message '{message.GetType().Name}' 1");
+						Console.WriteLine($"'{Name}' receives message '{message.GetType().Name}' 1");
 					});
 
 				yield return Receive<MyMessage>(
 					message => message.Value == 2,
 					message =>
 					{
-						Console.WriteLine($"ReceiverVipo '{Name}' receives message '{message.GetType().Name}' 2");
+						Console.WriteLine($"'{Name}' receives message '{message.GetType().Name}' 2");
 					});
 
-				Console.WriteLine($"ReceiverVipo '{Name}' END");
+				Console.WriteLine($"'{Name}' END");
 			}
 		}
 
-		public IEnumerator ReceiverVoroutine(CoroutineVipo v)
+		IEnumerator ReceiverVoroutine(CoroutineVipo v)
 		{
-			Console.WriteLine($"ReceiverVoroutine '{v.Name}' START");
+			Console.WriteLine($"'{v.Name}' START");
 
 			yield return v.Receive(
 				message =>
 				{
-					Console.WriteLine($"ReceiverVoroutine '{v.Name}' receives message '{message.GetType().Name}'");
+					Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}'");
 				});
 
 			yield return v.Receive(
 				message => message is MyMessage,
 				message =>
 				{
-					Console.WriteLine($"ReceiverVoroutine '{v.Name}' receives message '{message.GetType().Name}' 0");
+					Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}' 0");
 				});
 
 			yield return v.Receive<MyMessage>(
 				message =>
 				{
-					Console.WriteLine($"ReceiverVoroutine '{v.Name}' receives message '{message.GetType().Name}' 1");
+					Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}' 1");
 				});
 
 			yield return v.Receive<MyMessage>(
 				message => message.Value == 2,
 				message =>
 				{
-					Console.WriteLine($"ReceiverVoroutine '{v.Name}' receives message '{message.GetType().Name}' 2");
+					Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}' 2");
 				});
 
-			Console.WriteLine($"ReceiverVoroutine '{v.Name}' END");
+			Console.WriteLine($"'{v.Name}' END");
 		}
 
 		[TestMethod]
@@ -140,31 +140,31 @@ namespace DvmTests.VipoTests
 
 			var consoleOutput = GetConsoleOutput();
 			{
-				Assert.IsTrue(consoleOutput.Contains("ReceiverVipo 'Receiver1' START"));
-				Assert.IsTrue(consoleOutput.Contains("ReceiverVipo 'Receiver1' receives message 'Message'"));
-				Assert.IsTrue(consoleOutput.Contains("ReceiverVipo 'Receiver1' receives message 'MyMessage' 0"));
-				Assert.IsTrue(consoleOutput.Contains("ReceiverVipo 'Receiver1' receives message 'MyMessage' 1"));
-				Assert.IsTrue(consoleOutput.Contains("ReceiverVipo 'Receiver1' receives message 'MyMessage' 2"));
-				Assert.IsTrue(consoleOutput.Contains("ReceiverVipo 'Receiver1' END"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver1' START"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver1' receives message 'Message'"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver1' receives message 'MyMessage' 0"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver1' receives message 'MyMessage' 1"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver1' receives message 'MyMessage' 2"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver1' END"));
 
-				Assert.IsTrue(consoleOutput.Contains("ReceiverVoroutine 'Receiver2' START"));
-				Assert.IsTrue(consoleOutput.Contains("ReceiverVoroutine 'Receiver2' receives message 'Message'"));
-				Assert.IsTrue(consoleOutput.Contains("ReceiverVoroutine 'Receiver2' receives message 'MyMessage' 0"));
-				Assert.IsTrue(consoleOutput.Contains("ReceiverVoroutine 'Receiver2' receives message 'MyMessage' 1"));
-				Assert.IsTrue(consoleOutput.Contains("ReceiverVoroutine 'Receiver2' receives message 'MyMessage' 2"));
-				Assert.IsTrue(consoleOutput.Contains("ReceiverVoroutine 'Receiver2' END"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver2' START"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver2' receives message 'Message'"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver2' receives message 'MyMessage' 0"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver2' receives message 'MyMessage' 1"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver2' receives message 'MyMessage' 2"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver2' END"));
 
-				Assert.IsTrue(consoleOutput.Contains("SenderVoroutine 'Sender' START"));
-				Assert.IsTrue(consoleOutput.Contains("SenderVoroutine 'Sender' END"));
+				Assert.IsTrue(consoleOutput.Contains("'Sender' START"));
+				Assert.IsTrue(consoleOutput.Contains("'Sender' END"));
 			}
 		}
 
 		#endregion
 
-		#region ReactPrimitive
+		#region React
 
 		[TestMethod]
-		public void ReactPrimitive()
+		public void React()
 		{
 			HookConsoleOutput();
 
@@ -184,21 +184,21 @@ namespace DvmTests.VipoTests
 
 			var consoleOutput = GetConsoleOutput();
 			{
-				Assert.IsTrue(consoleOutput.Contains("ReacterVipo 'Reacter' START"));
-				Assert.IsTrue(consoleOutput.Contains("ReacterVipo 'Reacter' receives message 'Message'"));
-				Assert.IsTrue(consoleOutput.Contains("ReacterVipo 'Reacter' receives message 'MyMessage' 0"));
-				Assert.IsTrue(consoleOutput.Contains("ReacterVipo 'Reacter' receives message 'MyMessage' 1"));
-				Assert.IsTrue(consoleOutput.Contains("ReacterVipo 'Reacter' receives message 'MyMessage' 3"));
-				Assert.IsTrue(consoleOutput.Contains("ReacterVipo 'Reacter' END"));
+				Assert.IsTrue(consoleOutput.Contains("'Reacter' START"));
+				Assert.IsTrue(consoleOutput.Contains("'Reacter' receives message 'Message'"));
+				Assert.IsTrue(consoleOutput.Contains("'Reacter' receives message 'MyMessage' 0"));
+				Assert.IsTrue(consoleOutput.Contains("'Reacter' receives message 'MyMessage' 1"));
+				Assert.IsTrue(consoleOutput.Contains("'Reacter' receives message 'MyMessage' 3"));
+				Assert.IsTrue(consoleOutput.Contains("'Reacter' END"));
 
-				Assert.IsTrue(consoleOutput.Contains("ProducerVipo 'Producer' START"));
-				Assert.IsTrue(consoleOutput.Contains("ProducerVipo 'Producer' END"));
+				Assert.IsTrue(consoleOutput.Contains("'Producer' START"));
+				Assert.IsTrue(consoleOutput.Contains("'Producer' END"));
 			}
 		}
 
-		public IEnumerator ReactVoroutine(CoroutineVipo v)
+		IEnumerator ReactVoroutine(CoroutineVipo v)
 		{
-			Console.WriteLine($"ReacterVipo '{v.Name}' START");
+			Console.WriteLine($"'{v.Name}' START");
 
 			yield return v.React(
 				message =>
@@ -209,11 +209,11 @@ namespace DvmTests.VipoTests
 							if (mm.Value == 2)
 								return false;
 
-							Console.WriteLine($"ReacterVipo '{v.Name}' receives message '{message.GetType().Name}' {mm.Value}");
+							Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}' {mm.Value}");
 							break;
 
 						default:
-							Console.WriteLine($"ReacterVipo '{v.Name}' receives message '{message.GetType().Name}'");
+							Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}'");
 							break;
 					}
 
@@ -221,14 +221,14 @@ namespace DvmTests.VipoTests
 				});
 
 			yield return v.Receive<MyMessage>(message =>
-				Console.WriteLine($"ReacterVipo '{v.Name}' receives message '{message.GetType().Name}' {message.Value}"));
+				Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}' {message.Value}"));
 
-			Console.WriteLine($"ReacterVipo '{v.Name}' END");
+			Console.WriteLine($"'{v.Name}' END");
 		}
 
-		public void ProducerVoroutine(CoroutineVipo v, Vid reacter)
+		void ProducerVoroutine(CoroutineVipo v, Vid reacter)
 		{
-			Console.WriteLine($"ProducerVipo '{v.Name}' START");
+			Console.WriteLine($"'{v.Name}' START");
 
 			v.SendMessage(new Message(v.Vid, reacter));
 			v.SendMessage(new MyMessage(v.Vid, reacter, 0));
@@ -236,7 +236,7 @@ namespace DvmTests.VipoTests
 			v.SendMessage(new MyMessage(v.Vid, reacter, 2));
 			v.SendMessage(new MyMessage(v.Vid, reacter, 3));
 
-			Console.WriteLine($"ProducerVipo '{v.Name}' END");
+			Console.WriteLine($"'{v.Name}' END");
 		}
 
 		#endregion
