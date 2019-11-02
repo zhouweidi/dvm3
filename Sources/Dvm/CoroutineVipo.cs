@@ -16,10 +16,10 @@ namespace Dvm
 
 	class ReceiveYield : MessageYield
 	{
-		public Func<Message, bool> Filter { get; private set; }
-		public Action<Message> Handler { get; private set; }
+		public Func<VipoMessage, bool> Filter { get; private set; }
+		public Action<VipoMessage> Handler { get; private set; }
 
-		public ReceiveYield(Func<Message, bool> filter, Action<Message> handler)
+		public ReceiveYield(Func<VipoMessage, bool> filter, Action<VipoMessage> handler)
 		{
 			Filter = filter;
 			Handler = handler;
@@ -28,9 +28,9 @@ namespace Dvm
 
 	class ReactYield : MessageYield
 	{
-		public Func<Message, bool> React { get; private set; }
+		public Func<VipoMessage, bool> React { get; private set; }
 
-		public ReactYield(Func<Message, bool> react)
+		public ReactYield(Func<VipoMessage, bool> react)
 		{
 			React = react;
 		}
@@ -181,7 +181,7 @@ namespace Dvm
 
 		#region Primitives
 
-		public YieldInstruction Receive(Action<Message> handler)
+		public YieldInstruction Receive(Action<VipoMessage> handler)
 		{
 			if (handler == null)
 				throw new ArgumentNullException(nameof(handler));
@@ -189,7 +189,7 @@ namespace Dvm
 			return new ReceiveYield(null, handler);
 		}
 
-		public YieldInstruction Receive(Func<Message, bool> filter, Action<Message> handler)
+		public YieldInstruction Receive(Func<VipoMessage, bool> filter, Action<VipoMessage> handler)
 		{
 			if (filter == null)
 				throw new ArgumentNullException(nameof(filter));
@@ -199,18 +199,18 @@ namespace Dvm
 			return new ReceiveYield(filter, handler);
 		}
 
-		public YieldInstruction Receive<TMessage>(Action<TMessage> handler)
+		public YieldInstruction Receive<TMessage>(Action<VipoMessage, TMessage> handler)
 			where TMessage : Message
 		{
 			if (handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
 			return new ReceiveYield(
-				message => message is TMessage,
-				message => handler((TMessage)message));
+				message => message.Body is TMessage,
+				message => handler(message, (TMessage)message.Body));
 		}
 
-		public YieldInstruction Receive<TMessage>(Func<TMessage, bool> filter, Action<TMessage> handler)
+		public YieldInstruction Receive<TMessage>(Func<VipoMessage, TMessage, bool> filter, Action<VipoMessage, TMessage> handler)
 			where TMessage : Message
 		{
 			if (filter == null)
@@ -219,11 +219,11 @@ namespace Dvm
 				throw new ArgumentNullException(nameof(handler));
 
 			return new ReceiveYield(
-				message => message is TMessage && filter((TMessage)message),
-				message => handler((TMessage)message));
+				message => message.Body is TMessage && filter(message, (TMessage)message.Body),
+				message => handler(message, (TMessage)message.Body));
 		}
 
-		public YieldInstruction React(Func<Message, bool> react)
+		public YieldInstruction React(Func<VipoMessage, bool> react)
 		{
 			if (react == null)
 				throw new ArgumentNullException(nameof(react));
@@ -238,7 +238,7 @@ namespace Dvm
 
 		#endregion
 
-		public IReadOnlyList<Message> InMessages
+		public IReadOnlyList<VipoMessage> InMessages
 		{
 			get { return TickTask.Messages; }
 		}

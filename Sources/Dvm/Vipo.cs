@@ -17,7 +17,7 @@ namespace Dvm
 		CallState m_startCallState = CallState.NotRequested;
 		CallState m_destroyCallState = CallState.NotRequested;
 		SpinLock m_statesLock = new SpinLock();
-		List<Message> m_outMessages;
+		List<VipoMessage> m_outMessages;
 		Exception m_exception;
 
 		enum CallState
@@ -209,16 +209,30 @@ namespace Dvm
 			}
 		}
 
-		public void SendMessage(Message message) // Can be called only in VP thread
+		public void SendMessage(Vid to, Message body) // Can be called only in VP thread
+		{
+			SendMessage(new VipoMessage(m_vid, to, body));
+		}
+
+		public void SendMessage(VipoMessage message) // Can be called only in VP thread
 		{
 			if (Scheduler.VirtualProcessor.GetTickingVid() != m_vid)
 				throw new InvalidOperationException("It is not allowed to call SendMessage out of OnTick");
 
+			if (message.From.IsEmpty)
+				throw new ArgumentException("The 'From' of a VipoMessage passed to SendMessage must be non-null", nameof(message));
+
+			if (message.From != m_vid)
+				throw new ArgumentException("The 'From' of a VipoMessage passed to SendMessage must be sender self", nameof(message));
+
 			if (message.To.IsEmpty)
 				throw new ArgumentException("Can't SendMessage to an empty vid", nameof(message));
 
-			if (message.To == Vid)
+			if (message.To == m_vid)
 				throw new ArgumentException("Can't SendMessage to self", nameof(message));
+
+			if (message.Body == null)
+				throw new ArgumentException("The body of a VipoMessage passed to SendMessage is null", nameof(message));
 
 			// No lock needed while running in VP thread
 			switch (m_startCallState)
@@ -242,12 +256,12 @@ namespace Dvm
 			}
 
 			if (m_outMessages == null)
-				m_outMessages = new List<Message>();
+				m_outMessages = new List<VipoMessage>();
 
 			m_outMessages.Add(message);
 		}
 
-		internal IReadOnlyList<Message> TakeOutMessages()
+		internal IReadOnlyList<VipoMessage> TakeOutMessages()
 		{
 			if (m_outMessages == null || m_outMessages.Count == 0)
 				return null;

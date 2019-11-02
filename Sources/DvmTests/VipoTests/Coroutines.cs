@@ -14,10 +14,14 @@ namespace DvmTests.VipoTests
 		{
 			public int Value { get; private set; }
 
-			public MyMessage(Vid from, Vid to, int value)
-				: base(from, to)
+			public MyMessage(int value)
 			{
 				Value = value;
+			}
+
+			public override string ToString()
+			{
+				return Value.ToString();
 			}
 		}
 
@@ -27,15 +31,15 @@ namespace DvmTests.VipoTests
 		{
 			Console.WriteLine($"'{v.Name}' START");
 
-			v.SendMessage(new Message(v.Vid, receiver1));
-			v.SendMessage(new MyMessage(v.Vid, receiver1, 0));
-			v.SendMessage(new MyMessage(v.Vid, receiver1, 1));
-			v.SendMessage(new MyMessage(v.Vid, receiver1, 2));
+			v.SendMessage(new VipoMessage(v.Vid, receiver1, DefaultMessageBody));
+			v.SendMessage(receiver1, new MyMessage(0));
+			v.SendMessage(receiver1, new MyMessage(1));
+			v.SendMessage(receiver1, new MyMessage(2));
 
-			v.SendMessage(new Message(v.Vid, receiver2));
-			v.SendMessage(new MyMessage(v.Vid, receiver2, 0));
-			v.SendMessage(new MyMessage(v.Vid, receiver2, 1));
-			v.SendMessage(new MyMessage(v.Vid, receiver2, 2));
+			v.SendMessage(new VipoMessage(v.Vid, receiver2, DefaultMessageBody));
+			v.SendMessage(receiver2, new MyMessage(0));
+			v.SendMessage(receiver2, new MyMessage(1));
+			v.SendMessage(receiver2, new MyMessage(2));
 
 			Console.WriteLine($"'{v.Name}' END");
 		}
@@ -54,27 +58,27 @@ namespace DvmTests.VipoTests
 				yield return Receive(
 					message =>
 					{
-						Console.WriteLine($"'{Name}' receives message '{message.GetType().Name}'");
+						Console.WriteLine($"'{Name}' receives message '{message.Body:full}'");
 					});
 
 				yield return Receive(
-					message => message is MyMessage,
+					message => message.Body is MyMessage,
 					message =>
 					{
-						Console.WriteLine($"'{Name}' receives message '{message.GetType().Name}' 0");
+						Console.WriteLine($"'{Name}' receives message '{message.Body:full}'");
 					});
 
 				yield return Receive<MyMessage>(
-					message =>
+					(message, body) =>
 					{
-						Console.WriteLine($"'{Name}' receives message '{message.GetType().Name}' 1");
+						Console.WriteLine($"'{Name}' receives message '{message.Body:full}'");
 					});
 
 				yield return Receive<MyMessage>(
-					message => message.Value == 2,
-					message =>
+					(message, body) => body.Value == 2,
+					(message, body) =>
 					{
-						Console.WriteLine($"'{Name}' receives message '{message.GetType().Name}' 2");
+						Console.WriteLine($"'{Name}' receives message '{message.Body:full}'");
 					});
 
 				Console.WriteLine($"'{Name}' END");
@@ -88,27 +92,27 @@ namespace DvmTests.VipoTests
 			yield return v.Receive(
 				message =>
 				{
-					Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}'");
+					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
 				});
 
 			yield return v.Receive(
-				message => message is MyMessage,
+				message => message.Body is MyMessage,
 				message =>
 				{
-					Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}' 0");
+					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
 				});
 
 			yield return v.Receive<MyMessage>(
-				message =>
+				(message, body) =>
 				{
-					Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}' 1");
+					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
 				});
 
 			yield return v.Receive<MyMessage>(
-				message => message.Value == 2,
-				message =>
+				(message, body) => body.Value == 2,
+				(message, body) =>
 				{
-					Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}' 2");
+					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
 				});
 
 			Console.WriteLine($"'{v.Name}' END");
@@ -141,17 +145,17 @@ namespace DvmTests.VipoTests
 			var consoleOutput = GetConsoleOutput();
 			{
 				Assert.IsTrue(consoleOutput.Contains("'Receiver1' START"));
-				Assert.IsTrue(consoleOutput.Contains("'Receiver1' receives message 'Message'"));
-				Assert.IsTrue(consoleOutput.Contains("'Receiver1' receives message 'MyMessage' 0"));
-				Assert.IsTrue(consoleOutput.Contains("'Receiver1' receives message 'MyMessage' 1"));
-				Assert.IsTrue(consoleOutput.Contains("'Receiver1' receives message 'MyMessage' 2"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver1' receives message 'Message {MessageBase}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver1' receives message 'MyMessage {0}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver1' receives message 'MyMessage {1}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver1' receives message 'MyMessage {2}'"));
 				Assert.IsTrue(consoleOutput.Contains("'Receiver1' END"));
 
 				Assert.IsTrue(consoleOutput.Contains("'Receiver2' START"));
-				Assert.IsTrue(consoleOutput.Contains("'Receiver2' receives message 'Message'"));
-				Assert.IsTrue(consoleOutput.Contains("'Receiver2' receives message 'MyMessage' 0"));
-				Assert.IsTrue(consoleOutput.Contains("'Receiver2' receives message 'MyMessage' 1"));
-				Assert.IsTrue(consoleOutput.Contains("'Receiver2' receives message 'MyMessage' 2"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver2' receives message 'Message {MessageBase}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver2' receives message 'MyMessage {0}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver2' receives message 'MyMessage {1}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver2' receives message 'MyMessage {2}'"));
 				Assert.IsTrue(consoleOutput.Contains("'Receiver2' END"));
 
 				Assert.IsTrue(consoleOutput.Contains("'Sender' START"));
@@ -185,10 +189,11 @@ namespace DvmTests.VipoTests
 			var consoleOutput = GetConsoleOutput();
 			{
 				Assert.IsTrue(consoleOutput.Contains("'Reacter' START"));
-				Assert.IsTrue(consoleOutput.Contains("'Reacter' receives message 'Message'"));
-				Assert.IsTrue(consoleOutput.Contains("'Reacter' receives message 'MyMessage' 0"));
-				Assert.IsTrue(consoleOutput.Contains("'Reacter' receives message 'MyMessage' 1"));
-				Assert.IsTrue(consoleOutput.Contains("'Reacter' receives message 'MyMessage' 3"));
+				Assert.IsTrue(consoleOutput.Contains("'Reacter' receives message 'Message {MessageBase}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Reacter' receives message 'MyMessage {0}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Reacter' receives message 'MyMessage {1}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Reacter' receives message 'MyMessage {3}'"));
+				Assert.IsFalse(consoleOutput.Contains("'Reacter' receives message 'MyMessage {2}'"));
 				Assert.IsTrue(consoleOutput.Contains("'Reacter' END"));
 
 				Assert.IsTrue(consoleOutput.Contains("'Producer' START"));
@@ -203,25 +208,25 @@ namespace DvmTests.VipoTests
 			yield return v.React(
 				message =>
 				{
-					switch (message)
+					switch (message.Body)
 					{
 						case MyMessage mm:
 							if (mm.Value == 2)
 								return false;
 
-							Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}' {mm.Value}");
+							Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
 							break;
 
 						default:
-							Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}'");
+							Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
 							break;
 					}
 
 					return true;
 				});
 
-			yield return v.Receive<MyMessage>(message =>
-				Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}' {message.Value}"));
+			yield return v.Receive<MyMessage>((message, body) =>
+				Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'"));
 
 			Console.WriteLine($"'{v.Name}' END");
 		}
@@ -230,11 +235,11 @@ namespace DvmTests.VipoTests
 		{
 			Console.WriteLine($"'{v.Name}' START");
 
-			v.SendMessage(new Message(v.Vid, reacter));
-			v.SendMessage(new MyMessage(v.Vid, reacter, 0));
-			v.SendMessage(new MyMessage(v.Vid, reacter, 1));
-			v.SendMessage(new MyMessage(v.Vid, reacter, 2));
-			v.SendMessage(new MyMessage(v.Vid, reacter, 3));
+			v.SendMessage(new VipoMessage(v.Vid, reacter, DefaultMessageBody));
+			v.SendMessage(reacter, new MyMessage(0));
+			v.SendMessage(reacter, new MyMessage(1));
+			v.SendMessage(reacter, new MyMessage(2));
+			v.SendMessage(reacter, new MyMessage(3));
 
 			Console.WriteLine($"'{v.Name}' END");
 		}
@@ -265,9 +270,11 @@ namespace DvmTests.VipoTests
 			var consoleOutput = GetConsoleOutput();
 			{
 				Assert.IsTrue(consoleOutput.Contains("'Waiter' START"));
-				Assert.IsTrue(consoleOutput.Contains("'Waiter' receives message 'Message'"));
-				Assert.IsTrue(consoleOutput.Contains("'Waiter' receives message 'MyMessage' 0"));
-				Assert.IsTrue(consoleOutput.Contains("'Waiter' receives message 'MyMessage' 2"));
+				Assert.IsTrue(consoleOutput.Contains("'Waiter' receives message 'Message {MessageBase}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Waiter' receives message 'MyMessage {0}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Waiter' receives message 'MyMessage {2}'"));
+				Assert.IsFalse(consoleOutput.Contains("'Waiter' receives message 'MyMessage {1}'"));
+				Assert.IsFalse(consoleOutput.Contains("'Waiter' receives message 'MyMessage {3}'"));
 				Assert.IsTrue(consoleOutput.Contains("'Waiter' END"));
 
 				Assert.IsTrue(consoleOutput.Contains("'Producer' START"));
@@ -281,19 +288,20 @@ namespace DvmTests.VipoTests
 
 			yield return v.WaitForAnyMessage();
 
-			yield return v.Receive(message =>
-			{
-				Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}'");
-			});
+			yield return v.Receive(
+				message =>
+				{
+					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+				});
 
 			yield return v.WaitForAnyMessage();
 
 			foreach (var myMessage in from m in v.InMessages
-									  let mm = m as MyMessage
+									  let mm = m.Body as MyMessage
 									  where mm != null && mm.Value % 2 == 0
 									  select mm)
 			{
-				Console.WriteLine($"'{v.Name}' receives message '{myMessage.GetType().Name}' {myMessage.Value}");
+				Console.WriteLine($"'{v.Name}' receives message '{myMessage:full}'");
 			}
 
 			Console.WriteLine($"'{v.Name}' END");

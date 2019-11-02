@@ -363,7 +363,7 @@ namespace Dvm
 								throw new KernelFaultException($"No vipo {vid} to schedule");
 
 							var tickTask = GetOrAddTickTask(vid);
-							tickTask.AddMessage(Message.VipoSchedule);
+							tickTask.AddMessage(SystemVipoMessages.VipoSchedule);
 						}
 						break;
 

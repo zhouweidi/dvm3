@@ -5,10 +5,10 @@ namespace Dvm
 {
 	public sealed class TickTask
 	{
-		static readonly Message[] NoMessages = new Message[0];
+		static readonly VipoMessage[] NoMessages = new VipoMessage[0];
 
 		readonly Vipo m_vipo;
-		List<Message> m_messages;
+		List<VipoMessage> m_messages;
 		Requests m_requests;
 
 		[Flags]
@@ -25,10 +25,10 @@ namespace Dvm
 			m_vipo = vipo;
 		}
 
-		internal void AddMessage(Message message)
+		internal void AddMessage(VipoMessage message)
 		{
 			if (m_messages == null)
-				m_messages = new List<Message>();
+				m_messages = new List<VipoMessage>();
 
 			m_messages.Add(message);
 		}
@@ -48,9 +48,9 @@ namespace Dvm
 			get { return m_vipo; }
 		}
 
-		public IReadOnlyList<Message> Messages
+		public IReadOnlyList<VipoMessage> Messages
 		{
-			get { return m_messages == null ? (IReadOnlyList<Message>)NoMessages : m_messages; }
+			get { return m_messages == null ? (IReadOnlyList<VipoMessage>)NoMessages : m_messages; }
 		}
 
 		public bool AnyRequest

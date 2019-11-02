@@ -8,9 +8,9 @@ namespace Dvm
 
 	class DispatchVipoMessages : ScheduleTask
 	{
-		public IReadOnlyList<Message> Messages { get; private set; }
+		public IReadOnlyList<VipoMessage> Messages { get; private set; }
 
-		public DispatchVipoMessages(IReadOnlyList<Message> messages)
+		public DispatchVipoMessages(IReadOnlyList<VipoMessage> messages)
 		{
 			Messages = messages;
 		}

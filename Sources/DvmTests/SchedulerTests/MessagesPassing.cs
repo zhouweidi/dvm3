@@ -25,7 +25,7 @@ namespace DvmTests.SchedulerTests
 
 			Assert.IsTrue(consoleOutput.Contains("MyVipo '1' ticks #1, messages []"));
 			Assert.IsTrue(consoleOutput.Contains("MyVipo '2' ticks #1, messages []"));
-			Assert.IsTrue(consoleOutput.Contains("MyVipo '2' ticks #2, messages [Other]"));
+			Assert.IsTrue(consoleOutput.Contains("MyVipo '2' ticks #2, messages [MessageBase]"));
 		}
 
 		class MyVipo : Vipo
@@ -41,10 +41,10 @@ namespace DvmTests.SchedulerTests
 			{
 				++m_tickedCount;
 
-				Console.WriteLine($"MyVipo '{Name}' ticks #{m_tickedCount}, messages [{string.Join(',', tickTask.Messages)}]");
+				Console.WriteLine($"MyVipo '{Name}' ticks #{m_tickedCount}, messages [{JoinMessageBodies(tickTask.Messages)}]");
 
 				if (Vid == new Vid(1, 1, null))
-					SendMessage(new Message(Vid, new Vid(1, 2, null)));
+					SendMessage(new Vid(1, 2, null), DefaultMessageBody);
 			}
 		}
 	}

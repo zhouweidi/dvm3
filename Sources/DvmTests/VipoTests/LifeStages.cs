@@ -92,7 +92,7 @@ namespace DvmTests.VipoTests
 
 				++m_tickedCount;
 
-				Console.WriteLine($"MyVipo '{Name}' ticks #{m_tickedCount}, requests '{string.Join('|', requests)}', messages [{string.Join(',', tickTask.Messages)}]");
+				Console.WriteLine($"MyVipo '{Name}' ticks #{m_tickedCount}, requests '{string.Join('|', requests)}', messages [{JoinMessageBodies(tickTask.Messages)}]");
 			}
 
 			protected override void OnError(Exception e)

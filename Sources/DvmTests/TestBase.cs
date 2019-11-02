@@ -1,7 +1,9 @@
 ﻿using Dvm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 namespace DvmTests
@@ -71,6 +73,18 @@ namespace DvmTests
 			return m_consoleOutput
 				.ToString()
 				.Split(NewlineCharacters, StringSplitOptions.RemoveEmptyEntries);
+		}
+
+		#endregion
+
+		#region Utilities
+
+		protected static readonly Message DefaultMessageBody = new Message();
+
+		protected static string JoinMessageBodies(IEnumerable<VipoMessage> messages)
+		{
+			return string.Join(',', from message in messages
+									select message.Body);
 		}
 
 		#endregion
