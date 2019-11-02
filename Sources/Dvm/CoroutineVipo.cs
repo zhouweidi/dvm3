@@ -10,35 +10,35 @@ namespace Dvm
 	{
 	}
 
-	public class MessageInstruction : YieldInstruction
+	public class MessageYield : YieldInstruction
 	{
 	}
 
-	class ReceiveInstruction : MessageInstruction
+	class ReceiveYield : MessageYield
 	{
 		public Func<Message, bool> Filter { get; private set; }
 		public Action<Message> Handler { get; private set; }
 
-		public ReceiveInstruction(Func<Message, bool> filter, Action<Message> handler)
+		public ReceiveYield(Func<Message, bool> filter, Action<Message> handler)
 		{
 			Filter = filter;
 			Handler = handler;
 		}
 	}
 
-	class ReactInstruction : MessageInstruction
+	class ReactYield : MessageYield
 	{
 		public Func<Message, bool> React { get; private set; }
 
-		public ReactInstruction(Func<Message, bool> react)
+		public ReactYield(Func<Message, bool> react)
 		{
 			React = react;
 		}
 	}
 
-	class WaitForAnyMessageInstruction : MessageInstruction
+	class WaitForAnyMessageYield : MessageYield
 	{
-		public static readonly WaitForAnyMessageInstruction Instance = new WaitForAnyMessageInstruction();
+		public static readonly WaitForAnyMessageYield Instance = new WaitForAnyMessageYield();
 	}
 
 	public class BadYieldInstruction : VipoFaultException
@@ -57,7 +57,7 @@ namespace Dvm
 
 		IEnumerator m_enumerator;
 		bool m_finished;
-		MessageInstruction m_messageYield;
+		MessageYield m_messageYield;
 
 		protected CoroutineVipo(Scheduler scheduler, string name, CallbackOptions callbackOptions)
 			: base(scheduler, name, callbackOptions)
@@ -82,7 +82,7 @@ namespace Dvm
 
 						switch (m_messageYield)
 						{
-							case ReceiveInstruction receive:
+							case ReceiveYield receive:
 								{
 									if (receive.Filter != null)
 									{
@@ -100,7 +100,7 @@ namespace Dvm
 								}
 								break;
 
-							case ReactInstruction react:
+							case ReactYield react:
 								{
 									while (react.React(InMessages[messageIndex]))
 									{
@@ -113,7 +113,7 @@ namespace Dvm
 								}
 								break;
 
-							case WaitForAnyMessageInstruction waitForAnyMessage:
+							case WaitForAnyMessageYield waitForAnyMessage:
 								m_messageYield = null;
 								break;
 
@@ -144,15 +144,15 @@ namespace Dvm
 
 				switch (m_enumerator.Current)
 				{
-					case ReceiveInstruction receive:
+					case ReceiveYield receive:
 						m_messageYield = receive;
 						break;
 
-					case ReactInstruction react:
+					case ReactYield react:
 						m_messageYield = react;
 						break;
 
-					case WaitForAnyMessageInstruction waitForAnyMessage:
+					case WaitForAnyMessageYield waitForAnyMessage:
 						m_messageYield = waitForAnyMessage;
 						break;
 
@@ -186,7 +186,7 @@ namespace Dvm
 			if (handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
-			return new ReceiveInstruction(null, handler);
+			return new ReceiveYield(null, handler);
 		}
 
 		public YieldInstruction Receive(Func<Message, bool> filter, Action<Message> handler)
@@ -196,7 +196,7 @@ namespace Dvm
 			if (handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
-			return new ReceiveInstruction(filter, handler);
+			return new ReceiveYield(filter, handler);
 		}
 
 		public YieldInstruction Receive<TMessage>(Action<TMessage> handler)
@@ -205,7 +205,7 @@ namespace Dvm
 			if (handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
-			return new ReceiveInstruction(
+			return new ReceiveYield(
 				message => message is TMessage,
 				message => handler((TMessage)message));
 		}
@@ -218,7 +218,7 @@ namespace Dvm
 			if (handler == null)
 				throw new ArgumentNullException(nameof(handler));
 
-			return new ReceiveInstruction(
+			return new ReceiveYield(
 				message => message is TMessage && filter((TMessage)message),
 				message => handler((TMessage)message));
 		}
@@ -228,12 +228,12 @@ namespace Dvm
 			if (react == null)
 				throw new ArgumentNullException(nameof(react));
 
-			return new ReactInstruction(react);
+			return new ReactYield(react);
 		}
 
 		public YieldInstruction WaitForAnyMessage()
 		{
-			return WaitForAnyMessageInstruction.Instance;
+			return WaitForAnyMessageYield.Instance;
 		}
 
 		#endregion
