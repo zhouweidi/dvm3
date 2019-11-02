@@ -20,19 +20,19 @@ namespace DvmTests.VipoTests
 			}
 		}
 
-		public void SenderVoroutine(CoroutineVipo v)
+		public void SenderVoroutine(CoroutineVipo v, Vid receiver1, Vid receiver2)
 		{
 			Console.WriteLine($"SenderVoroutine '{v.Name}' START");
 
-			v.SendMessage(new Message(v.Vid, s_vidReceiver1));
-			v.SendMessage(new MyMessage(v.Vid, s_vidReceiver1, 0));
-			v.SendMessage(new MyMessage(v.Vid, s_vidReceiver1, 1));
-			v.SendMessage(new MyMessage(v.Vid, s_vidReceiver1, 2));
+			v.SendMessage(new Message(v.Vid, receiver1));
+			v.SendMessage(new MyMessage(v.Vid, receiver1, 0));
+			v.SendMessage(new MyMessage(v.Vid, receiver1, 1));
+			v.SendMessage(new MyMessage(v.Vid, receiver1, 2));
 
-			v.SendMessage(new Message(v.Vid, s_vidReceiver2));
-			v.SendMessage(new MyMessage(v.Vid, s_vidReceiver2, 0));
-			v.SendMessage(new MyMessage(v.Vid, s_vidReceiver2, 1));
-			v.SendMessage(new MyMessage(v.Vid, s_vidReceiver2, 2));
+			v.SendMessage(new Message(v.Vid, receiver2));
+			v.SendMessage(new MyMessage(v.Vid, receiver2, 0));
+			v.SendMessage(new MyMessage(v.Vid, receiver2, 1));
+			v.SendMessage(new MyMessage(v.Vid, receiver2, 2));
 
 			Console.WriteLine($"SenderVoroutine '{v.Name}' END");
 		}
@@ -111,23 +111,18 @@ namespace DvmTests.VipoTests
 			Console.WriteLine($"ReceiverVoroutine '{v.Name}' END");
 		}
 
-		static Vid s_vidReceiver1;
-		static Vid s_vidReceiver2;
-
 		[TestMethod]
 		public void Basic()
 		{
 			HookConsoleOutput();
 
 			var receiver1 = new ReceiverVipo(TheScheduler, "Receiver1");
-			s_vidReceiver1 = receiver1.Vid;
 			receiver1.Start();
 
 			var receiver2 = TheScheduler.CreateVoroutine(ReceiverVoroutine, "Receiver2");
-			s_vidReceiver2 = receiver2.Vid;
 			receiver2.Start();
 
-			var sender = TheScheduler.CreateVoroutineMinor(SenderVoroutine, "Sender");
+			var sender = TheScheduler.CreateVoroutineMinor(v => SenderVoroutine(v, receiver1.Vid, receiver2.Vid), "Sender");
 			sender.Start();
 
 			Sleep();
