@@ -20,6 +20,8 @@ namespace DvmTests.VipoTests
 			}
 		}
 
+		#region Basic
+
 		public void SenderVoroutine(CoroutineVipo v, Vid receiver1, Vid receiver2)
 		{
 			Console.WriteLine($"SenderVoroutine '{v.Name}' START");
@@ -155,5 +157,87 @@ namespace DvmTests.VipoTests
 				Assert.IsTrue(consoleOutput.Contains("SenderVoroutine 'Sender' END"));
 			}
 		}
+
+		#endregion
+
+		#region ReactPrimitive
+
+		[TestMethod]
+		public void ReactPrimitive()
+		{
+			HookConsoleOutput();
+
+			var reacter = TheScheduler.CreateVoroutine(ReactVoroutine, "Reacter");
+			reacter.Start();
+
+			var producer = TheScheduler.CreateVoroutineMinor(v => ProducerVoroutine(v, reacter.Vid), "Producer");
+			producer.Start();
+
+			Sleep();
+
+			//reacter.Destroy();
+			//producer.Destroy();
+
+			Assert.AreEqual(reacter.Stage, VipoStage.Destroyed);
+			Assert.AreEqual(producer.Stage, VipoStage.Destroyed);
+
+			var consoleOutput = GetConsoleOutput();
+			{
+				Assert.IsTrue(consoleOutput.Contains("ReacterVipo 'Reacter' START"));
+				Assert.IsTrue(consoleOutput.Contains("ReacterVipo 'Reacter' receives message 'Message'"));
+				Assert.IsTrue(consoleOutput.Contains("ReacterVipo 'Reacter' receives message 'MyMessage' 0"));
+				Assert.IsTrue(consoleOutput.Contains("ReacterVipo 'Reacter' receives message 'MyMessage' 1"));
+				Assert.IsTrue(consoleOutput.Contains("ReacterVipo 'Reacter' receives message 'MyMessage' 3"));
+				Assert.IsTrue(consoleOutput.Contains("ReacterVipo 'Reacter' END"));
+
+				Assert.IsTrue(consoleOutput.Contains("ProducerVipo 'Producer' START"));
+				Assert.IsTrue(consoleOutput.Contains("ProducerVipo 'Producer' END"));
+			}
+		}
+
+		public IEnumerator ReactVoroutine(CoroutineVipo v)
+		{
+			Console.WriteLine($"ReacterVipo '{v.Name}' START");
+
+			yield return v.React(
+				message =>
+				{
+					switch (message)
+					{
+						case MyMessage mm:
+							if (mm.Value == 2)
+								return false;
+
+							Console.WriteLine($"ReacterVipo '{v.Name}' receives message '{message.GetType().Name}' {mm.Value}");
+							break;
+
+						default:
+							Console.WriteLine($"ReacterVipo '{v.Name}' receives message '{message.GetType().Name}'");
+							break;
+					}
+
+					return true;
+				});
+
+			yield return v.Receive<MyMessage>(message =>
+				Console.WriteLine($"ReacterVipo '{v.Name}' receives message '{message.GetType().Name}' {message.Value}"));
+
+			Console.WriteLine($"ReacterVipo '{v.Name}' END");
+		}
+
+		public void ProducerVoroutine(CoroutineVipo v, Vid reacter)
+		{
+			Console.WriteLine($"ProducerVipo '{v.Name}' START");
+
+			v.SendMessage(new Message(v.Vid, reacter));
+			v.SendMessage(new MyMessage(v.Vid, reacter, 0));
+			v.SendMessage(new MyMessage(v.Vid, reacter, 1));
+			v.SendMessage(new MyMessage(v.Vid, reacter, 2));
+			v.SendMessage(new MyMessage(v.Vid, reacter, 3));
+
+			Console.WriteLine($"ProducerVipo '{v.Name}' END");
+		}
+
+		#endregion
 	}
 }

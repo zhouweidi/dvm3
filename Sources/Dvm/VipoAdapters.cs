@@ -4,19 +4,17 @@ using System.Collections.Generic;
 
 namespace Dvm
 {
+	#region YieldInstruction
+
 	public class YieldInstruction
 	{
 	}
 
-	public class BadYieldInstruction : VipoFaultException
+	public class MessageInstruction : YieldInstruction
 	{
-		public BadYieldInstruction(Vid vid, string message)
-			: base(vid, message)
-		{
-		}
 	}
 
-	class ReceiveInstruction : YieldInstruction
+	class ReceiveInstruction : MessageInstruction
 	{
 		public Func<Message, bool> Filter { get; private set; }
 		public Action<Message> Handler { get; private set; }
@@ -28,13 +26,33 @@ namespace Dvm
 		}
 	}
 
+	class ReactInstruction : MessageInstruction
+	{
+		public Func<Message, bool> React { get; private set; }
+
+		public ReactInstruction(Func<Message, bool> react)
+		{
+			React = react;
+		}
+	}
+
+	public class BadYieldInstruction : VipoFaultException
+	{
+		public BadYieldInstruction(Vid vid, string message)
+			: base(vid, message)
+		{
+		}
+	}
+
+	#endregion
+
 	public abstract class CoroutineVipo : Vipo
 	{
 		public TickTask TickTask { get; private set; }
 
 		IEnumerator m_enumerator;
 		bool m_finished;
-		ReceiveInstruction m_receive;
+		MessageInstruction m_messageYield;
 
 		protected CoroutineVipo(Scheduler scheduler, string name, CallbackOptions callbackOptions)
 			: base(scheduler, name, callbackOptions)
@@ -50,30 +68,53 @@ namespace Dvm
 
 			try
 			{
-				if (m_enumerator == null)
-					m_enumerator = Coroutine();
-
-				for (int messageIndex = -1; ;)
+				for (int messageIndex = 0; ;)
 				{
-					if (m_receive != null)
+					if (m_messageYield != null)
 					{
-						if (tickTask.Messages.Count == 0)
+						if (messageIndex >= InMessages.Count)
 							return;
 
-						++messageIndex;
-
-						if (m_receive.Filter != null)
+						switch (m_messageYield)
 						{
-							while (!m_receive.Filter(InMessages[messageIndex]))
-							{
-								if (++messageIndex >= InMessages.Count)
-									return;
-							}
-						}
+							case ReceiveInstruction receive:
+								{
+									if (receive.Filter != null)
+									{
+										while (!receive.Filter(InMessages[messageIndex]))
+										{
+											if (++messageIndex >= InMessages.Count)
+												return;
+										}
+									}
 
-						m_receive.Handler(InMessages[messageIndex]);
-						m_receive = null;
+									receive.Handler(InMessages[messageIndex]);
+
+									++messageIndex;
+									m_messageYield = null;
+								}
+								break;
+
+							case ReactInstruction react:
+								{
+									while (react.React(InMessages[messageIndex]))
+									{
+										if (++messageIndex >= InMessages.Count)
+											return;
+									}
+
+									++messageIndex;
+									m_messageYield = null;
+								}
+								break;
+
+							default:
+								throw new BadYieldInstruction(Vid, "Unsupported message yield instruction");
+						}
 					}
+
+					if (m_enumerator == null)
+						m_enumerator = Coroutine();
 
 					if (m_enumerator.MoveNext())
 					{
@@ -82,8 +123,12 @@ namespace Dvm
 
 						switch (m_enumerator.Current)
 						{
-							case ReceiveInstruction ri:
-								m_receive = ri;
+							case ReceiveInstruction receive:
+								m_messageYield = receive;
+								break;
+
+							case ReactInstruction react:
+								m_messageYield = react;
 								break;
 
 							case null:
@@ -155,6 +200,14 @@ namespace Dvm
 			return new ReceiveInstruction(
 				message => message is TMessage && filter((TMessage)message),
 				message => handler((TMessage)message));
+		}
+
+		public YieldInstruction React(Func<Message, bool> react)
+		{
+			if (react == null)
+				throw new ArgumentNullException(nameof(react));
+
+			return new ReactInstruction(react);
 		}
 
 		#endregion
