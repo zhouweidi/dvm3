@@ -116,6 +116,7 @@ namespace Dvm
 			switch (format)
 			{
 				case null:
+				case "":
 				case ShortFormat:
 					{
 						if (string.IsNullOrEmpty(m_name))
