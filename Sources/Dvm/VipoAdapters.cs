@@ -113,46 +113,54 @@ namespace Dvm
 						}
 					}
 
-					if (m_enumerator == null)
-						m_enumerator = Coroutine();
-
-					if (m_enumerator.MoveNext())
-					{
-						if (!(m_enumerator.Current is YieldInstruction))
-							throw new BadYieldInstruction(Vid, "Yield return a non-YieldInstruction");
-
-						switch (m_enumerator.Current)
-						{
-							case ReceiveInstruction receive:
-								m_messageYield = receive;
-								break;
-
-							case ReactInstruction react:
-								m_messageYield = react;
-								break;
-
-							case null:
-								throw new BadYieldInstruction(Vid, "The yield instruction cannot be null");
-
-							default:
-								throw new BadYieldInstruction(Vid, "Unsupported yield instruction");
-						}
-					}
-					else
-					{
-						Destroy();
-
-						DisposableObject.TryDispose(ref m_enumerator);
-
-						m_finished = true;
-
+					if (!TickCoroutine())
 						return;
-					}
 				}
 			}
 			finally
 			{
 				TickTask = null;
+			}
+		}
+
+		bool TickCoroutine()
+		{
+			if (m_enumerator == null)
+				m_enumerator = Coroutine();
+
+			if (m_enumerator.MoveNext())
+			{
+				if (!(m_enumerator.Current is YieldInstruction))
+					throw new BadYieldInstruction(Vid, "Yield return a non-YieldInstruction");
+
+				switch (m_enumerator.Current)
+				{
+					case ReceiveInstruction receive:
+						m_messageYield = receive;
+						break;
+
+					case ReactInstruction react:
+						m_messageYield = react;
+						break;
+
+					case null:
+						throw new BadYieldInstruction(Vid, "The yield instruction cannot be null");
+
+					default:
+						throw new BadYieldInstruction(Vid, "Unsupported yield instruction");
+				}
+
+				return true;
+			}
+			else
+			{
+				Destroy();
+
+				DisposableObject.TryDispose(ref m_enumerator);
+
+				m_finished = true;
+
+				return false;
 			}
 		}
 
