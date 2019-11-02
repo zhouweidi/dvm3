@@ -240,5 +240,65 @@ namespace DvmTests.VipoTests
 		}
 
 		#endregion
+
+		#region WaitForAnyMessage
+
+		[TestMethod]
+		public void WaitForAnyMessage()
+		{
+			HookConsoleOutput();
+
+			var waiter = TheScheduler.CreateVoroutine(WaiterVoroutine, "Waiter");
+			waiter.Start();
+
+			var producer = TheScheduler.CreateVoroutineMinor(v => ProducerVoroutine(v, waiter.Vid), "Producer");
+			producer.Start();
+
+			Sleep();
+
+			//waiter.Destroy();
+			//producer.Destroy();
+
+			Assert.AreEqual(waiter.Stage, VipoStage.Destroyed);
+			Assert.AreEqual(producer.Stage, VipoStage.Destroyed);
+
+			var consoleOutput = GetConsoleOutput();
+			{
+				Assert.IsTrue(consoleOutput.Contains("'Waiter' START"));
+				Assert.IsTrue(consoleOutput.Contains("'Waiter' receives message 'Message'"));
+				Assert.IsTrue(consoleOutput.Contains("'Waiter' receives message 'MyMessage' 0"));
+				Assert.IsTrue(consoleOutput.Contains("'Waiter' receives message 'MyMessage' 2"));
+				Assert.IsTrue(consoleOutput.Contains("'Waiter' END"));
+
+				Assert.IsTrue(consoleOutput.Contains("'Producer' START"));
+				Assert.IsTrue(consoleOutput.Contains("'Producer' END"));
+			}
+		}
+
+		IEnumerator WaiterVoroutine(CoroutineVipo v)
+		{
+			Console.WriteLine($"'{v.Name}' START");
+
+			yield return v.WaitForAnyMessage();
+
+			yield return v.Receive(message =>
+			{
+				Console.WriteLine($"'{v.Name}' receives message '{message.GetType().Name}'");
+			});
+
+			yield return v.WaitForAnyMessage();
+
+			foreach (var myMessage in from m in v.InMessages
+									  let mm = m as MyMessage
+									  where mm != null && mm.Value % 2 == 0
+									  select mm)
+			{
+				Console.WriteLine($"'{v.Name}' receives message '{myMessage.GetType().Name}' {myMessage.Value}");
+			}
+
+			Console.WriteLine($"'{v.Name}' END");
+		}
+
+		#endregion
 	}
 }

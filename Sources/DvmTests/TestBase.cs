@@ -59,6 +59,8 @@ namespace DvmTests
 			Console.SetOut(sw);
 		}
 
+		static readonly char[] NewlineCharacters = new[] { '\n', '\r' };
+
 		protected string[] GetConsoleOutput()
 		{
 			if (m_consoleOutput == null)
@@ -66,7 +68,9 @@ namespace DvmTests
 
 			m_consoleOutput.Flush();
 
-			return m_consoleOutput.ToString().Split('\n', '\r');
+			return m_consoleOutput
+				.ToString()
+				.Split(NewlineCharacters, StringSplitOptions.RemoveEmptyEntries);
 		}
 
 		#endregion

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Dvm
 {
-	#region YieldInstruction
+	#region Yield instructions
 
 	public class YieldInstruction
 	{
@@ -34,6 +34,11 @@ namespace Dvm
 		{
 			React = react;
 		}
+	}
+
+	class WaitForAnyMessageInstruction : MessageInstruction
+	{
+		public static readonly WaitForAnyMessageInstruction Instance = new WaitForAnyMessageInstruction();
 	}
 
 	public class BadYieldInstruction : VipoFaultException
@@ -108,6 +113,10 @@ namespace Dvm
 								}
 								break;
 
+							case WaitForAnyMessageInstruction waitForAnyMessage:
+								m_messageYield = null;
+								break;
+
 							default:
 								throw new BadYieldInstruction(Vid, "Unsupported message yield instruction");
 						}
@@ -141,6 +150,10 @@ namespace Dvm
 
 					case ReactInstruction react:
 						m_messageYield = react;
+						break;
+
+					case WaitForAnyMessageInstruction waitForAnyMessage:
+						m_messageYield = waitForAnyMessage;
 						break;
 
 					case null:
@@ -218,6 +231,11 @@ namespace Dvm
 			return new ReactInstruction(react);
 		}
 
+		public YieldInstruction WaitForAnyMessage()
+		{
+			return WaitForAnyMessageInstruction.Instance;
+		}
+
 		#endregion
 
 		public IReadOnlyList<Message> InMessages
@@ -259,10 +277,6 @@ namespace Dvm
 		}
 	}
 
-	#endregion
-
-	#region MinorVoroutine
-
 	public delegate void MinorVoroutine(CoroutineVipo v);
 
 	sealed class MinorVoroutineObject : CoroutineVipo
@@ -296,8 +310,6 @@ namespace Dvm
 		}
 	}
 
-	#endregion
-
 	public static class VoroutineExtension
 	{
 		public static CoroutineVipo CreateVoroutine(this Scheduler scheduler, Voroutine procedure, string name = null)
@@ -320,4 +332,6 @@ namespace Dvm
 			return new MinorVoroutineObject(procedure, handleError, scheduler, name);
 		}
 	}
+
+	#endregion
 }
