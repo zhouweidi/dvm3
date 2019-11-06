@@ -217,28 +217,28 @@ namespace Dvm
 		public void Send(VipoMessage message) // Can be called only in VP thread
 		{
 			if (Scheduler.VirtualProcessor.GetTickingVid() != m_vid)
-				throw new InvalidOperationException("It is not allowed to call SendMessage out of OnTick");
+				throw new InvalidOperationException("It is not allowed to call Send out of OnTick");
 
 			if (message.From.IsEmpty)
-				throw new ArgumentException("The 'From' of a VipoMessage passed to SendMessage must be non-null", nameof(message));
+				throw new ArgumentException("The 'From' of a VipoMessage passed to Send must be non-null", nameof(message));
 
 			if (message.From != m_vid)
-				throw new ArgumentException("The 'From' of a VipoMessage passed to SendMessage must be sender self", nameof(message));
+				throw new ArgumentException("The 'From' of a VipoMessage passed to Send must be sender self", nameof(message));
 
 			if (message.To.IsEmpty)
-				throw new ArgumentException("Can't SendMessage to an empty vid", nameof(message));
+				throw new ArgumentException("Can't Send to an empty vid", nameof(message));
 
 			if (message.To == m_vid)
-				throw new ArgumentException("Can't SendMessage to self", nameof(message));
+				throw new ArgumentException("Can't Send to self", nameof(message));
 
 			if (message.Body == null)
-				throw new ArgumentException("The body of a VipoMessage passed to SendMessage is null", nameof(message));
+				throw new ArgumentException("The body of a VipoMessage passed to Send is null", nameof(message));
 
 			// No lock needed while running in VP thread
 			switch (m_startCallState)
 			{
 				case CallState.NotRequested:
-					throw new VipoFaultException(m_vid, $"Unexpected {nameof(m_startCallState)} in Vipo.SendMessage");
+					throw new VipoFaultException(m_vid, $"Unexpected {nameof(m_startCallState)} in Vipo.Send");
 
 				case CallState.Requested:
 				case CallState.Callbacked:
@@ -252,7 +252,7 @@ namespace Dvm
 
 				case CallState.Requested:
 				case CallState.Callbacked:
-					throw new InvalidOperationException("Can't call SendMessage after Destroy called");
+					throw new InvalidOperationException("Can't call Send after Destroy called");
 			}
 
 			if (m_outMessages == null)
