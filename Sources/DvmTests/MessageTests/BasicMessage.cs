@@ -30,6 +30,7 @@ namespace DvmTests.MessageTests
 			Assert.AreEqual(message.ToString(""), "MessageBase");
 			Assert.AreEqual(message.ToString(null), "MessageBase");
 			Assert.AreEqual(message.ToString(Message.FullFormat), "Message {MessageBase}");
+			Assert.AreEqual($"{message:full}", "Message {MessageBase}");
 
 			var myMessage = new MyMessage(888);
 
@@ -37,6 +38,7 @@ namespace DvmTests.MessageTests
 			Assert.AreEqual(myMessage.ToString(""), "888");
 			Assert.AreEqual(myMessage.ToString(null), "888");
 			Assert.AreEqual(myMessage.ToString(Message.FullFormat), "MyMessage {888}");
+			Assert.AreEqual($"{myMessage:full}", "MyMessage {888}");
 
 			var from = new Vid(1, 2, "aa");
 			var to = new Vid(3, 4, "bb");

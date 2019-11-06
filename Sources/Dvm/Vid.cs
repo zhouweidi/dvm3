@@ -6,9 +6,7 @@ namespace Dvm
 	{
 		public static readonly Vid Empty = new Vid(0, null);
 
-		public const string
-			ShortFormat = "s",
-			FullFormat = "f";
+		public const string FullFormat = "full";
 
 		readonly ulong m_data;
 		readonly string m_name;
@@ -105,7 +103,7 @@ namespace Dvm
 
 		public override string ToString()
 		{
-			return ToString(ShortFormat, null);
+			return ToString(null, null);
 		}
 
 		public string ToString(string format, IFormatProvider provider = null)
@@ -117,33 +115,27 @@ namespace Dvm
 			{
 				case null:
 				case "":
-				case ShortFormat:
-					{
-						if (string.IsNullOrEmpty(m_name))
-							return m_data.ToString("X");
-						else
-							return string.Format("{0}^{1}",
-												  m_data.ToString("X"),
-												  m_name);
-
-					}
+					if (string.IsNullOrEmpty(m_name))
+						return m_data.ToString("X");
+					else
+						return string.Format("{0}^{1}",
+											  m_data.ToString("X"),
+											  m_name);
 
 				case FullFormat:
+					// <cid>-<index>^<name>
+					if (string.IsNullOrEmpty(m_name))
 					{
-						// <cid>-<index>^<name>
-						if (string.IsNullOrEmpty(m_name))
-						{
-							return string.Format("{0}-{1}",
-												  Index.ToString("X"),
-												  Cid.ToString("X"));
-						}
-						else
-						{
-							return string.Format("{0}-{1}^{2}",
-												  Index.ToString("X"),
-												  Cid.ToString("X"),
-												  m_name);
-						}
+						return string.Format("{0}-{1}",
+											  Index.ToString("X"),
+											  Cid.ToString("X"));
+					}
+					else
+					{
+						return string.Format("{0}-{1}^{2}",
+											  Index.ToString("X"),
+											  Cid.ToString("X"),
+											  m_name);
 					}
 
 				default:
