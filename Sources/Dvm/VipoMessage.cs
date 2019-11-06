@@ -10,6 +10,9 @@ namespace Dvm
 
 		internal VipoMessage(Message body) // For system messages
 		{
+			if (body == null)
+				throw new ArgumentNullException(nameof(body));
+
 			From = Vid.Empty;
 			To = Vid.Empty;
 			Body = body;
@@ -17,6 +20,9 @@ namespace Dvm
 
 		public VipoMessage(Vid from, Vid to, Message body)
 		{
+			if (body == null)
+				throw new ArgumentNullException(nameof(body));
+
 			From = from;
 			To = to;
 			Body = body;
@@ -24,10 +30,7 @@ namespace Dvm
 
 		public override string ToString()
 		{
-			if (Body != null)
-				return $"{From}, {To}, {Body.ToString(Message.FullFormat)}";
-			else
-				return $"{From}, {To}, NULL";
+			return $"{From}, {To}, {Body.ToString(Message.FullFormat)}";
 		}
 	}
 
