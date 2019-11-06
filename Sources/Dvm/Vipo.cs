@@ -209,12 +209,12 @@ namespace Dvm
 			}
 		}
 
-		public void SendMessage(Vid to, Message body) // Can be called only in VP thread
+		public void Send(Vid to, Message body) // Can be called only in VP thread
 		{
-			SendMessage(new VipoMessage(m_vid, to, body));
+			Send(new VipoMessage(m_vid, to, body));
 		}
 
-		public void SendMessage(VipoMessage message) // Can be called only in VP thread
+		public void Send(VipoMessage message) // Can be called only in VP thread
 		{
 			if (Scheduler.VirtualProcessor.GetTickingVid() != m_vid)
 				throw new InvalidOperationException("It is not allowed to call SendMessage out of OnTick");

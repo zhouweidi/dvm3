@@ -44,7 +44,7 @@ namespace DvmTests.SchedulerTests
 				Console.WriteLine($"MyVipo '{Name}' ticks #{m_tickedCount}, messages [{JoinMessageBodies(tickTask.Messages)}]");
 
 				if (Vid == new Vid(1, 1, null))
-					SendMessage(new Vid(1, 2, null), DefaultMessageBody);
+					Send(new Vid(1, 2, null), DefaultMessageBody);
 			}
 		}
 	}
