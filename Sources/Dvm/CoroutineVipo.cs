@@ -277,6 +277,52 @@ namespace Dvm
 				message => handler(message, (TMessage)message.Body));
 		}
 
+		public YieldInstruction Call(Vid to, Message body, Action<VipoMessage> handler)
+		{
+			if (handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
+			Send(to, body);
+
+			return ReceiveFrom(to, handler);
+		}
+
+		public YieldInstruction Call(Vid to, Message body, Func<VipoMessage, bool> filter, Action<VipoMessage> handler)
+		{
+			if (filter == null)
+				throw new ArgumentNullException(nameof(filter));
+			if (handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
+			Send(to, body);
+
+			return ReceiveFrom(to, filter, handler);
+		}
+
+		public YieldInstruction Call<TMessage>(Vid to, Message body, Action<VipoMessage, TMessage> handler)
+			where TMessage : Message
+		{
+			if (handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
+			Send(to, body);
+
+			return ReceiveFrom(to, handler);
+		}
+
+		public YieldInstruction Call<TMessage>(Vid to, Message body, Func<VipoMessage, TMessage, bool> filter, Action<VipoMessage, TMessage> handler)
+			where TMessage : Message
+		{
+			if (filter == null)
+				throw new ArgumentNullException(nameof(filter));
+			if (handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
+			Send(to, body);
+
+			return ReceiveFrom(to, filter, handler);
+		}
+
 		public YieldInstruction React(Func<VipoMessage, bool> react)
 		{
 			if (react == null)

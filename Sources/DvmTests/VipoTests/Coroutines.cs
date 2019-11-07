@@ -365,5 +365,133 @@ namespace DvmTests.VipoTests
 		}
 
 		#endregion
+
+		#region Call
+
+		[TestMethod]
+		public void Call()
+		{
+			HookConsoleOutput();
+
+			var callee = TheScheduler.CreateVoroutine(CalleeVoroutine, "Callee");
+			callee.Start();
+
+			var caller = TheScheduler.CreateVoroutine(v => CallerVoroutine(v, callee.Vid), "Caller");
+			caller.Start();
+
+			Sleep();
+
+			//callee.Destroy();
+			//caller.Destroy();
+
+			Assert.AreEqual(callee.Stage, VipoStage.Destroyed);
+			Assert.AreEqual(caller.Stage, VipoStage.Destroyed);
+
+			var consoleOutput = GetConsoleOutput();
+			{
+				Assert.IsTrue(consoleOutput.Contains("'Caller' START"));
+				Assert.IsTrue(consoleOutput.Contains("'Caller' receives return message 'ResponseMessage {0}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Caller' receives return message 'ResponseMessage {1}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Caller' receives return message 'ResponseMessage {2}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Caller' receives return message 'ResponseMessage {444}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Caller' END"));
+
+				Assert.IsTrue(consoleOutput.Contains("'Callee' START"));
+				Assert.IsTrue(consoleOutput.Contains("'Callee' being called 'RequestMessage {11}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Callee' being called 'RequestMessage {22}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Callee' being called 'RequestMessage {33}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Callee' being called 'RequestMessage {44}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Callee' END"));
+			}
+		}
+
+		class RequestMessage : Message
+		{
+			public int Value { get; private set; }
+
+			public RequestMessage(int value)
+			{
+				Value = value;
+			}
+
+			public override string ToString()
+			{
+				return Value.ToString();
+			}
+		}
+
+		class ResponseMessage : Message
+		{
+			public int Value { get; private set; }
+
+			public ResponseMessage(int value)
+			{
+				Value = value;
+			}
+
+			public override string ToString()
+			{
+				return Value.ToString();
+			}
+		}
+
+		IEnumerator CalleeVoroutine(CoroutineVipo v)
+		{
+			Console.WriteLine($"'{v.Name}' START");
+
+			int count = 0;
+
+			yield return v.React(
+				message =>
+				{
+					Console.WriteLine($"'{v.Name}' being called '{message.Body:full}'");
+
+					var mm = message.Body as RequestMessage;
+					Assert.IsNotNull(mm);
+
+					v.Send(message.From, new ResponseMessage(mm.Value == 44 ? 444 : count));
+
+					count++;
+
+					return count != 4;
+				});
+
+			Console.WriteLine($"'{v.Name}' END");
+		}
+
+		IEnumerator CallerVoroutine(CoroutineVipo v, Vid callee)
+		{
+			Console.WriteLine($"'{v.Name}' START");
+
+			yield return v.Call(callee, new RequestMessage(11),
+				message =>
+				{
+					Console.WriteLine($"'{v.Name}' receives return message '{message.Body:full}'");
+				});
+
+			yield return v.Call(callee, new RequestMessage(22),
+				message => message.Body is ResponseMessage,
+				message =>
+				{
+					Console.WriteLine($"'{v.Name}' receives return message '{message.Body:full}'");
+				});
+
+			yield return v.Call<ResponseMessage>(callee, new RequestMessage(33),
+				(message, body) =>
+				{
+					Console.WriteLine($"'{v.Name}' receives return message '{message.Body:full}'");
+				});
+
+			yield return v.Call<ResponseMessage>(callee, new RequestMessage(44),
+				(message, body) => body.Value == 444,
+				(message, body) =>
+				{
+					Console.WriteLine($"'{v.Name}' receives return message '{message.Body:full}'");
+				});
+
+			Console.WriteLine($"'{v.Name}' END");
+		}
+
+		#endregion
 	}
 }
