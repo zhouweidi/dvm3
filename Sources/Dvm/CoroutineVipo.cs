@@ -223,6 +223,60 @@ namespace Dvm
 				message => handler(message, (TMessage)message.Body));
 		}
 
+		public YieldInstruction ReceiveFrom(Vid from, Action<VipoMessage> handler)
+		{
+			if (from.IsEmpty)
+				throw new ArgumentException("from is empty", nameof(from));
+			if (handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
+			return new ReceiveYield(
+				message => message.From == from,
+				handler);
+		}
+
+		public YieldInstruction ReceiveFrom(Vid from, Func<VipoMessage, bool> filter, Action<VipoMessage> handler)
+		{
+			if (from.IsEmpty)
+				throw new ArgumentException("from is empty", nameof(from));
+			if (filter == null)
+				throw new ArgumentNullException(nameof(filter));
+			if (handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
+			return new ReceiveYield(
+				message => message.From == from && filter(message),
+				handler);
+		}
+
+		public YieldInstruction ReceiveFrom<TMessage>(Vid from, Action<VipoMessage, TMessage> handler)
+			where TMessage : Message
+		{
+			if (from.IsEmpty)
+				throw new ArgumentException("from is empty", nameof(from));
+			if (handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
+			return new ReceiveYield(
+				message => message.Body is TMessage && message.From == from,
+				message => handler(message, (TMessage)message.Body));
+		}
+
+		public YieldInstruction ReceiveFrom<TMessage>(Vid from, Func<VipoMessage, TMessage, bool> filter, Action<VipoMessage, TMessage> handler)
+			where TMessage : Message
+		{
+			if (from.IsEmpty)
+				throw new ArgumentException("from is empty", nameof(from));
+			if (filter == null)
+				throw new ArgumentNullException(nameof(filter));
+			if (handler == null)
+				throw new ArgumentNullException(nameof(handler));
+
+			return new ReceiveYield(
+				message => message.Body is TMessage && message.From == from && filter(message, (TMessage)message.Body),
+				message => handler(message, (TMessage)message.Body));
+		}
+
 		public YieldInstruction React(Func<VipoMessage, bool> react)
 		{
 			if (react == null)

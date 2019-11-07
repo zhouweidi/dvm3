@@ -27,7 +27,7 @@ namespace DvmTests.VipoTests
 
 		#region Basic
 
-		void SenderVoroutine(CoroutineVipo v, Vid receiver1, Vid receiver2)
+		void SenderVoroutine(CoroutineVipo v, Vid receiver1, Vid receiver2, Vid receiver3)
 		{
 			Console.WriteLine($"'{v.Name}' START");
 
@@ -40,6 +40,12 @@ namespace DvmTests.VipoTests
 			v.Send(receiver2, new MyMessage(0));
 			v.Send(receiver2, new MyMessage(1));
 			v.Send(receiver2, new MyMessage(2));
+
+			v.Send(receiver3, DefaultMessageBody);
+			v.Send(new VipoMessage(v.Vid, receiver3, DefaultMessageBody));
+			v.Send(receiver3, new MyMessage(0));
+			v.Send(receiver3, new MyMessage(1));
+			v.Send(receiver3, new MyMessage(2));
 
 			Console.WriteLine($"'{v.Name}' END");
 		}
@@ -118,24 +124,68 @@ namespace DvmTests.VipoTests
 			Console.WriteLine($"'{v.Name}' END");
 		}
 
+		IEnumerator ReceiverFromVoroutine(CoroutineVipo v)
+		{
+			Console.WriteLine($"'{v.Name}' START");
+
+			Vid from = Vid.Empty;
+
+			yield return v.Receive(
+				message => from = message.From);
+
+			yield return v.ReceiveFrom(
+				from,
+				message =>
+				{
+					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+				});
+
+			yield return v.ReceiveFrom(
+				from,
+				message => message.Body is MyMessage,
+				message =>
+				{
+					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+				});
+
+			yield return v.ReceiveFrom<MyMessage>(
+				from,
+				(message, body) =>
+				{
+					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+				});
+
+			yield return v.ReceiveFrom<MyMessage>(
+				from,
+				(message, body) => body.Value == 2,
+				(message, body) =>
+				{
+					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+				});
+
+			Console.WriteLine($"'{v.Name}' END");
+		}
+
 		[TestMethod]
 		public void Basic()
 		{
 			HookConsoleOutput();
 
 			var receiver1 = new ReceiverVipo(TheScheduler, "Receiver1");
-			receiver1.Start();
-
 			var receiver2 = TheScheduler.CreateVoroutine(ReceiverVoroutine, "Receiver2");
-			receiver2.Start();
+			var receiver3 = TheScheduler.CreateVoroutine(ReceiverFromVoroutine, "Receiver3");
+			var sender = TheScheduler.CreateVoroutineMinor(v => SenderVoroutine(v, receiver1.Vid, receiver2.Vid, receiver3.Vid), "Sender");
 
-			var sender = TheScheduler.CreateVoroutineMinor(v => SenderVoroutine(v, receiver1.Vid, receiver2.Vid), "Sender");
+			receiver1.Start();
+			receiver2.Start();
+			receiver3.Start();
 			sender.Start();
 
 			Sleep();
 
 			//receiver1.Destroy();
 			//receiver2.Destroy();
+			//receiver3.Destroy();
 			//sender.Destroy();
 
 			Assert.AreEqual(receiver1.Stage, VipoStage.Destroyed);
@@ -157,6 +207,13 @@ namespace DvmTests.VipoTests
 				Assert.IsTrue(consoleOutput.Contains("'Receiver2' receives message 'MyMessage {1}'"));
 				Assert.IsTrue(consoleOutput.Contains("'Receiver2' receives message 'MyMessage {2}'"));
 				Assert.IsTrue(consoleOutput.Contains("'Receiver2' END"));
+
+				Assert.IsTrue(consoleOutput.Contains("'Receiver3' START"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver3' receives message 'Message {MessageBase}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver3' receives message 'MyMessage {0}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver3' receives message 'MyMessage {1}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver3' receives message 'MyMessage {2}'"));
+				Assert.IsTrue(consoleOutput.Contains("'Receiver3' END"));
 
 				Assert.IsTrue(consoleOutput.Contains("'Sender' START"));
 				Assert.IsTrue(consoleOutput.Contains("'Sender' END"));
