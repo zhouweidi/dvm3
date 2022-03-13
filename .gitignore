@@ -1,0 +1,9 @@
+﻿################################################################################
+# 此 .gitignore 文件已由 Microsoft(R) Visual Studio 自动创建。
+################################################################################
+
+/Sources/Dvm/bin
+/Sources/Dvm/obj
+/Sources/DvmTests/bin
+/Sources/DvmTests/obj
+/Sources/.vs
