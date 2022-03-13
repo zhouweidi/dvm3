@@ -8,7 +8,7 @@ namespace DvmTests.SchedulerTests
 	[TestClass]
 	public class TestSchedulerBase : TestBase
 	{
-		Scheduler m_scheduler;
+		VirtualMachine m_vm;
 		CancellationTokenSource m_cts;
 		ManualResetEvent m_exceptionOccured = new ManualResetEvent(false);
 
@@ -18,22 +18,22 @@ namespace DvmTests.SchedulerTests
 			base.Initialize();
 
 			m_cts = new CancellationTokenSource();
-			m_scheduler = new Scheduler(4, m_cts.Token);
+			m_vm = new VirtualMachine(4, m_cts.Token);
 
-			m_scheduler.OnError += OnError;
+			m_vm.OnError += OnError;
 
-			Assert.AreEqual(m_scheduler.State, SchedulerState.Running);
+			Assert.AreEqual(m_vm.State, VirtualMachineState.Running);
 		}
 
 		[TestCleanup]
 		public override void Cleanup()
 		{
-			Assert.IsNull(m_scheduler.Exception);
-			Assert.AreEqual(m_scheduler.State, SchedulerState.Running);
+			Assert.IsNull(m_vm.Exception);
+			Assert.AreEqual(m_vm.State, VirtualMachineState.Running);
 
 			m_cts.Cancel();
 
-			DisposableObject.SafeDispose(ref m_scheduler);
+			DisposableObject.SafeDispose(ref m_vm);
 			DisposableObject.SafeDispose(ref m_cts);
 
 			base.Cleanup();
@@ -49,9 +49,9 @@ namespace DvmTests.SchedulerTests
 			Assert.IsFalse(m_exceptionOccured.WaitOne((int)(seconds * 1000)));
 		}
 
-		internal Scheduler TheScheduler
+		internal VirtualMachine TheVM
 		{
-			get { return m_scheduler; }
+			get { return m_vm; }
 		}
 	}
 }

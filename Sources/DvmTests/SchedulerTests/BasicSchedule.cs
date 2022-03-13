@@ -11,8 +11,8 @@ namespace DvmTests.SchedulerTests
 		[TestMethod]
 		public void AddNewVipos()
 		{
-			var a = new MyVipo(TheScheduler, "a");
-			var b = new MyVipo(TheScheduler, "b");
+			var a = new MyVipo(TheVM, "a");
+			var b = new MyVipo(TheVM, "b");
 
 			a.Start();
 			b.Start();
@@ -30,16 +30,16 @@ namespace DvmTests.SchedulerTests
 		{
 			int m_tickedCount;
 
-			public MyVipo(Scheduler scheduler, string name)
-				: base(scheduler, name, CallbackOptions.All)
+			public MyVipo(VirtualMachine vm, string name)
+				: base(vm, name, CallbackOptions.All)
 			{
 			}
 
-			protected override void OnTick(TickTask tickTask)
+			protected override void OnTick(VipoJob job)
 			{
 				++m_tickedCount;
 
-				Console.WriteLine($"MyVipo '{Name}' ticks #{m_tickedCount}, messages [{string.Join(',', tickTask.Messages)}]");
+				Console.WriteLine($"MyVipo '{Name}' ticks #{m_tickedCount}, messages [{string.Join(',', job.Messages)}]");
 			}
 		}
 	}

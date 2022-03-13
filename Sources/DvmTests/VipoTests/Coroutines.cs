@@ -52,8 +52,8 @@ namespace DvmTests.VipoTests
 
 		class ReceiverVipo : CoroutineVipo
 		{
-			public ReceiverVipo(Scheduler scheduler, string name)
-				: base(scheduler, name, CallbackOptions.None)
+			public ReceiverVipo(VirtualMachine vm, string name)
+				: base(vm, name, CallbackOptions.None)
 			{
 			}
 
@@ -171,10 +171,10 @@ namespace DvmTests.VipoTests
 		{
 			HookConsoleOutput();
 
-			var receiver1 = new ReceiverVipo(TheScheduler, "Receiver1");
-			var receiver2 = TheScheduler.CreateVoroutine(ReceiverVoroutine, "Receiver2");
-			var receiver3 = TheScheduler.CreateVoroutine(ReceiverFromVoroutine, "Receiver3");
-			var sender = TheScheduler.CreateVoroutineMinor(v => SenderVoroutine(v, receiver1.Vid, receiver2.Vid, receiver3.Vid), "Sender");
+			var receiver1 = new ReceiverVipo(TheVM, "Receiver1");
+			var receiver2 = TheVM.CreateVoroutine(ReceiverVoroutine, "Receiver2");
+			var receiver3 = TheVM.CreateVoroutine(ReceiverFromVoroutine, "Receiver3");
+			var sender = TheVM.CreateVoroutineMinor(v => SenderVoroutine(v, receiver1.Vid, receiver2.Vid, receiver3.Vid), "Sender");
 
 			receiver1.Start();
 			receiver2.Start();
@@ -229,10 +229,10 @@ namespace DvmTests.VipoTests
 		{
 			HookConsoleOutput();
 
-			var reacter = TheScheduler.CreateVoroutine(ReactVoroutine, "Reacter");
+			var reacter = TheVM.CreateVoroutine(ReactVoroutine, "Reacter");
 			reacter.Start();
 
-			var producer = TheScheduler.CreateVoroutineMinor(v => ProducerVoroutine(v, reacter.Vid), "Producer");
+			var producer = TheVM.CreateVoroutineMinor(v => ProducerVoroutine(v, reacter.Vid), "Producer");
 			producer.Start();
 
 			Sleep();
@@ -310,10 +310,10 @@ namespace DvmTests.VipoTests
 		{
 			HookConsoleOutput();
 
-			var waiter = TheScheduler.CreateVoroutine(WaiterVoroutine, "Waiter");
+			var waiter = TheVM.CreateVoroutine(WaiterVoroutine, "Waiter");
 			waiter.Start();
 
-			var producer = TheScheduler.CreateVoroutineMinor(v => ProducerVoroutine(v, waiter.Vid), "Producer");
+			var producer = TheVM.CreateVoroutineMinor(v => ProducerVoroutine(v, waiter.Vid), "Producer");
 			producer.Start();
 
 			Sleep();
@@ -373,10 +373,10 @@ namespace DvmTests.VipoTests
 		{
 			HookConsoleOutput();
 
-			var callee = TheScheduler.CreateVoroutine(CalleeVoroutine, "Callee");
+			var callee = TheVM.CreateVoroutine(CalleeVoroutine, "Callee");
 			callee.Start();
 
-			var caller = TheScheduler.CreateVoroutine(v => CallerVoroutine(v, callee.Vid), "Caller");
+			var caller = TheVM.CreateVoroutine(v => CallerVoroutine(v, callee.Vid), "Caller");
 			caller.Start();
 
 			Sleep();

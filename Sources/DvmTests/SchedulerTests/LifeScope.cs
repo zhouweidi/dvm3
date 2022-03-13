@@ -12,30 +12,30 @@ namespace DvmTests.SchedulerTests
 		{
 			using (var cts = new CancellationTokenSource())
 			{
-				var scheduler = new Scheduler(4, cts.Token);
-				using (scheduler)
+				var vm = new VirtualMachine(4, cts.Token);
+				using (vm)
 				{
-					Assert.AreEqual(scheduler.State, SchedulerState.Running);
+					Assert.AreEqual(vm.State, VirtualMachineState.Running);
 					Sleep();
 				}
 
-				Assert.AreEqual(scheduler.State, SchedulerState.Stopped);
-				Assert.IsNull(scheduler.Exception);
+				Assert.AreEqual(vm.State, VirtualMachineState.End);
+				Assert.IsNull(vm.Exception);
 			}
 		}
 
 		[TestMethod]
 		public void NoCancellationToken()
 		{
-			var scheduler = new Scheduler(4, CancellationToken.None);
-			using (scheduler)
+			var vm = new VirtualMachine(4, CancellationToken.None);
+			using (vm)
 			{
-				Assert.AreEqual(scheduler.State, SchedulerState.Running);
+				Assert.AreEqual(vm.State, VirtualMachineState.Running);
 				Sleep();
 			}
 
-			Assert.AreEqual(scheduler.State, SchedulerState.Stopped);
-			Assert.IsNull(scheduler.Exception);
+			Assert.AreEqual(vm.State, VirtualMachineState.End);
+			Assert.IsNull(vm.Exception);
 		}
 
 		[TestMethod]
@@ -43,17 +43,17 @@ namespace DvmTests.SchedulerTests
 		{
 			using (var cts = new CancellationTokenSource())
 			{
-				var scheduler = new Scheduler(4, cts.Token);
-				using (scheduler)
+				var vm = new VirtualMachine(4, cts.Token);
+				using (vm)
 				{
-					Assert.AreEqual(scheduler.State, SchedulerState.Running);
+					Assert.AreEqual(vm.State, VirtualMachineState.Running);
 
 					Sleep();
 					cts.Cancel();
 				}
 
-				Assert.AreEqual(scheduler.State, SchedulerState.Stopped);
-				Assert.IsNull(scheduler.Exception);
+				Assert.AreEqual(vm.State, VirtualMachineState.End);
+				Assert.IsNull(vm.Exception);
 			}
 		}
 
@@ -62,17 +62,17 @@ namespace DvmTests.SchedulerTests
 		{
 			using (var cts = new CancellationTokenSource())
 			{
-				var scheduler = new Scheduler(4, cts.Token);
-				using (scheduler)
+				var vm = new VirtualMachine(4, cts.Token);
+				using (vm)
 				{
-					Assert.AreEqual(scheduler.State, SchedulerState.Running);
+					Assert.AreEqual(vm.State, VirtualMachineState.Running);
 
 					cts.Cancel();
 					Sleep();
 				}
 
-				Assert.AreEqual(scheduler.State, SchedulerState.Stopped);
-				Assert.IsNull(scheduler.Exception);
+				Assert.AreEqual(vm.State, VirtualMachineState.End);
+				Assert.IsNull(vm.Exception);
 			}
 		}
 	}

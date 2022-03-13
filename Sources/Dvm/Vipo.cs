@@ -11,9 +11,9 @@ namespace Dvm
 
 	public abstract class Vipo
 	{
-		readonly Scheduler m_scheduler;
+		readonly VirtualMachine m_vm;
 		readonly Vid m_vid;
-		CallbackOptions m_callbackOptions;
+		readonly CallbackOptions m_callbackOptions;
 		CallState m_startCallState = CallState.NotRequested;
 		CallState m_destroyCallState = CallState.NotRequested;
 		SpinLock m_statesLock = new SpinLock();
@@ -34,13 +34,10 @@ namespace Dvm
 			All = OnStart | OnDestroy,
 		}
 
-		protected Vipo(Scheduler scheduler, string name, CallbackOptions callbackOptions)
+		protected Vipo(VirtualMachine vm, string name, CallbackOptions callbackOptions)
 		{
-			if (scheduler == null)
-				throw new ArgumentNullException(nameof(scheduler));
-
-			m_scheduler = scheduler;
-			m_vid = scheduler.CreateVid(name);
+			m_vm = vm ?? throw new ArgumentNullException(nameof(vm));
+			m_vid = vm.CreateVid(name);
 			m_callbackOptions = callbackOptions;
 		}
 
@@ -93,7 +90,7 @@ namespace Dvm
 			 });
 
 			if (r)
-				m_scheduler.AddScheduleTask(new VipoStart(this));
+				m_vm.AddScheduleRequest(new VipoStart(this));
 		}
 
 		public void Destroy() // Can be called in any thread
@@ -125,7 +122,7 @@ namespace Dvm
 			 });
 
 			if (r)
-				m_scheduler.AddScheduleTask(new VipoDestroy(this));
+				m_vm.AddScheduleRequest(new VipoDestroy(this));
 		}
 
 		public void Schedule() // Can be called in any thread
@@ -156,12 +153,12 @@ namespace Dvm
 			 });
 
 			if (r)
-				m_scheduler.AddScheduleTask(new VipoSchedule(this));
+				m_vm.AddScheduleRequest(new VipoSchedule(this));
 		}
 
-		internal void Tick(TickTask tickTask)
+		internal void Tick(VipoJob job)
 		{
-			if (!tickTask.AnyRequest && tickTask.Messages.Count == 0)
+			if (!job.AnyRequest && job.Messages.Count == 0)
 				throw new VipoFaultException(m_vid, "No message/request to tick");
 
 			bool isCallingDestroy = false;
@@ -169,7 +166,7 @@ namespace Dvm
 			try
 			{
 				// OnStart
-				if (tickTask.StartRequest)
+				if (job.StartRequest)
 				{
 					OnStart();
 
@@ -177,10 +174,10 @@ namespace Dvm
 				}
 
 				// OnTick
-				OnTick(tickTask);
+				OnTick(job);
 
 				// OnDestroy
-				if (tickTask.DestroyRequest)
+				if (job.DestroyRequest)
 				{
 					isCallingDestroy = true;
 					OnDestroy();
@@ -216,7 +213,7 @@ namespace Dvm
 
 		public void Send(VipoMessage message) // Can be called only in VP thread
 		{
-			if (Scheduler.VirtualProcessor.GetTickingVid() != m_vid)
+			if (VmProcessor.GetTickingVid() != m_vid)
 				throw new InvalidOperationException("It is not allowed to call Send out of OnTick");
 
 			if (message.From.IsEmpty)
@@ -296,7 +293,7 @@ namespace Dvm
 		protected virtual void OnDestroy()
 		{ }
 
-		protected abstract void OnTick(TickTask tickTask);
+		protected abstract void OnTick(VipoJob job);
 
 		// It's called when OnStart, OnDestroy or OnTick raises an exception.
 		// If OnError raises another exception, it will be ignored and OnDestroy will be skipped neither.
@@ -309,9 +306,9 @@ namespace Dvm
 
 		#region Properties
 
-		public Scheduler Scheduler
+		public VirtualMachine VM
 		{
-			get { return m_scheduler; }
+			get { return m_vm; }
 		}
 
 		public Vid Vid

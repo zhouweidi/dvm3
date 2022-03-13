@@ -27,18 +27,18 @@ namespace DvmTests.VipoTests
 		{
 			Assert.ThrowsException<TestException>(() =>
 			{
-				new MyVipo(TheScheduler, ExceptionPosition.Constructor);
+				new MyVipo(TheVM, ExceptionPosition.Constructor);
 			});
 
 			var vipos = new[]
 				{
-					new MyVipo(TheScheduler, ExceptionPosition.OnStart),
-					new MyVipo(TheScheduler, ExceptionPosition.OnTick),
-					new MyVipo(TheScheduler, ExceptionPosition.OnDestroy),
-					new MyVipo(TheScheduler, ExceptionPosition.OnError),
+					new MyVipo(TheVM, ExceptionPosition.OnStart),
+					new MyVipo(TheVM, ExceptionPosition.OnTick),
+					new MyVipo(TheVM, ExceptionPosition.OnDestroy),
+					new MyVipo(TheVM, ExceptionPosition.OnError),
 				};
 
-			var safe = new MyVipo(TheScheduler, ExceptionPosition.None);
+			var safe = new MyVipo(TheVM, ExceptionPosition.None);
 
 			foreach (var v in vipos.Append(safe))
 				v.Start();
@@ -55,15 +55,15 @@ namespace DvmTests.VipoTests
 
 			Assert.IsNull(safe.Exception);
 
-			Assert.IsNull(TheScheduler.Exception);
+			Assert.IsNull(TheVM.Exception);
 		}
 
 		class MyVipo : Vipo
 		{
 			ExceptionPosition m_throwExceptionAt;
 
-			public MyVipo(Scheduler scheduler, ExceptionPosition at)
-				: base(scheduler, at.ToString(), CallbackOptions.All)
+			public MyVipo(VirtualMachine vm, ExceptionPosition at)
+				: base(vm, at.ToString(), CallbackOptions.All)
 			{
 				m_throwExceptionAt = at;
 
@@ -87,7 +87,7 @@ namespace DvmTests.VipoTests
 				base.OnDestroy();
 			}
 
-			protected override void OnTick(TickTask tickTask)
+			protected override void OnTick(VipoJob job)
 			{
 				if (m_throwExceptionAt == ExceptionPosition.OnTick)
 					throw new TestException("OnTick");

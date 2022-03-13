@@ -25,22 +25,14 @@ namespace Dvm
 			int disposed = Interlocked.CompareExchange(ref m_disposed, 1, 0);
 			if (disposed == 0)
 			{
-				DisposeUnmanaged(explicitCall);
+				OnDispose(explicitCall);
 
 				if (explicitCall)
-				{
-					DisposeManaged();
-
 					GC.SuppressFinalize(this);
-				}
 			}
 		}
 
-		protected virtual void DisposeManaged()
-		{ }
-
-		protected virtual void DisposeUnmanaged(bool explicitCall)
-		{ }
+		protected abstract void OnDispose(bool explicitCall);
 
 		protected void CheckDisposed()
 		{

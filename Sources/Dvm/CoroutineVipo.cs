@@ -53,23 +53,23 @@ namespace Dvm
 
 	public abstract class CoroutineVipo : Vipo
 	{
-		public TickTask TickTask { get; private set; }
+		public VipoJob Job { get; private set; }
 
 		IEnumerator m_enumerator;
 		bool m_finished;
 		MessageYield m_messageYield;
 
-		protected CoroutineVipo(Scheduler scheduler, string name, CallbackOptions callbackOptions)
-			: base(scheduler, name, callbackOptions)
+		protected CoroutineVipo(VirtualMachine vm, string name, CallbackOptions callbackOptions)
+			: base(vm, name, callbackOptions)
 		{
 		}
 
-		protected override void OnTick(TickTask tickTask)
+		protected override void OnTick(VipoJob job)
 		{
 			if (m_finished)
 				return;
 
-			TickTask = tickTask;
+			Job = job;
 
 			try
 			{
@@ -128,7 +128,7 @@ namespace Dvm
 			}
 			finally
 			{
-				TickTask = null;
+				Job = null;
 			}
 		}
 
@@ -340,7 +340,7 @@ namespace Dvm
 
 		public IReadOnlyList<VipoMessage> InMessages
 		{
-			get { return TickTask.Messages; }
+			get { return Job.Messages; }
 		}
 	}
 
@@ -353,8 +353,8 @@ namespace Dvm
 		Voroutine m_voroutine;
 		Action<Exception> m_handleError;
 
-		public VoroutineObject(Voroutine voroutine, Action<Exception> handleError, Scheduler scheduler, string name)
-			: base(scheduler, name, CallbackOptions.None)
+		public VoroutineObject(Voroutine voroutine, Action<Exception> handleError, VirtualMachine vm, string name)
+			: base(vm, name, CallbackOptions.None)
 		{
 			if (voroutine == null)
 				throw new ArgumentNullException(nameof(voroutine));
@@ -384,8 +384,8 @@ namespace Dvm
 		MinorVoroutine m_voroutine;
 		Action<Exception> m_handleError;
 
-		public MinorVoroutineObject(MinorVoroutine voroutine, Action<Exception> handleError, Scheduler scheduler, string name)
-			: base(scheduler, name, CallbackOptions.None)
+		public MinorVoroutineObject(MinorVoroutine voroutine, Action<Exception> handleError, VirtualMachine vm, string name)
+			: base(vm, name, CallbackOptions.None)
 		{
 			if (voroutine == null)
 				throw new ArgumentNullException(nameof(voroutine));
@@ -412,24 +412,24 @@ namespace Dvm
 
 	public static class VoroutineExtension
 	{
-		public static CoroutineVipo CreateVoroutine(this Scheduler scheduler, Voroutine procedure, string name = null)
+		public static CoroutineVipo CreateVoroutine(this VirtualMachine vm, Voroutine procedure, string name = null)
 		{
-			return new VoroutineObject(procedure, null, scheduler, name);
+			return new VoroutineObject(procedure, null, vm, name);
 		}
 
-		public static CoroutineVipo CreateVoroutine(this Scheduler scheduler, Voroutine procedure, Action<Exception> handleError, string name = null)
+		public static CoroutineVipo CreateVoroutine(this VirtualMachine vm, Voroutine procedure, Action<Exception> handleError, string name = null)
 		{
-			return new VoroutineObject(procedure, handleError, scheduler, name);
+			return new VoroutineObject(procedure, handleError, vm, name);
 		}
 
-		public static CoroutineVipo CreateVoroutineMinor(this Scheduler scheduler, MinorVoroutine procedure, string name = null)
+		public static CoroutineVipo CreateVoroutineMinor(this VirtualMachine vm, MinorVoroutine procedure, string name = null)
 		{
-			return new MinorVoroutineObject(procedure, null, scheduler, name);
+			return new MinorVoroutineObject(procedure, null, vm, name);
 		}
 
-		public static CoroutineVipo CreateVoroutineMinor(this Scheduler scheduler, MinorVoroutine procedure, Action<Exception> handleError, string name = null)
+		public static CoroutineVipo CreateVoroutineMinor(this VirtualMachine vm, MinorVoroutine procedure, Action<Exception> handleError, string name = null)
 		{
-			return new MinorVoroutineObject(procedure, handleError, scheduler, name);
+			return new MinorVoroutineObject(procedure, handleError, vm, name);
 		}
 	}
 

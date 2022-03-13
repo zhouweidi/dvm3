@@ -17,7 +17,7 @@ namespace DvmTests.VipoTests
 		{
 			HookConsoleOutput();
 
-			var v = new MyVipo(TheScheduler, "a");
+			var v = new MyVipo(TheVM, "a");
 
 			Assert.AreEqual(v.Stage, VipoStage.NotStarted);
 			v.Start();
@@ -47,8 +47,8 @@ namespace DvmTests.VipoTests
 		{
 			int m_tickedCount;
 
-			public MyVipo(Scheduler scheduler, string name)
-				: base(scheduler, name, CallbackOptions.All)
+			public MyVipo(VirtualMachine vm, string name)
+				: base(vm, name, CallbackOptions.All)
 			{
 				Assert.AreEqual(Stage, VipoStage.NotStarted);
 			}
@@ -67,23 +67,23 @@ namespace DvmTests.VipoTests
 				base.OnDestroy();
 			}
 
-			protected override void OnTick(TickTask tickTask)
+			protected override void OnTick(VipoJob job)
 			{
 				var requests = new List<string>();
 				{
-					if (tickTask.StartRequest)
+					if (job.StartRequest)
 					{
 						Assert.AreEqual(Stage, VipoStage.Running);
 						requests.Add("Start");
 					}
 
-					if (tickTask.DestroyRequest)
+					if (job.DestroyRequest)
 					{
 						Assert.AreEqual(Stage, VipoStage.DestroyRequested);
 						requests.Add("Destroy");
 					}
 
-					if (!tickTask.AnyRequest)
+					if (!job.AnyRequest)
 					{
 						Assert.AreEqual(Stage, VipoStage.Running);
 						requests.Add("None");
@@ -92,7 +92,7 @@ namespace DvmTests.VipoTests
 
 				++m_tickedCount;
 
-				Console.WriteLine($"MyVipo '{Name}' ticks #{m_tickedCount}, requests '{string.Join('|', requests)}', messages [{JoinMessageBodies(tickTask.Messages)}]");
+				Console.WriteLine($"MyVipo '{Name}' ticks #{m_tickedCount}, requests '{string.Join('|', requests)}', messages [{JoinMessageBodies(job.Messages)}]");
 			}
 
 			protected override void OnError(Exception e)
@@ -110,7 +110,7 @@ namespace DvmTests.VipoTests
 		{
 			HookConsoleOutput();
 
-			var v = new MyVipoWithoutCallback(TheScheduler, "a");
+			var v = new MyVipoWithoutCallback(TheVM, "a");
 			v.Start();
 
 			Sleep();
@@ -130,8 +130,8 @@ namespace DvmTests.VipoTests
 		{
 			int m_tickedCount;
 
-			public MyVipoWithoutCallback(Scheduler scheduler, string name)
-				: base(scheduler, name, CallbackOptions.None)
+			public MyVipoWithoutCallback(VirtualMachine vm, string name)
+				: base(vm, name, CallbackOptions.None)
 			{
 			}
 
@@ -145,7 +145,7 @@ namespace DvmTests.VipoTests
 				Assert.Fail("Unexcepted being called");
 			}
 
-			protected override void OnTick(TickTask tickTask)
+			protected override void OnTick(VipoJob job)
 			{
 				++m_tickedCount;
 
