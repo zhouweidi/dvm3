@@ -4,9 +4,11 @@ using System.Threading;
 
 namespace Dvm
 {
-	public class DisposableObject : IDisposable
+	public abstract class DisposableObject : IDisposable
 	{
 		volatile int m_disposed;
+
+		public bool Disposed => m_disposed != 0;
 
 		~DisposableObject()
 		{
@@ -16,11 +18,6 @@ namespace Dvm
 		public void Dispose()
 		{
 			Dispose(true);
-		}
-
-		public bool Disposed
-		{
-			get { return m_disposed != 0; }
 		}
 
 		void Dispose(bool explicitCall)
@@ -71,7 +68,7 @@ namespace Dvm
 			if (obj != null)
 			{
 				obj.Dispose();
-				obj = default(T);
+				obj = default;
 
 				return true;
 			}
@@ -81,8 +78,7 @@ namespace Dvm
 
 		public static bool TryDispose(object obj)
 		{
-			var d = obj as IDisposable;
-			if (d != null)
+			if (obj is IDisposable d)
 			{
 				d.Dispose();
 				return true;
@@ -93,11 +89,10 @@ namespace Dvm
 
 		public static bool TryDispose<T>(ref T obj)
 		{
-			var d = obj as IDisposable;
-			if (d != null)
+			if (obj is IDisposable d)
 			{
 				d.Dispose();
-				obj = default(T);
+				obj = default;
 
 				return true;
 			}
@@ -124,8 +119,7 @@ namespace Dvm
 			{
 				foreach (var obj in objects)
 				{
-					var d = obj as IDisposable;
-					if (d != null)
+					if (obj is IDisposable d)
 						d.Dispose();
 				}
 			}
