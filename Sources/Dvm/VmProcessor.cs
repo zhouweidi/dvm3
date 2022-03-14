@@ -9,13 +9,13 @@ namespace Dvm
 		readonly VmScheduler m_scheduler;
 		readonly int m_index;
 		readonly ManualResetEventSlim m_tickSignal = new ManualResetEventSlim(false);
-		readonly Queue<VipoJob> m_jobs = new Queue<VipoJob>();
+		readonly Queue<VipoJob> m_jobsCache = new Queue<VipoJob>();
 
 		#region Properties
 
 		VmExecutor Executor => m_scheduler.Executor;
 		public int Index => m_index;
-		public Queue<VipoJob> Jobs => m_jobs;
+		public Queue<VipoJob> JobsCache => m_jobsCache;
 		
 		#endregion
 
@@ -34,7 +34,7 @@ namespace Dvm
 				m_tickSignal.Dispose();
 		}
 
-		public void TriggerRun()
+		public void Start()
 		{
 			m_tickSignal.Set();
 		}
@@ -94,7 +94,7 @@ namespace Dvm
 			Thread.SetData(TickingVidDataSlot, vid.Data);
 		}
 
-		internal static Vid GetTickingVid()
+		public static Vid GetTickingVid()
 		{
 			return new Vid((ulong)Thread.GetData(TickingVidDataSlot), null);
 		}

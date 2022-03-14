@@ -10,10 +10,9 @@ namespace Dvm
 		readonly IVmThreadController m_controller;
 		readonly VmProcessor[] m_processors;
 		readonly IndexBag m_idleProcessors;
-		int m_idleProcessorIndex = -1;
 
 		readonly object m_runningViposLock = new object();
-		readonly Dictionary<Vipo, VmProcessor> m_runningVipos = new Dictionary<Vipo, VmProcessor>();
+		readonly Dictionary<Vipo, VmProcessor> m_runningProcessor = new Dictionary<Vipo, VmProcessor>();
 
 		#region Properties
 
@@ -49,29 +48,29 @@ namespace Dvm
 		{
 			foreach (var job in jobs)
 			{
+				// Push to a current processor running the same vipo
 				lock (m_runningViposLock)
 				{
-					if (m_runningVipos.TryGetValue(job.Vipo, out VmProcessor processor))
+					if (m_runningProcessor.TryGetValue(job.Vipo, out VmProcessor processor))
 					{
-						processor.Jobs.Enqueue(job);
+						processor.JobsCache.Enqueue(job);
 						continue;
 					}
 				}
 
-				if (m_idleProcessorIndex < 0)
-					m_idleProcessorIndex = m_idleProcessors.Take(m_controller.EndToken);
+				// Get an idle processor
+				var idleProcessorIndex = m_idleProcessors.Take(m_controller.EndToken);
+				var idleProcessor = m_processors[idleProcessorIndex];
 
 				lock (m_runningViposLock)
 				{
-					var idleProcessor = m_processors[m_idleProcessorIndex];
-					if (idleProcessor.Jobs.Count != 0)
+					if (idleProcessor.JobsCache.Count != 0)
 						throw new KernelFaultException("Expecting the idle virtual process has no job");
 
-					m_runningVipos.Add(job.Vipo, idleProcessor);
-					m_idleProcessorIndex = -1;
+					m_runningProcessor.Add(job.Vipo, idleProcessor);
 
-					idleProcessor.Jobs.Enqueue(job);
-					idleProcessor.TriggerRun();
+					idleProcessor.JobsCache.Enqueue(job);
+					idleProcessor.Start();
 				}
 			}
 		}
@@ -80,17 +79,17 @@ namespace Dvm
 		{
 			lock (m_runningViposLock)
 			{
-				if (processor.Jobs.Count == 0)
+				if (processor.JobsCache.Count == 0)
 				{
 					if (vipo == null)
 						throw new KernelFaultException("Expecting a non-null vipo to free a virtual processor");
 
-					m_runningVipos.Remove(vipo);
+					m_runningProcessor.Remove(vipo);
 
 					goto ReturnToFree;
 				}
 				else
-					return processor.Jobs.Dequeue();
+					return processor.JobsCache.Dequeue();
 			}
 
 		ReturnToFree:
