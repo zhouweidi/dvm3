@@ -11,8 +11,8 @@ namespace Dvm
 		readonly VmProcessor[] m_processors;
 		readonly IndexBag m_idleProcessors;
 
-		readonly object m_runningViposLock = new object();
-		readonly Dictionary<Vipo, VmProcessor> m_runningProcessor = new Dictionary<Vipo, VmProcessor>();
+		readonly object m_workingProcessorsLock = new object();
+		readonly Dictionary<Vipo, VmProcessor> m_workingProcessors = new Dictionary<Vipo, VmProcessor>();
 
 		#region Properties
 
@@ -49,53 +49,48 @@ namespace Dvm
 			foreach (var job in jobs)
 			{
 				// Push to a current processor running the same vipo
-				lock (m_runningViposLock)
+				lock (m_workingProcessorsLock)
 				{
-					if (m_runningProcessor.TryGetValue(job.Vipo, out VmProcessor processor))
+					if (m_workingProcessors.TryGetValue(job.Vipo, out VmProcessor processor))
 					{
-						processor.JobsCache.Enqueue(job);
+						processor.AddJob(job);
 						continue;
 					}
 				}
 
-				// Get an idle processor
+				// Get and start an idle processor
 				var idleProcessorIndex = m_idleProcessors.Take(m_controller.EndToken);
 				var idleProcessor = m_processors[idleProcessorIndex];
 
-				lock (m_runningViposLock)
+				lock (m_workingProcessorsLock)
 				{
-					if (idleProcessor.JobsCache.Count != 0)
-						throw new KernelFaultException("Expecting the idle virtual process has no job");
+					if (idleProcessor.HasJobs)
+						throw new KernelFaultException("An idle virtual process should have no job");
 
-					m_runningProcessor.Add(job.Vipo, idleProcessor);
-
-					idleProcessor.JobsCache.Enqueue(job);
-					idleProcessor.Start();
+					m_workingProcessors.Add(job.Vipo, idleProcessor);
 				}
+
+				idleProcessor.StartCircle(job);
 			}
 		}
 
-		public VipoJob GetNextVipoJob(VmProcessor processor, Vipo vipo)
+		public bool FinishCircle(VmProcessor processor, Vipo workingVipo)
 		{
-			lock (m_runningViposLock)
+			lock (m_workingProcessorsLock)
 			{
-				if (processor.JobsCache.Count == 0)
+				if (!processor.HasJobs)
 				{
-					if (vipo == null)
-						throw new KernelFaultException("Expecting a non-null vipo to free a virtual processor");
-
-					m_runningProcessor.Remove(vipo);
+					m_workingProcessors.Remove(workingVipo);
 
 					goto ReturnToFree;
 				}
-				else
-					return processor.JobsCache.Dequeue();
 			}
+
+			return false;
 
 		ReturnToFree:
 			m_idleProcessors.Return(processor.Index);
-
-			return null;
+			return true;
 		}
 
 		#region IndexBag

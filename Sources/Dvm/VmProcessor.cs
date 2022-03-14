@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Threading;
 
 namespace Dvm
@@ -8,15 +8,17 @@ namespace Dvm
 	{
 		readonly VmScheduler m_scheduler;
 		readonly int m_index;
-		readonly ManualResetEventSlim m_tickSignal = new ManualResetEventSlim(false);
-		readonly Queue<VipoJob> m_jobsCache = new Queue<VipoJob>();
+		readonly ManualResetEventSlim m_circleSignal = new ManualResetEventSlim(false);
+		readonly ConcurrentQueue<VipoJob> m_jobsCache = new ConcurrentQueue<VipoJob>();
+
+		static readonly LocalDataStoreSlot WorkingVipoSlot = Thread.GetNamedDataSlot("WorkingVipo");
 
 		#region Properties
 
 		VmExecutor Executor => m_scheduler.Executor;
 		public int Index => m_index;
-		public Queue<VipoJob> JobsCache => m_jobsCache;
-		
+		public bool HasJobs => !m_jobsCache.IsEmpty;
+
 		#endregion
 
 		public VmProcessor(IVmThreadController controller, VmScheduler scheduler, int index)
@@ -31,72 +33,87 @@ namespace Dvm
 			base.OnDispose(explicitCall);
 
 			if (explicitCall)
-				m_tickSignal.Dispose();
+				m_circleSignal.Dispose();
 		}
 
-		public void Start()
+		public void StartCircle(VipoJob job)
 		{
-			m_tickSignal.Set();
+			if (!m_jobsCache.IsEmpty)
+				throw new KernelFaultException("Can't start a VM processor since it still has jobs to run");
+
+			AddJob(job);
+
+			m_circleSignal.Set();
+		}
+
+		public void AddJob(VipoJob job)
+		{
+			if (job.Vipo == null)
+				throw new KernelFaultException("VipoJob.Vipo is null");
+
+			m_jobsCache.Enqueue(job);
 		}
 
 		protected override void ThreadEntry()
 		{
 			for (; ; )
 			{
-				m_tickSignal.Wait(EndToken);
-				m_tickSignal.Reset();
+				m_circleSignal.Wait(EndToken);
+				m_circleSignal.Reset();
 
-				var tickTask = Executor.GetNextVipoJob(this, null);
-				if (tickTask == null)
-					throw new KernelFaultException("No initial TickTask found");
-				if (tickTask.Vipo == null)
-					throw new KernelFaultException("Expecting a non-null vipo of a TickTask");
-
-				var vipo = tickTask.Vipo;
-				SetTickingVid(vipo.Vid);
-
-				try
+				for (Vipo workingVipo = null; ;)
 				{
-					for (; ; )
+					while (m_jobsCache.TryDequeue(out VipoJob job))
 					{
-						if (vipo.Exception == null)
-							vipo.Tick(tickTask);
+						if (workingVipo == null)
+						{
+							workingVipo = job.Vipo;
+							SetWorkingVipo(workingVipo);
+						}
+						else if (job.Vipo != workingVipo)
+							throw new KernelFaultException("Different vipos in the same VM processor circle");
 
-						tickTask = Executor.GetNextVipoJob(this, vipo);
-						if (tickTask == null)
-							break;
-
-						if (tickTask.Vipo != vipo)
-							throw new KernelFaultException("The TickTask is not along with the previous vipo");
+						RunJob(job);
 					}
 
-					var outMessages = vipo.TakeOutMessages();
+					if (workingVipo == null)
+						throw new KernelFaultException("Empty VM processor circle");
 
-					if (vipo.Exception == null)
+					if (Executor.FinishCircle(this, workingVipo))
 					{
-						if (outMessages != null)
-							m_scheduler.AddRequest(new DispatchVipoMessages(outMessages));
+						SetWorkingVipo(null);
+						break;
 					}
-					else
-						vipo.Destroy();
-				}
-				finally
-				{
-					SetTickingVid(Vid.Empty);
 				}
 			}
 		}
 
-		static readonly LocalDataStoreSlot TickingVidDataSlot = Thread.GetNamedDataSlot("TickingVid");
-
-		static void SetTickingVid(Vid vid)
+		void RunJob(VipoJob job)
 		{
-			Thread.SetData(TickingVidDataSlot, vid.Data);
+			var vipo = job.Vipo;
+
+			if (vipo.Exception == null)
+				vipo.Tick(job);
+
+			var outMessages = vipo.TakeOutMessages();
+
+			if (vipo.Exception == null)
+			{
+				if (outMessages != null)
+					m_scheduler.AddRequest(new DispatchVipoMessages(outMessages));
+			}
+			else
+				vipo.Destroy();
 		}
 
-		public static Vid GetTickingVid()
+		static void SetWorkingVipo(Vipo vipo)
 		{
-			return new Vid((ulong)Thread.GetData(TickingVidDataSlot), null);
+			Thread.SetData(WorkingVipoSlot, vipo);
+		}
+
+		public static Vipo GetWorkingVipo()
+		{
+			return (Vipo)Thread.GetData(WorkingVipoSlot);
 		}
 	}
 }

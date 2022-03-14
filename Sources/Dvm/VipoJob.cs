@@ -28,7 +28,7 @@ namespace Dvm
 
 		internal VipoJob(Vipo vipo)
 		{
-			m_vipo = vipo;
+			m_vipo = vipo ?? throw new ArgumentNullException(nameof(vipo));
 		}
 
 		internal void AddMessage(VipoMessage message)

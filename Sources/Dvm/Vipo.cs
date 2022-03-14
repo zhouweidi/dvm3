@@ -213,7 +213,7 @@ namespace Dvm
 
 		public void Send(VipoMessage message) // Can be called only in VP thread
 		{
-			if (VmProcessor.GetTickingVid() != m_vid)
+			if (!ReferenceEquals(VmProcessor.GetWorkingVipo(), this))
 				throw new InvalidOperationException("It is not allowed to call Send outside of OnTick");
 
 			if (message.From.IsEmpty)
