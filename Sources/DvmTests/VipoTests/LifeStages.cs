@@ -92,7 +92,7 @@ namespace DvmTests.VipoTests
 
 				++m_tickedCount;
 
-				Console.WriteLine($"MyVipo '{Name}' ticks #{m_tickedCount}, requests '{string.Join('|', requests)}', messages [{JoinMessageBodies(job.Messages)}]");
+				Console.WriteLine($"MyVipo '{Symbol}' ticks #{m_tickedCount}, requests '{string.Join('|', requests)}', messages [{JoinMessageBodies(job.Messages)}]");
 			}
 
 			protected override void OnError(Exception e)
@@ -149,7 +149,7 @@ namespace DvmTests.VipoTests
 			{
 				++m_tickedCount;
 
-				Console.WriteLine($"MyVipoWithoutCallback '{Name}' ticks #{m_tickedCount}");
+				Console.WriteLine($"MyVipoWithoutCallback '{Symbol}' ticks #{m_tickedCount}");
 			}
 
 			protected override void OnError(Exception e)

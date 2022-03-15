@@ -9,56 +9,57 @@ namespace Dvm
 		public const string FullFormat = "full";
 
 		readonly ulong m_data;
-		readonly string m_name;
+		readonly string m_symbol;
 
 		#region Bits schema
 
-		// Cid: 2 bytes | Index: 6 bytes
+		// NodeId: 2 bytes | Index: 6 bytes
 
 		// Field bytes
 		const int
-			CidBits = 2 * 8,
+			NodeIdBits = 2 * 8,
 			IndexBits = 6 * 8;
 
 		// Bits offsets
 		const int
-			CidBitOffset = IndexBits,
+			NodeIdBitOffset = IndexBits,
 			IndexBitOffset = 0;
 
 		// Field masks
-		internal const ushort MaxCid = (ushort)(((ulong)1 << CidBits) - 1);
+		internal const ushort MaxNodeId = (ushort)(((ulong)1 << NodeIdBits) - 1);
 		internal const ulong MaxIndex = ((ulong)1 << IndexBits) - 1;
+
+		#endregion
+
+		#region Properties
+
+		public ulong Data => m_data;
+		public string Symbol => m_symbol;
+		public bool IsEmpty => this == Empty;
+
+		internal ushort NodeId => (ushort)((m_data >> NodeIdBitOffset) & MaxNodeId);
+		internal ulong Index => (m_data >> IndexBitOffset) & MaxIndex;
 
 		#endregion
 
 		#region Initialize
 
-		internal Vid(ulong data, string name)
+		internal Vid(ulong data, string symbol)
 		{
 			m_data = data;
-			m_name = name;
+			m_symbol = symbol ?? string.Empty;
 		}
 
-		internal Vid(ushort cid, ulong index, string name)
+		internal Vid(ushort nodeId, ulong index, string symbol)
 		{
-			if (cid == 0 || cid > MaxCid)
-				throw new ArgumentException("Invalid Cid component for a Vid", nameof(cid));
+			if (nodeId == 0 || nodeId > MaxNodeId)
+				throw new ArgumentException("Invalid NodeId component for a Vid", nameof(nodeId));
 
 			if (index == 0 || index > MaxIndex)
 				throw new ArgumentException("Invalid index component for a Vid", nameof(index));
 
-			m_data = (((ulong)cid) << CidBitOffset) | (((ulong)index) << IndexBitOffset);
-			m_name = name;
-		}
-
-		internal static ulong GetNextIndex(ref long index)
-		{
-			++index;
-
-			if (index > (long)MaxIndex || index <= 0)
-				index = 1;
-
-			return (ulong)index;
+			m_data = (((ulong)nodeId) << NodeIdBitOffset) | (index << IndexBitOffset);
+			m_symbol = symbol ?? string.Empty;
 		}
 
 		public override int GetHashCode()
@@ -115,61 +116,32 @@ namespace Dvm
 			{
 				case null:
 				case "":
-					if (string.IsNullOrEmpty(m_name))
+					if (string.IsNullOrEmpty(m_symbol))
 						return m_data.ToString("X");
 					else
 						return string.Format("{0}^{1}",
 											  m_data.ToString("X"),
-											  m_name);
+											  m_symbol);
 
 				case FullFormat:
-					// <cid>-<index>^<name>
-					if (string.IsNullOrEmpty(m_name))
+					// <nodeId>-<index>^<symbol>
+					if (string.IsNullOrEmpty(m_symbol))
 					{
 						return string.Format("{0}-{1}",
 											  Index.ToString("X"),
-											  Cid.ToString("X"));
+											  NodeId.ToString("X"));
 					}
 					else
 					{
 						return string.Format("{0}-{1}^{2}",
 											  Index.ToString("X"),
-											  Cid.ToString("X"),
-											  m_name);
+											  NodeId.ToString("X"),
+											  m_symbol);
 					}
 
 				default:
 					throw new FormatException($"The {format} format string is not supported.");
 			}
-		}
-
-		#endregion
-
-		#region Properties
-
-		public ulong Data
-		{
-			get { return m_data; }
-		}
-
-		internal ushort Cid
-		{
-			get { return (ushort)((m_data >> CidBitOffset) & MaxCid); }
-		}
-
-		internal ulong Index
-		{
-			get { return (ulong)((m_data >> IndexBitOffset) & MaxIndex); }
-		}
-
-		public string Name
-		{
-			get { return m_name; }
-		}
-
-		public bool IsEmpty
-		{
-			get { return this == Empty; }
 		}
 
 		#endregion

@@ -39,7 +39,7 @@ namespace DvmTests.SchedulerTests
 			{
 				++m_tickedCount;
 
-				Console.WriteLine($"MyVipo '{Name}' ticks #{m_tickedCount}, messages [{string.Join(',', job.Messages)}]");
+				Console.WriteLine($"MyVipo '{Symbol}' ticks #{m_tickedCount}, messages [{string.Join(',', job.Messages)}]");
 			}
 		}
 	}

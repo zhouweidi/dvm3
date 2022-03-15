@@ -15,16 +15,16 @@ namespace DvmTests.VidTests
 			Assert.ThrowsException<ArgumentException>(() => new Vid(1, Vid.MaxIndex + 1, null));
 
 			Assert.IsTrue(Vid.Empty.Data == 0);
-			Assert.IsTrue(Vid.Empty.Cid == 0);
+			Assert.IsTrue(Vid.Empty.NodeId == 0);
 			Assert.IsTrue(Vid.Empty.Index == 0);
-			Assert.IsNull(Vid.Empty.Name);
+			Assert.IsNull(Vid.Empty.Symbol);
 			Assert.IsTrue(Vid.Empty.IsEmpty);
 
 			var vid = new Vid(1, 2, "abc");
 			Assert.AreEqual(vid.Data, (((ulong)1 << (6 * 8)) | 2));
-			Assert.AreEqual(vid.Cid, 1);
+			Assert.AreEqual(vid.NodeId, 1);
 			Assert.AreEqual(vid.Index, 2ul);
-			Assert.AreEqual(vid.Name, "abc");
+			Assert.AreEqual(vid.Symbol, "abc");
 			Assert.IsFalse(vid.IsEmpty);
 		}
 
@@ -73,8 +73,8 @@ namespace DvmTests.VidTests
 			Assert.AreEqual(vid2.ToString(null), $"{vid2.Data:X}^abc");
 			Assert.AreEqual(vid2.ToString(""), $"{vid2.Data:X}^abc");
 
-			Assert.AreEqual(vid1.ToString(Vid.FullFormat), $"{vid1.Index:X}-{vid1.Cid:X}");
-			Assert.AreEqual(vid2.ToString(Vid.FullFormat), $"{vid2.Index:X}-{vid2.Cid:X}^abc");
+			Assert.AreEqual(vid1.ToString(Vid.FullFormat), $"{vid1.Index:X}-{vid1.NodeId:X}");
+			Assert.AreEqual(vid2.ToString(Vid.FullFormat), $"{vid2.Index:X}-{vid2.NodeId:X}^abc");
 		}
 	}
 }

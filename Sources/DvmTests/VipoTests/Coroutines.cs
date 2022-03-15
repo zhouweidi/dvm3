@@ -29,7 +29,7 @@ namespace DvmTests.VipoTests
 
 		void SenderVoroutine(CoroutineVipo v, Vid receiver1, Vid receiver2, Vid receiver3)
 		{
-			Console.WriteLine($"'{v.Name}' START");
+			Console.WriteLine($"'{v.Symbol}' START");
 
 			v.Send(new VipoMessage(v.Vid, receiver1, DefaultMessageBody));
 			v.Send(receiver1, new MyMessage(0));
@@ -47,7 +47,7 @@ namespace DvmTests.VipoTests
 			v.Send(receiver3, new MyMessage(1));
 			v.Send(receiver3, new MyMessage(2));
 
-			Console.WriteLine($"'{v.Name}' END");
+			Console.WriteLine($"'{v.Symbol}' END");
 		}
 
 		class ReceiverVipo : CoroutineVipo
@@ -59,74 +59,74 @@ namespace DvmTests.VipoTests
 
 			protected override IEnumerator Coroutine()
 			{
-				Console.WriteLine($"'{Name}' START");
+				Console.WriteLine($"'{Symbol}' START");
 
 				yield return Receive(
 					message =>
 					{
-						Console.WriteLine($"'{Name}' receives message '{message.Body:full}'");
+						Console.WriteLine($"'{Symbol}' receives message '{message.Body:full}'");
 					});
 
 				yield return Receive(
 					message => message.Body is MyMessage,
 					message =>
 					{
-						Console.WriteLine($"'{Name}' receives message '{message.Body:full}'");
+						Console.WriteLine($"'{Symbol}' receives message '{message.Body:full}'");
 					});
 
 				yield return Receive<MyMessage>(
 					(message, body) =>
 					{
-						Console.WriteLine($"'{Name}' receives message '{message.Body:full}'");
+						Console.WriteLine($"'{Symbol}' receives message '{message.Body:full}'");
 					});
 
 				yield return Receive<MyMessage>(
 					(message, body) => body.Value == 2,
 					(message, body) =>
 					{
-						Console.WriteLine($"'{Name}' receives message '{message.Body:full}'");
+						Console.WriteLine($"'{Symbol}' receives message '{message.Body:full}'");
 					});
 
-				Console.WriteLine($"'{Name}' END");
+				Console.WriteLine($"'{Symbol}' END");
 			}
 		}
 
 		IEnumerator ReceiverVoroutine(CoroutineVipo v)
 		{
-			Console.WriteLine($"'{v.Name}' START");
+			Console.WriteLine($"'{v.Symbol}' START");
 
 			yield return v.Receive(
 				message =>
 				{
-					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+					Console.WriteLine($"'{v.Symbol}' receives message '{message.Body:full}'");
 				});
 
 			yield return v.Receive(
 				message => message.Body is MyMessage,
 				message =>
 				{
-					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+					Console.WriteLine($"'{v.Symbol}' receives message '{message.Body:full}'");
 				});
 
 			yield return v.Receive<MyMessage>(
 				(message, body) =>
 				{
-					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+					Console.WriteLine($"'{v.Symbol}' receives message '{message.Body:full}'");
 				});
 
 			yield return v.Receive<MyMessage>(
 				(message, body) => body.Value == 2,
 				(message, body) =>
 				{
-					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+					Console.WriteLine($"'{v.Symbol}' receives message '{message.Body:full}'");
 				});
 
-			Console.WriteLine($"'{v.Name}' END");
+			Console.WriteLine($"'{v.Symbol}' END");
 		}
 
 		IEnumerator ReceiverFromVoroutine(CoroutineVipo v)
 		{
-			Console.WriteLine($"'{v.Name}' START");
+			Console.WriteLine($"'{v.Symbol}' START");
 
 			Vid from = Vid.Empty;
 
@@ -137,7 +137,7 @@ namespace DvmTests.VipoTests
 				from,
 				message =>
 				{
-					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+					Console.WriteLine($"'{v.Symbol}' receives message '{message.Body:full}'");
 				});
 
 			yield return v.ReceiveFrom(
@@ -145,14 +145,14 @@ namespace DvmTests.VipoTests
 				message => message.Body is MyMessage,
 				message =>
 				{
-					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+					Console.WriteLine($"'{v.Symbol}' receives message '{message.Body:full}'");
 				});
 
 			yield return v.ReceiveFrom<MyMessage>(
 				from,
 				(message, body) =>
 				{
-					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+					Console.WriteLine($"'{v.Symbol}' receives message '{message.Body:full}'");
 				});
 
 			yield return v.ReceiveFrom<MyMessage>(
@@ -160,10 +160,10 @@ namespace DvmTests.VipoTests
 				(message, body) => body.Value == 2,
 				(message, body) =>
 				{
-					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+					Console.WriteLine($"'{v.Symbol}' receives message '{message.Body:full}'");
 				});
 
-			Console.WriteLine($"'{v.Name}' END");
+			Console.WriteLine($"'{v.Symbol}' END");
 		}
 
 		[TestMethod]
@@ -260,7 +260,7 @@ namespace DvmTests.VipoTests
 
 		IEnumerator ReactVoroutine(CoroutineVipo v)
 		{
-			Console.WriteLine($"'{v.Name}' START");
+			Console.WriteLine($"'{v.Symbol}' START");
 
 			yield return v.React(
 				message =>
@@ -271,11 +271,11 @@ namespace DvmTests.VipoTests
 							if (mm.Value == 2)
 								return false;
 
-							Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+							Console.WriteLine($"'{v.Symbol}' receives message '{message.Body:full}'");
 							break;
 
 						default:
-							Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+							Console.WriteLine($"'{v.Symbol}' receives message '{message.Body:full}'");
 							break;
 					}
 
@@ -283,14 +283,14 @@ namespace DvmTests.VipoTests
 				});
 
 			yield return v.Receive<MyMessage>((message, body) =>
-				Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'"));
+				Console.WriteLine($"'{v.Symbol}' receives message '{message.Body:full}'"));
 
-			Console.WriteLine($"'{v.Name}' END");
+			Console.WriteLine($"'{v.Symbol}' END");
 		}
 
 		void ProducerVoroutine(CoroutineVipo v, Vid reacter)
 		{
-			Console.WriteLine($"'{v.Name}' START");
+			Console.WriteLine($"'{v.Symbol}' START");
 
 			v.Send(new VipoMessage(v.Vid, reacter, DefaultMessageBody));
 			v.Send(reacter, new MyMessage(0));
@@ -298,7 +298,7 @@ namespace DvmTests.VipoTests
 			v.Send(reacter, new MyMessage(2));
 			v.Send(reacter, new MyMessage(3));
 
-			Console.WriteLine($"'{v.Name}' END");
+			Console.WriteLine($"'{v.Symbol}' END");
 		}
 
 		#endregion
@@ -341,14 +341,14 @@ namespace DvmTests.VipoTests
 
 		IEnumerator WaiterVoroutine(CoroutineVipo v)
 		{
-			Console.WriteLine($"'{v.Name}' START");
+			Console.WriteLine($"'{v.Symbol}' START");
 
 			yield return v.WaitForAnyMessage();
 
 			yield return v.Receive(
 				message =>
 				{
-					Console.WriteLine($"'{v.Name}' receives message '{message.Body:full}'");
+					Console.WriteLine($"'{v.Symbol}' receives message '{message.Body:full}'");
 				});
 
 			yield return v.WaitForAnyMessage();
@@ -358,10 +358,10 @@ namespace DvmTests.VipoTests
 									  where mm != null && mm.Value % 2 == 0
 									  select mm)
 			{
-				Console.WriteLine($"'{v.Name}' receives message '{myMessage:full}'");
+				Console.WriteLine($"'{v.Symbol}' receives message '{myMessage:full}'");
 			}
 
-			Console.WriteLine($"'{v.Name}' END");
+			Console.WriteLine($"'{v.Symbol}' END");
 		}
 
 		#endregion
@@ -437,14 +437,14 @@ namespace DvmTests.VipoTests
 
 		IEnumerator CalleeVoroutine(CoroutineVipo v)
 		{
-			Console.WriteLine($"'{v.Name}' START");
+			Console.WriteLine($"'{v.Symbol}' START");
 
 			int count = 0;
 
 			yield return v.React(
 				message =>
 				{
-					Console.WriteLine($"'{v.Name}' being called '{message.Body:full}'");
+					Console.WriteLine($"'{v.Symbol}' being called '{message.Body:full}'");
 
 					var mm = message.Body as RequestMessage;
 					Assert.IsNotNull(mm);
@@ -456,40 +456,40 @@ namespace DvmTests.VipoTests
 					return count != 4;
 				});
 
-			Console.WriteLine($"'{v.Name}' END");
+			Console.WriteLine($"'{v.Symbol}' END");
 		}
 
 		IEnumerator CallerVoroutine(CoroutineVipo v, Vid callee)
 		{
-			Console.WriteLine($"'{v.Name}' START");
+			Console.WriteLine($"'{v.Symbol}' START");
 
 			yield return v.Call(callee, new RequestMessage(11),
 				message =>
 				{
-					Console.WriteLine($"'{v.Name}' receives return message '{message.Body:full}'");
+					Console.WriteLine($"'{v.Symbol}' receives return message '{message.Body:full}'");
 				});
 
 			yield return v.Call(callee, new RequestMessage(22),
 				message => message.Body is ResponseMessage,
 				message =>
 				{
-					Console.WriteLine($"'{v.Name}' receives return message '{message.Body:full}'");
+					Console.WriteLine($"'{v.Symbol}' receives return message '{message.Body:full}'");
 				});
 
 			yield return v.Call<ResponseMessage>(callee, new RequestMessage(33),
 				(message, body) =>
 				{
-					Console.WriteLine($"'{v.Name}' receives return message '{message.Body:full}'");
+					Console.WriteLine($"'{v.Symbol}' receives return message '{message.Body:full}'");
 				});
 
 			yield return v.Call<ResponseMessage>(callee, new RequestMessage(44),
 				(message, body) => body.Value == 444,
 				(message, body) =>
 				{
-					Console.WriteLine($"'{v.Name}' receives return message '{message.Body:full}'");
+					Console.WriteLine($"'{v.Symbol}' receives return message '{message.Body:full}'");
 				});
 
-			Console.WriteLine($"'{v.Name}' END");
+			Console.WriteLine($"'{v.Symbol}' END");
 		}
 
 		#endregion

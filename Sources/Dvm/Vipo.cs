@@ -34,10 +34,10 @@ namespace Dvm
 			All = OnStart | OnDestroy,
 		}
 
-		protected Vipo(VirtualMachine vm, string name, CallbackOptions callbackOptions)
+		protected Vipo(VirtualMachine vm, string symbol, CallbackOptions callbackOptions)
 		{
 			m_vm = vm ?? throw new ArgumentNullException(nameof(vm));
-			m_vid = vm.CreateVid(name);
+			m_vid = vm.VidAllocator.New(symbol);
 			m_callbackOptions = callbackOptions;
 		}
 
@@ -316,9 +316,9 @@ namespace Dvm
 			get { return m_vid; }
 		}
 
-		public string Name
+		public string Symbol
 		{
-			get { return m_vid.Name; }
+			get { return m_vid.Symbol; }
 		}
 
 		public Exception Exception

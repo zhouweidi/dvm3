@@ -16,8 +16,7 @@ namespace Dvm
 		readonly VmScheduler m_scheduler;
 
 		readonly ConcurrentDictionary<Vid, Vipo> m_vipos = new ConcurrentDictionary<Vid, Vipo>();
-		readonly SpinLock m_vidIndexLock = new SpinLock();
-		long m_vidIndex; // TODO class VidAllocator
+		readonly VidAllocator m_vidAllocator;
 
 		#region Properties
 
@@ -30,6 +29,7 @@ namespace Dvm
 		}
 		public int ProcessorsCount => m_scheduler.Executor.ProcessorsCount;
 		public int ViposCount => m_vipos.Count;
+		internal VidAllocator VidAllocator => m_vidAllocator;
 
 		#endregion
 
@@ -47,6 +47,8 @@ namespace Dvm
 				virtualProcessorsCount = Environment.ProcessorCount;
 
 			m_scheduler = new VmScheduler(m_controller, virtualProcessorsCount, m_vipos);
+
+			m_vidAllocator = new VidAllocator(new UsedVidQuery(this));
 		}
 
 		protected override void OnDispose(bool explicitCall)
@@ -124,35 +126,25 @@ namespace Dvm
 
 		#endregion
 
+		#region UsedVidQuery
+
+		struct UsedVidQuery : IUsedVidQuery
+		{
+			readonly VirtualMachine m_vm;
+
+			public UsedVidQuery(VirtualMachine vm)
+			{
+				m_vm = vm;
+			}
+
+			bool IUsedVidQuery.IsUsed(Vid vid) => m_vm.m_vipos.ContainsKey(vid);
+		}
+
+		#endregion
+
 		internal void AddScheduleRequest(ScheduleRequest request)
 		{
 			m_scheduler.AddRequest(request);
-		}
-
-		internal Vid CreateVid(string name)
-		{
-			for (; ; )
-			{
-				ulong index;
-				{
-					bool gotLock = false;
-					try
-					{
-						m_vidIndexLock.Enter(ref gotLock);
-
-						index = Vid.GetNextIndex(ref m_vidIndex);
-					}
-					finally
-					{
-						if (gotLock)
-							m_vidIndexLock.Exit();
-					}
-				}
-
-				var vid = new Vid(1, index, name);
-				if (!m_vipos.ContainsKey(vid))
-					return vid;
-			}
 		}
 	}
 }
