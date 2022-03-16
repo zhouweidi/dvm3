@@ -14,16 +14,16 @@ namespace DvmTests.SchedulerTests
 			var a = new MyVipo(TheVM, "a");
 			var b = new MyVipo(TheVM, "b");
 
-			a.Start();
-			b.Start();
+			a.Schedule();
+			b.Schedule();
 
 			HookConsoleOutput();
 
 			Sleep();
 
 			var consoleOutput = GetConsoleOutput();
-			Assert.IsTrue(consoleOutput.Contains("MyVipo 'a' ticks #1, messages []"));
-			Assert.IsTrue(consoleOutput.Contains("MyVipo 'b' ticks #1, messages []"));
+			Assert.IsTrue(consoleOutput.Contains("MyVipo 'a' ticks #1, messages [SystemMessageSchedule {}]"));
+			Assert.IsTrue(consoleOutput.Contains("MyVipo 'b' ticks #1, messages [SystemMessageSchedule {}]"));
 		}
 
 		class MyVipo : Vipo
@@ -31,7 +31,7 @@ namespace DvmTests.SchedulerTests
 			int m_tickedCount;
 
 			public MyVipo(VirtualMachine vm, string name)
-				: base(vm, name, CallbackOptions.All)
+				: base(vm, name)
 			{
 			}
 
@@ -39,7 +39,8 @@ namespace DvmTests.SchedulerTests
 			{
 				++m_tickedCount;
 
-				Console.WriteLine($"MyVipo '{Symbol}' ticks #{m_tickedCount}, messages [{string.Join(',', job.Messages)}]");
+				var text = $"MyVipo '{Symbol}' ticks #{m_tickedCount}, messages [{JoinMessageBodies(job.Messages)}]";
+				Console.WriteLine(text);
 			}
 		}
 	}

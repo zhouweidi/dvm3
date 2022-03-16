@@ -17,7 +17,7 @@ namespace Dvm
 
 		public override string ToString()
 		{
-			return $"{From}, {To}, {Message}";
+			return $"({From}, {To}, {Message})";
 		}
 	}
 }

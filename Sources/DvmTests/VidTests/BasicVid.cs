@@ -17,7 +17,7 @@ namespace DvmTests.VidTests
 			Assert.IsTrue(Vid.Empty.Data == 0);
 			Assert.IsTrue(Vid.Empty.NodeId == 0);
 			Assert.IsTrue(Vid.Empty.Index == 0);
-			Assert.IsNull(Vid.Empty.Symbol);
+			Assert.AreEqual(Vid.Empty.Symbol, "");
 			Assert.IsTrue(Vid.Empty.IsEmpty);
 
 			var vid = new Vid(1, 2, "abc");

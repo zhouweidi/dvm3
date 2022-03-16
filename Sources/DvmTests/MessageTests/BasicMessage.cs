@@ -6,6 +6,10 @@ namespace DvmTests.MessageTests
 	[TestClass]
 	public class BasicMessage
 	{
+		class EmptyMessage : Message
+		{
+		}
+
 		class MyMessage : Message
 		{
 			public int Value { get; private set; }
@@ -15,38 +19,25 @@ namespace DvmTests.MessageTests
 				Value = value;
 			}
 
-			public override string ToString()
-			{
-				return Value.ToString();
-			}
+			protected override string BodyToString() => Value.ToString();
 		}
 
 		[TestMethod]
 		public void FormatString()
 		{
-			var message = new Message();
-
-			Assert.AreEqual(message.ToString(), "MessageBase");
-			Assert.AreEqual(message.ToString(""), "MessageBase");
-			Assert.AreEqual(message.ToString(null), "MessageBase");
-			Assert.AreEqual(message.ToString(Message.FullFormat), "Message {MessageBase}");
-			Assert.AreEqual($"{message:full}", "Message {MessageBase}");
+			var emptyMessage = new EmptyMessage();
+			Assert.AreEqual(emptyMessage.ToString(), "EmptyMessage {}");
 
 			var myMessage = new MyMessage(888);
-
-			Assert.AreEqual(myMessage.ToString(), "888");
-			Assert.AreEqual(myMessage.ToString(""), "888");
-			Assert.AreEqual(myMessage.ToString(null), "888");
-			Assert.AreEqual(myMessage.ToString(Message.FullFormat), "MyMessage {888}");
-			Assert.AreEqual($"{myMessage:full}", "MyMessage {888}");
+			Assert.AreEqual(myMessage.ToString(), "MyMessage {888}");
 
 			var from = new Vid(1, 2, "aa");
 			var to = new Vid(3, 4, "bb");
-			var vm1 = new VipoMessage(from, to, message);
+			var vm1 = new VipoMessage(from, to, emptyMessage);
 			var vm2 = new VipoMessage(from, to, myMessage);
 
-			Assert.AreEqual(vm1.ToString(), "1000000000002^aa, 3000000000004^bb, Message {MessageBase}");
-			Assert.AreEqual(vm2.ToString(), "1000000000002^aa, 3000000000004^bb, MyMessage {888}");
+			Assert.AreEqual(vm1.ToString(), "(1000000000002^aa, 3000000000004^bb, EmptyMessage {})");
+			Assert.AreEqual(vm2.ToString(), "(1000000000002^aa, 3000000000004^bb, MyMessage {888})");
 		}
 	}
 }

@@ -2,7 +2,8 @@
 {
 	public abstract class Message
 	{
-		public override string ToString() => GetType().Name;
+		public override string ToString() => $"{GetType().Name} {{{BodyToString()}}}";
+		protected virtual string BodyToString() => "";
 	}
 
 	#region System messages
@@ -19,17 +20,19 @@
 	{
 		public object Context { get; private set; }
 
-		SystemMessageSchedule(object context)
-		{
-			Context = context;
-		}
-
 		internal static VipoMessage Create(object context)
 		{
 			var message = new SystemMessageSchedule(context);
 
 			return SystemMessage.Create(message);
 		}
+
+		SystemMessageSchedule(object context)
+		{
+			Context = context;
+		}
+
+		protected override string BodyToString() => Context == null ? "" : Context.ToString();
 	}
 
 	#endregion

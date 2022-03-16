@@ -55,8 +55,10 @@ namespace DvmTests
 
 		void ResetConsoleOutput()
 		{
-			var sw = new StreamWriter(Console.OpenStandardOutput());
-			sw.AutoFlush = true;
+			var sw = new StreamWriter(Console.OpenStandardOutput())
+			{
+				AutoFlush = true
+			};
 
 			Console.SetOut(sw);
 		}
@@ -79,7 +81,11 @@ namespace DvmTests
 
 		#region Utilities
 
-		protected static readonly Message DefaultMessage = new Message();
+		class TestMessage : Message
+		{
+		}
+
+		protected static readonly Message DefaultMessage = new TestMessage();
 
 		protected static string JoinMessageBodies(IEnumerable<VipoMessage> vipoMessages)
 		{

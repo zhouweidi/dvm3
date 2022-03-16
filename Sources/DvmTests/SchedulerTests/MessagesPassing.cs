@@ -14,8 +14,8 @@ namespace DvmTests.SchedulerTests
 			var one = new MyVipo(TheVM, "1");
 			var two = new MyVipo(TheVM, "2");
 
-			one.Start();
-			two.Start();
+			one.Schedule();
+			two.Schedule();
 
 			HookConsoleOutput();
 
@@ -23,9 +23,9 @@ namespace DvmTests.SchedulerTests
 
 			var consoleOutput = GetConsoleOutput();
 
-			Assert.IsTrue(consoleOutput.Contains("MyVipo '1' ticks #1, messages []"));
-			Assert.IsTrue(consoleOutput.Contains("MyVipo '2' ticks #1, messages []"));
-			Assert.IsTrue(consoleOutput.Contains("MyVipo '2' ticks #2, messages [MessageBase]"));
+			Assert.IsTrue(consoleOutput.Contains("MyVipo '1' ticks #1, messages [SystemMessageSchedule {}]"));
+			Assert.IsTrue(consoleOutput.Contains("MyVipo '2' ticks #1, messages [SystemMessageSchedule {}]"));
+			Assert.IsTrue(consoleOutput.Contains("MyVipo '2' ticks #2, messages [TestMessage {}]"));
 		}
 
 		class MyVipo : Vipo
@@ -33,7 +33,7 @@ namespace DvmTests.SchedulerTests
 			int m_tickedCount;
 
 			public MyVipo(VirtualMachine vm, string name)
-				: base(vm, name, CallbackOptions.All)
+				: base(vm, name)
 			{
 			}
 
@@ -41,7 +41,8 @@ namespace DvmTests.SchedulerTests
 			{
 				++m_tickedCount;
 
-				Console.WriteLine($"MyVipo '{Symbol}' ticks #{m_tickedCount}, messages [{JoinMessageBodies(job.Messages)}]");
+				var text = $"MyVipo '{Symbol}' ticks #{m_tickedCount}, messages [{JoinMessageBodies(job.Messages)}]";
+				Console.WriteLine(text);
 
 				if (Vid == new Vid(1, 1, null))
 					Send(new Vid(1, 2, null), DefaultMessage);
