@@ -35,7 +35,7 @@ namespace DvmTests.SchedulerTests
 			{
 			}
 
-			protected override void OnTick(VipoJob job)
+			protected override void Run(VipoJob job)
 			{
 				++m_tickedCount;
 

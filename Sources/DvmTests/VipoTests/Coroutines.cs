@@ -31,18 +31,18 @@ namespace DvmTests.VipoTests
 		{
 			Console.WriteLine($"'{v.Symbol}' START");
 
-			v.Send(new VipoMessage(v.Vid, receiver1, DefaultMessageBody));
+			v.Send(new VipoMessage(v.Vid, receiver1, DefaultMessage));
 			v.Send(receiver1, new MyMessage(0));
 			v.Send(receiver1, new MyMessage(1));
 			v.Send(receiver1, new MyMessage(2));
 
-			v.Send(new VipoMessage(v.Vid, receiver2, DefaultMessageBody));
+			v.Send(new VipoMessage(v.Vid, receiver2, DefaultMessage));
 			v.Send(receiver2, new MyMessage(0));
 			v.Send(receiver2, new MyMessage(1));
 			v.Send(receiver2, new MyMessage(2));
 
-			v.Send(receiver3, DefaultMessageBody);
-			v.Send(new VipoMessage(v.Vid, receiver3, DefaultMessageBody));
+			v.Send(receiver3, DefaultMessage);
+			v.Send(new VipoMessage(v.Vid, receiver3, DefaultMessage));
 			v.Send(receiver3, new MyMessage(0));
 			v.Send(receiver3, new MyMessage(1));
 			v.Send(receiver3, new MyMessage(2));
@@ -292,7 +292,7 @@ namespace DvmTests.VipoTests
 		{
 			Console.WriteLine($"'{v.Symbol}' START");
 
-			v.Send(new VipoMessage(v.Vid, reacter, DefaultMessageBody));
+			v.Send(new VipoMessage(v.Vid, reacter, DefaultMessage));
 			v.Send(reacter, new MyMessage(0));
 			v.Send(reacter, new MyMessage(1));
 			v.Send(reacter, new MyMessage(2));

@@ -15,7 +15,7 @@ namespace Dvm
 		public VmExecutor Executor => m_executor;
 
 		#endregion
-		
+
 		public VmScheduler(IVmThreadController controller, int processorsCount, ConcurrentDictionary<Vid, Vipo> vipos)
 			: base(controller, "DVM-Scheduler")
 		{
@@ -83,16 +83,12 @@ namespace Dvm
 					ProcessRequest_Dispatch(dispatch, vipoJobs);
 					break;
 
-				case VipoStart start:
-					ProcessRequest_VipoStart(start, vipoJobs);
-					break;
-
-				case VipoDestroy destroy:
-					ProcessRequest_VipoDestroy(destroy, vipoJobs);
-					break;
-
 				case VipoSchedule schedule:
 					ProcessRequest_VipoSchedule(schedule, vipoJobs);
+					break;
+
+				case VipoDetach detach:
+					ProcessRequest_VipoDetach(detach);
 					break;
 
 				default:
@@ -117,63 +113,56 @@ namespace Dvm
 			}
 		}
 
-		void ProcessRequest_VipoStart(VipoStart start, Dictionary<Vid, VipoJob> vipoJobs)
+		void ProcessRequest_VipoSchedule(VipoSchedule request, Dictionary<Vid, VipoJob> vipoJobs)
 		{
-			var vipo = start.Vipo;
-			var vid = vipo.Vid;
-
-			// Add to the vipos list
-			if (!m_vipos.TryAdd(vid, vipo))
-				throw new KernelFaultException($"The vipo '{vid}' to add has already existed in the vipos list");
-
-			// Add to a job
-			var job = new VipoJob(vipo);
-			if (!vipoJobs.TryAdd(vid, job))
-				throw new KernelFaultException($"Failed to add a vipo job for a start request of '{vid}'");
-
-			var withCallback = start.Vipo.HasCallbackOption(Vipo.CallbackOptions.OnStart);
-			job.SetStartRequest(withCallback);
-		}
-
-		void ProcessRequest_VipoDestroy(VipoDestroy destroy, Dictionary<Vid, VipoJob> vipoJobs)
-		{
-			var vipo = destroy.Vipo;
+			var vipo = request.Vipo;
 			var vid = vipo.Vid;
 
 			// Check if the vipo exists
-			if (!m_vipos.ContainsKey(vid))
-				throw new KernelFaultException($"No vipo '{vid}' found to deal with a destroy request");
-
-			// Add to a job
-			var withCallback = destroy.Vipo.HasCallbackOption(Vipo.CallbackOptions.OnDestroy);
-			var shouldCallback = withCallback && destroy.Vipo.Exception == null;
-
-			if (shouldCallback)
+			if (m_vipos.ContainsKey(vid))
 			{
-				var job = GetOrAddVipoJob(vipoJobs, vipo);
-				job.SetDestroyRequest();
+				if (!vipo.IsAttached)
+					throw new KernelFaultException($"The vipo '{vid}' is not attached, but exists in the vipos list");
+			}
+			else
+			{
+				if (vipo.IsAttached)
+					throw new KernelFaultException($"The vipo '{vid}' is attached, but doesn't exist in the vipos list");
+
+				// Add to the vipos list
+				if (!m_vipos.TryAdd(vid, vipo))
+					throw new KernelFaultException($"Failed to add the vipo '{vid}' to the vipos list");
+
+				vipo.IsAttached = true;
+			}
+
+			// Get or add a job
+			var job = GetOrAddVipoJob(vipoJobs, vipo);
+			var message = SystemMessageSchedule.Create(request.Context);
+			job.AddMessage(message);
+		}
+
+		void ProcessRequest_VipoDetach(VipoDetach request)
+		{
+			var vipo = request.Vipo;
+			var vid = vipo.Vid;
+
+			if (!vipo.IsAttached)
+			{
+				if (m_vipos.ContainsKey(vid))
+					throw new KernelFaultException($"The vipo '{vid}' to detach is not attached, but exists in the vipos list");
+
+				return;
 			}
 
 			// Remove from the vipos list
 			if (!m_vipos.TryRemove(vid, out Vipo removedVipo))
-				throw new KernelFaultException($"No vipo {vid} to remove");
+				throw new KernelFaultException($"Failed to remove the vipo '{vid}' from the vipos list");
 
-			if (removedVipo != destroy.Vipo)
-				throw new KernelFaultException($"Unmatched vipo {vid} being removed");
-		}
+			if (removedVipo != vipo)
+				throw new KernelFaultException($"Unmatched vipo '{vid}' being detached");
 
-		void ProcessRequest_VipoSchedule(VipoSchedule schedule, Dictionary<Vid, VipoJob> vipoJobs)
-		{
-			var vipo = schedule.Vipo;
-			var vid = vipo.Vid;
-
-			// Check if the vipo exists
-			if (!m_vipos.ContainsKey(vid))
-				throw new KernelFaultException($"No vipo '{vid}' found to deal with a schedule request");
-
-			// Add to a job
-			var job = GetOrAddVipoJob(vipoJobs, vipo);
-			job.AddMessage(SystemVipoMessages.VipoSchedule);
+			vipo.IsAttached = false;
 		}
 
 		static VipoJob GetOrAddVipoJob(Dictionary<Vid, VipoJob> vipoJobs, Vipo vipo)

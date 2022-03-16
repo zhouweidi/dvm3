@@ -42,7 +42,7 @@ namespace Dvm
 
 		#endregion
 
-		#region Initialize
+		#region Initialization
 
 		internal Vid(ulong data, string symbol)
 		{
@@ -140,7 +140,7 @@ namespace Dvm
 					}
 
 				default:
-					throw new FormatException($"The {format} format string is not supported.");
+					throw new FormatException($"The format string '{format}' is not supported.");
 			}
 		}
 

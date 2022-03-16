@@ -16,31 +16,23 @@ namespace Dvm
 		}
 	}
 
-	class VipoStart : ScheduleRequest
-	{
-		public Vipo Vipo { get; private set; }
-
-		public VipoStart(Vipo vipo)
-		{
-			Vipo = vipo;
-		}
-	}
-
-	class VipoDestroy : ScheduleRequest
-	{
-		public Vipo Vipo { get; private set; }
-
-		public VipoDestroy(Vipo vipo)
-		{
-			Vipo = vipo;
-		}
-	}
-
 	class VipoSchedule : ScheduleRequest
 	{
 		public Vipo Vipo { get; private set; }
+		public object Context { get; private set; }
 
-		public VipoSchedule(Vipo vipo)
+		public VipoSchedule(Vipo vipo, object context)
+		{
+			Vipo = vipo;
+			Context = context;
+		}
+	}
+
+	class VipoDetach : ScheduleRequest
+	{
+		public Vipo Vipo { get; private set; }
+
+		public VipoDetach(Vipo vipo)
 		{
 			Vipo = vipo;
 		}

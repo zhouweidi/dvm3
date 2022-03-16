@@ -37,14 +37,14 @@ namespace DvmTests.SchedulerTests
 			{
 			}
 
-			protected override void OnTick(VipoJob job)
+			protected override void Run(VipoJob job)
 			{
 				++m_tickedCount;
 
 				Console.WriteLine($"MyVipo '{Symbol}' ticks #{m_tickedCount}, messages [{JoinMessageBodies(job.Messages)}]");
 
 				if (Vid == new Vid(1, 1, null))
-					Send(new Vid(1, 2, null), DefaultMessageBody);
+					Send(new Vid(1, 2, null), DefaultMessage);
 			}
 		}
 	}

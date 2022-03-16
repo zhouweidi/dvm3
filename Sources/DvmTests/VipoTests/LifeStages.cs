@@ -31,7 +31,7 @@ namespace DvmTests.VipoTests
 			Sleep();
 
 			Assert.AreEqual(v.Stage, VipoStage.Running);
-			v.Destroy();
+			v.Detach();
 			Assert.AreEqual(v.Stage, VipoStage.DestroyRequested);
 
 			Sleep();
@@ -67,7 +67,7 @@ namespace DvmTests.VipoTests
 				base.OnDestroy();
 			}
 
-			protected override void OnTick(VipoJob job)
+			protected override void Run(VipoJob job)
 			{
 				var requests = new List<string>();
 				{
@@ -119,7 +119,7 @@ namespace DvmTests.VipoTests
 
 			Sleep();
 
-			v.Destroy();
+			v.Detach();
 
 			var consoleOutput = GetConsoleOutput();
 			Assert.IsTrue(consoleOutput.Contains("MyVipoWithoutCallback 'a' ticks #1"));
@@ -145,7 +145,7 @@ namespace DvmTests.VipoTests
 				Assert.Fail("Unexcepted being called");
 			}
 
-			protected override void OnTick(VipoJob job)
+			protected override void Run(VipoJob job)
 			{
 				++m_tickedCount;
 

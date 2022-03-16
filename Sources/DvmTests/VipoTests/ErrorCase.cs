@@ -46,7 +46,7 @@ namespace DvmTests.VipoTests
 			Sleep();
 
 			foreach (var v in vipos.Append(safe))
-				v.Destroy();
+				v.Detach();
 
 			Sleep();
 
@@ -87,7 +87,7 @@ namespace DvmTests.VipoTests
 				base.OnDestroy();
 			}
 
-			protected override void OnTick(VipoJob job)
+			protected override void Run(VipoJob job)
 			{
 				if (m_throwExceptionAt == ExceptionPosition.OnTick)
 					throw new TestException("OnTick");

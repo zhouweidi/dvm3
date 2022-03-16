@@ -79,12 +79,12 @@ namespace DvmTests
 
 		#region Utilities
 
-		protected static readonly Message DefaultMessageBody = new Message();
+		protected static readonly Message DefaultMessage = new Message();
 
-		protected static string JoinMessageBodies(IEnumerable<VipoMessage> messages)
+		protected static string JoinMessageBodies(IEnumerable<VipoMessage> vipoMessages)
 		{
-			return string.Join(',', from message in messages
-									select message.Body);
+			return string.Join(',', from vm in vipoMessages
+									select vm.Message);
 		}
 
 		#endregion

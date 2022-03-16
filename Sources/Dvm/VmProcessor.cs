@@ -93,17 +93,11 @@ namespace Dvm
 			var vipo = job.Vipo;
 
 			if (vipo.Exception == null)
-				vipo.Tick(job);
+				vipo.RunEntry(job);
 
 			var outMessages = vipo.TakeOutMessages();
-
-			if (vipo.Exception == null)
-			{
-				if (outMessages != null)
-					m_scheduler.AddRequest(new DispatchVipoMessages(outMessages));
-			}
-			else
-				vipo.Destroy();
+			if (outMessages != null && outMessages.Count > 0)
+				m_scheduler.AddRequest(new DispatchVipoMessages(outMessages));
 		}
 
 		static void SetWorkingVipo(Vipo vipo)
