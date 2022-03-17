@@ -12,6 +12,8 @@ namespace DvmTests.SchedulerTests
 		CancellationTokenSource m_cts;
 		readonly ManualResetEvent m_exceptionOccured = new ManualResetEvent(false);
 
+		protected VirtualMachine TheVM => m_vm;
+
 		[TestInitialize]
 		public override void Initialize()
 		{
@@ -47,11 +49,6 @@ namespace DvmTests.SchedulerTests
 		protected override void Sleep(double seconds)
 		{
 			Assert.IsFalse(m_exceptionOccured.WaitOne((int)(seconds * 1000)));
-		}
-
-		internal VirtualMachine TheVM
-		{
-			get { return m_vm; }
 		}
 	}
 }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 
 namespace DvmTests
@@ -13,17 +14,23 @@ namespace DvmTests
 	{
 		#region Basic
 
+		static TestBase s_currentTest;
+
 		StringWriter m_consoleOutput;
 
 		[TestInitialize]
 		public virtual void Initialize()
-		{ }
+		{
+			s_currentTest = this;
+		}
 
 		[TestCleanup]
 		public virtual void Cleanup()
 		{
 			if (DisposableObject.SafeDispose(ref m_consoleOutput))
 				ResetConsoleOutput();
+
+			s_currentTest = null;
 		}
 
 		#endregion
@@ -79,13 +86,39 @@ namespace DvmTests
 
 		#endregion
 
-		#region Utilities
+		#region Custom output
 
-		class TestMessage : Message
+		readonly object m_customOutputLock = new object();
+		readonly StringBuilder m_customOutput = new StringBuilder();
+
+		protected void Print(string content)
 		{
+			lock (m_customOutputLock)
+				m_customOutput.Append(content);
 		}
 
-		protected static readonly Message DefaultMessage = new TestMessage();
+		protected void PrintLine(string content)
+		{
+			lock (m_customOutputLock)
+				m_customOutput.AppendLine(content);
+		}
+
+		protected static void PrintStatic(string content) => s_currentTest.Print(content);
+		protected static void PrintLineStatic(string content) => s_currentTest.PrintLine(content);
+
+		protected string[] GetCustomOutput()
+		{
+			lock (m_customOutputLock)
+			{
+				return m_customOutput
+					.ToString()
+					.Split(NewlineCharacters, StringSplitOptions.RemoveEmptyEntries);
+			}
+		}
+
+		#endregion
+
+		#region Utilities
 
 		protected static string JoinMessageBodies(IEnumerable<VipoMessage> vipoMessages)
 		{

@@ -17,15 +17,13 @@ namespace DvmTests.SchedulerTests
 			one.Schedule();
 			two.Schedule();
 
-			HookConsoleOutput();
-
 			Sleep();
 
-			var consoleOutput = GetConsoleOutput();
+			var output = GetCustomOutput();
 
-			Assert.IsTrue(consoleOutput.Contains("MyVipo '1' ticks #1, messages [SystemMessageSchedule]"));
-			Assert.IsTrue(consoleOutput.Contains("MyVipo '2' ticks #1, messages [SystemMessageSchedule]"));
-			Assert.IsTrue(consoleOutput.Contains("MyVipo '2' ticks #2, messages [TestMessage]"));
+			Assert.IsTrue(output.Contains("MyVipo '1' ticks #1, messages [SystemMessageSchedule]"));
+			Assert.IsTrue(output.Contains("MyVipo '2' ticks #1, messages [SystemMessageSchedule]"));
+			Assert.IsTrue(output.Contains("MyVipo '2' ticks #2, messages [TestMessage]"));
 		}
 
 		class MyVipo : Vipo
@@ -42,11 +40,15 @@ namespace DvmTests.SchedulerTests
 				++m_tickedCount;
 
 				var text = $"MyVipo '{Symbol}' ticks #{m_tickedCount}, messages [{JoinMessageBodies(job.Messages)}]";
-				Console.WriteLine(text);
+				PrintLineStatic(text);
 
 				if (Vid == new Vid(1, 1, null))
-					Send(new Vid(1, 2, null), DefaultMessage);
+					Send(new Vid(1, 2, null), new TestMessage());
 			}
+		}
+
+		class TestMessage : Message
+		{
 		}
 	}
 }
