@@ -50,14 +50,13 @@ namespace DvmTests.VidTests
 			Assert.IsTrue(vid1.CompareTo(vid3) < 0);
 			Assert.IsTrue(vid3.CompareTo(vid1) > 0);
 
-			Assert.IsTrue(vid1.CompareTo(Vid.Empty) != 0);
-			Assert.IsTrue(Vid.Empty.CompareTo(vid1) != 0);
 			Assert.IsTrue(vid1.CompareTo(Vid.Empty) > 0);
+			Assert.IsTrue(Vid.Empty.CompareTo(vid1) != 0);
 
 			// Equals
-			Assert.IsTrue(vid1.Equals((object)vid1));
-			Assert.IsTrue(vid1.Equals((object)vid2));
-			Assert.IsFalse(vid1.Equals((object)vid3));
+			Assert.IsTrue(vid1.Equals(vid1));
+			Assert.IsTrue(vid1.Equals(vid2));
+			Assert.IsFalse(vid1.Equals(vid3));
 			Assert.IsFalse(vid1.Equals(null));
 			Assert.IsFalse(vid1.Equals("abc"));
 		}
@@ -70,11 +69,18 @@ namespace DvmTests.VidTests
 
 			Assert.AreEqual(vid1.ToString(null), $"{vid1.Data:X}");
 			Assert.AreEqual(vid1.ToString(""), $"{vid1.Data:X}");
+			Assert.AreEqual(vid1.ToString(""), vid1.ToString());
+
 			Assert.AreEqual(vid2.ToString(null), $"{vid2.Data:X}^abc");
 			Assert.AreEqual(vid2.ToString(""), $"{vid2.Data:X}^abc");
+			Assert.AreEqual(vid2.ToString(""), vid2.ToString());
 
-			Assert.AreEqual(vid1.ToString(Vid.FullFormat), $"{vid1.Index:X}-{vid1.NodeId:X}");
-			Assert.AreEqual(vid2.ToString(Vid.FullFormat), $"{vid2.Index:X}-{vid2.NodeId:X}^abc");
+			Assert.AreEqual(vid1.ToString("detail"), "1.2");
+			Assert.AreEqual(vid2.ToString("detail"), "1.2^abc");
+
+			Assert.AreEqual(Vid.Empty.ToString(), "0.0");
+
+			Assert.ThrowsException<FormatException>(() => vid1.ToString("???"));
 		}
 	}
 }

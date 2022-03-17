@@ -2,7 +2,7 @@
 
 namespace Dvm
 {
-	public struct VipoMessage
+	public struct VipoMessage : IFormattable
 	{
 		public Vid From { get; private set; }
 		public Vid To { get; private set; }
@@ -15,9 +15,26 @@ namespace Dvm
 			Message = message ?? throw new ArgumentNullException(nameof(message));
 		}
 
-		public override string ToString()
+		#region Formatting
+
+		public override string ToString() => ToString(null, null);
+
+		public string ToString(string format, IFormatProvider provider = null)
 		{
-			return $"({From}, {To}, {Message})";
+			switch (format)
+			{
+				case null:
+				case "":
+					return $"({From}, {To}, {Message})";
+
+				case "detail":
+					return $"({From:detail}, {To:detail}, {Message:detail})";
+
+				default:
+					throw new FormatException($"The format string '{format}' is not supported.");
+			}
 		}
+
+		#endregion
 	}
 }

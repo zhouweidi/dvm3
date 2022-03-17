@@ -1,9 +1,32 @@
-﻿namespace Dvm
+﻿using System;
+
+namespace Dvm
 {
-	public abstract class Message
+	public abstract class Message : IFormattable
 	{
-		public override string ToString() => $"{GetType().Name} {{{BodyToString()}}}";
+		#region Formatting
+
+		public override string ToString() => ToString(null, null);
+
+		public string ToString(string format, IFormatProvider provider = null)
+		{
+			switch (format)
+			{
+				case null:
+				case "":
+					return GetType().Name;
+
+				case "detail":
+					return $"{GetType().Name} {{{BodyToString()}}}";
+
+				default:
+					throw new FormatException($"The format string '{format}' is not supported.");
+			}
+		}
+
 		protected virtual string BodyToString() => "";
+
+		#endregion
 	}
 
 	#region System messages

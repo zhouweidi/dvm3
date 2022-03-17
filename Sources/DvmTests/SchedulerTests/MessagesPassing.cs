@@ -23,9 +23,9 @@ namespace DvmTests.SchedulerTests
 
 			var consoleOutput = GetConsoleOutput();
 
-			Assert.IsTrue(consoleOutput.Contains("MyVipo '1' ticks #1, messages [SystemMessageSchedule {}]"));
-			Assert.IsTrue(consoleOutput.Contains("MyVipo '2' ticks #1, messages [SystemMessageSchedule {}]"));
-			Assert.IsTrue(consoleOutput.Contains("MyVipo '2' ticks #2, messages [TestMessage {}]"));
+			Assert.IsTrue(consoleOutput.Contains("MyVipo '1' ticks #1, messages [SystemMessageSchedule]"));
+			Assert.IsTrue(consoleOutput.Contains("MyVipo '2' ticks #1, messages [SystemMessageSchedule]"));
+			Assert.IsTrue(consoleOutput.Contains("MyVipo '2' ticks #2, messages [TestMessage]"));
 		}
 
 		class MyVipo : Vipo

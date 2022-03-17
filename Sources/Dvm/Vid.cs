@@ -6,8 +6,6 @@ namespace Dvm
 	{
 		public static readonly Vid Empty = new Vid(0, null);
 
-		public const string FullFormat = "full";
-
 		readonly ulong m_data;
 		readonly string m_symbol;
 
@@ -102,15 +100,12 @@ namespace Dvm
 
 		#region Formatting
 
-		public override string ToString()
-		{
-			return ToString(null, null);
-		}
+		public override string ToString() => ToString(null, null);
 
 		public string ToString(string format, IFormatProvider provider = null)
 		{
 			if (Data == Empty.Data)
-				return "Empty";
+				return "0.0";
 
 			switch (format)
 			{
@@ -119,25 +114,13 @@ namespace Dvm
 					if (string.IsNullOrEmpty(m_symbol))
 						return m_data.ToString("X");
 					else
-						return string.Format("{0}^{1}",
-											  m_data.ToString("X"),
-											  m_symbol);
+						return $"{m_data:X}^{m_symbol}";
 
-				case FullFormat:
-					// <nodeId>-<index>^<symbol>
-					if (string.IsNullOrEmpty(m_symbol))
-					{
-						return string.Format("{0}-{1}",
-											  Index.ToString("X"),
-											  NodeId.ToString("X"));
-					}
-					else
-					{
-						return string.Format("{0}-{1}^{2}",
-											  Index.ToString("X"),
-											  NodeId.ToString("X"),
-											  m_symbol);
-					}
+				case "detail":
+					// <nodeId>.<index>^<symbol>
+					return string.IsNullOrEmpty(m_symbol) ?
+						$"{NodeId:X}.{Index:X}" :
+						$"{NodeId:X}.{Index:X}^{m_symbol}";
 
 				default:
 					throw new FormatException($"The format string '{format}' is not supported.");
