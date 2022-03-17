@@ -54,7 +54,7 @@ namespace Dvm
 		internal void RunEntry(VipoJob job)
 		{
 			if (job.IsEmpty)
-				throw new VipoFaultException(m_vid, "Empty job to run");
+				throw new KernelFaultException("Empty job to run");
 
 			try
 			{
