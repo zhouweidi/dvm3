@@ -10,14 +10,12 @@ namespace Dvm
 
 		public bool IsAttached { get; internal set; }
 		List<VipoMessage> m_outMessages;
-		Exception m_exception;
 
 		#region Properties
 
 		public VirtualMachine VM => m_vm;
 		public Vid Vid => m_vid;
 		public string Symbol => m_vid.Symbol;
-		public Exception Exception => m_exception;
 
 		#endregion
 
@@ -62,8 +60,6 @@ namespace Dvm
 			}
 			catch (Exception e)
 			{
-				m_exception = e;
-
 				OnError(e);
 			}
 		}

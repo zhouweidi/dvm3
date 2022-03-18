@@ -92,8 +92,7 @@ namespace Dvm
 		{
 			var vipo = job.Vipo;
 
-			if (vipo.Exception == null)
-				vipo.RunEntry(job);
+			vipo.RunEntry(job);
 
 			var outMessages = vipo.TakeOutMessages();
 			if (outMessages != null && outMessages.Count > 0)
