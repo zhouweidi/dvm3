@@ -106,13 +106,18 @@ namespace DvmTests
 		protected static void PrintStatic(string content) => s_currentTest.Print(content);
 		protected static void PrintLineStatic(string content) => s_currentTest.PrintLine(content);
 
-		protected string[] GetCustomOutput()
+		protected string[] GetCustomOutput(bool reset = true)
 		{
 			lock (m_customOutputLock)
 			{
-				return m_customOutput
+				var results = m_customOutput
 					.ToString()
 					.Split(NewlineCharacters, StringSplitOptions.RemoveEmptyEntries);
+
+				if (reset)
+					m_customOutput.Clear();
+
+				return results;
 			}
 		}
 

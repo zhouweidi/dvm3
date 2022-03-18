@@ -1,7 +1,6 @@
 using Dvm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Linq;
 
 namespace DvmTests.SchedulerTests
 {
@@ -21,9 +20,15 @@ namespace DvmTests.SchedulerTests
 
 			var output = GetCustomOutput();
 
-			Assert.IsTrue(output.Contains("MyVipo '1' ticks #1, messages [SystemMessageSchedule]"));
-			Assert.IsTrue(output.Contains("MyVipo '2' ticks #1, messages [SystemMessageSchedule]"));
-			Assert.IsTrue(output.Contains("MyVipo '2' ticks #2, messages [TestMessage]"));
+			var index1 = Array.IndexOf(output, "MyVipo '1' ticks #1, messages [SystemMessageSchedule]");
+			Assert.IsTrue(index1 >= 0);
+
+			var index2 = Array.IndexOf(output, "MyVipo '2' ticks #1, messages [SystemMessageSchedule]");
+			Assert.IsTrue(index2 >= 0);
+
+			var index3 = Array.IndexOf(output, "MyVipo '2' ticks #2, messages [TestMessage]");
+			Assert.IsTrue(index3 >= 0);
+			Assert.IsTrue(index3 > index1 && index3 > index2);
 		}
 
 		class MyVipo : Vipo
