@@ -11,7 +11,7 @@ namespace DvmTests.SchedulerTests
 		public void Normal()
 		{
 			using var cts = new CancellationTokenSource();
-			var vm = new VirtualMachine(4, cts.Token);
+			var vm = new VirtualMachine(4, 10, cts.Token);
 			using (vm)
 			{
 				Assert.AreEqual(vm.State, VirtualMachineState.Running);
@@ -25,7 +25,7 @@ namespace DvmTests.SchedulerTests
 		[TestMethod]
 		public void NoCancellationToken()
 		{
-			var vm = new VirtualMachine(4, CancellationToken.None);
+			var vm = new VirtualMachine(4, 10, CancellationToken.None);
 			using (vm)
 			{
 				Assert.AreEqual(vm.State, VirtualMachineState.Running);
@@ -40,7 +40,7 @@ namespace DvmTests.SchedulerTests
 		public void ExplicitCancel()
 		{
 			using var cts = new CancellationTokenSource();
-			var vm = new VirtualMachine(4, cts.Token);
+			var vm = new VirtualMachine(4, 10, cts.Token);
 			using (vm)
 			{
 				Assert.AreEqual(vm.State, VirtualMachineState.Running);
@@ -57,7 +57,7 @@ namespace DvmTests.SchedulerTests
 		public void ExplicitCancelImmediately()
 		{
 			using var cts = new CancellationTokenSource();
-			var vm = new VirtualMachine(4, cts.Token);
+			var vm = new VirtualMachine(4, 10, cts.Token);
 			using (vm)
 			{
 				Assert.AreEqual(vm.State, VirtualMachineState.Running);

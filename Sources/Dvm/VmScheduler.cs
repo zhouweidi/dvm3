@@ -7,6 +7,7 @@ namespace Dvm
 	class VmScheduler : VmThread
 	{
 		readonly VmExecutor m_executor;
+		readonly int m_maxCircleMilliseconds;
 		readonly ConcurrentDictionary<Vid, Vipo> m_vipos;
 		readonly BlockingCollection<ScheduleRequest> m_requestsQueue = new BlockingCollection<ScheduleRequest>();
 
@@ -16,10 +17,11 @@ namespace Dvm
 
 		#endregion
 
-		public VmScheduler(IVmThreadController controller, int processorsCount, ConcurrentDictionary<Vid, Vipo> vipos)
+		public VmScheduler(IVmThreadController controller, int processorsCount, int maxCircleMilliseconds, ConcurrentDictionary<Vid, Vipo> vipos)
 			: base(controller, "DVM-Scheduler")
 		{
 			m_executor = new VmExecutor(controller, this, processorsCount);
+			m_maxCircleMilliseconds = maxCircleMilliseconds;
 			m_vipos = vipos;
 		}
 
@@ -55,15 +57,26 @@ namespace Dvm
 
 		void GenerateVipoJobs(Dictionary<Vid, VipoJob> vipoJobs)
 		{
-			// TODO 如果requests都是填充单一vipo，会导致这个循环一直不结束。需要设定最小循环次数或时间
+			var startTime = Environment.TickCount64;
+
 			for (var request = m_requestsQueue.Take(EndToken); ;)
 			{
 				ProcessRequest(request, vipoJobs);
 
-				var enoughJobs = vipoJobs.Count >= m_executor.ProcessorsCount;
+				// Time up
+				if (m_maxCircleMilliseconds >= 0)
+				{
+					var elapsedTime = Environment.TickCount64 - startTime;
+					if (elapsedTime >= m_maxCircleMilliseconds)
+						break;
+				}
+
+				// Enough jobs
+				var enoughJobs = vipoJobs.Count >= m_executor.IdleProcessorsCount;
 				if (enoughJobs)
 					break;
 
+				// No more request
 				var noMoreRequest = !m_requestsQueue.TryTake(out request);
 				if (noMoreRequest)
 				{

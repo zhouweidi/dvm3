@@ -20,7 +20,7 @@ namespace DvmTests.SchedulerTests
 			base.Initialize();
 
 			m_cts = new CancellationTokenSource();
-			m_vm = new VirtualMachine(4, m_cts.Token);
+			m_vm = new VirtualMachine(4, 10, m_cts.Token);
 
 			m_vm.OnError += OnError;
 

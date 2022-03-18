@@ -35,18 +35,18 @@ namespace Dvm
 
 		#region Initialization
 
-		public VirtualMachine(int virtualProcessorsCount = 0)
-			: this(virtualProcessorsCount, CancellationToken.None)
+		public VirtualMachine(int virtualProcessorsCount = 0, int maxSchedulerCircleMilliseconds = 10)
+			: this(virtualProcessorsCount, maxSchedulerCircleMilliseconds, CancellationToken.None)
 		{ }
 
-		public VirtualMachine(int virtualProcessorsCount, CancellationToken endToken)
+		public VirtualMachine(int virtualProcessorsCount, int maxSchedulerCircleMilliseconds, CancellationToken endToken)
 		{
 			m_controller = new ThreadController(endToken);
 
 			if (virtualProcessorsCount == 0)
-				virtualProcessorsCount = Environment.ProcessorCount;
+				virtualProcessorsCount = Math.Max(Environment.ProcessorCount - 1, 1);
 
-			m_scheduler = new VmScheduler(m_controller, virtualProcessorsCount, m_vipos);
+			m_scheduler = new VmScheduler(m_controller, virtualProcessorsCount, maxSchedulerCircleMilliseconds, m_vipos);
 
 			m_vidAllocator = new VidAllocator(new UsedVidQuery(this));
 		}

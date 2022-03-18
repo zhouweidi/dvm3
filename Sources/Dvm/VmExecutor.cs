@@ -17,6 +17,7 @@ namespace Dvm
 		#region Properties
 
 		public int ProcessorsCount => m_processors.Length;
+		public int IdleProcessorsCount => m_idleProcessors.Count;
 
 		#endregion
 
@@ -99,6 +100,8 @@ namespace Dvm
 		{
 			readonly ConcurrentBag<int> m_bag;
 			readonly SemaphoreSlim m_semaphore;
+
+			public int Count => m_bag.Count;
 
 			public IndexBag(int count)
 			{
