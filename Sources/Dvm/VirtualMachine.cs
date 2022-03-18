@@ -4,7 +4,6 @@ using System.Threading;
 
 namespace Dvm
 {
-	// TODO 添加error state
 	public enum VirtualMachineState
 	{
 		Running, EndRequested, End
@@ -71,7 +70,7 @@ namespace Dvm
 		{
 			readonly CancellationTokenSource m_endSource;
 
-			int m_state = (int)VirtualMachineState.Running;
+			volatile int m_state = (int)VirtualMachineState.Running;
 			public event Action<Exception> OnError;
 			volatile Exception m_exception;
 
@@ -107,7 +106,11 @@ namespace Dvm
 					throw new ArgumentNullException(nameof(exception));
 
 				if (Interlocked.CompareExchange(ref m_exception, exception, null) == null)
+				{
 					OnError?.Invoke(exception);
+
+					RequestToEnd();
+				}
 			}
 
 			public void RequestToEnd()
