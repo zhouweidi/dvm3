@@ -9,28 +9,44 @@ namespace DvmTests.SchedulerTests
 	public class BasicSchedule : TestSchedulerBase
 	{
 		[TestMethod]
-		public void AddNewVipos()
+		public void RunVipos()
 		{
-			var a = new MyVipo(TheVM, "a");
-			var b = new MyVipo(TheVM, "b");
+			var a = new MyVipo(VM, "a");
+			var b = new MyVipo(VM, "b");
+
+			Assert.AreEqual(VM.ViposCount, 0);
 
 			a.Schedule();
 			b.Schedule();
-
 			Sleep();
+			Assert.AreEqual(VM.ViposCount, 2);
 
 			var output = GetCustomOutput();
-
 			Assert.IsTrue(output.Contains("MyVipo 'a' ticks #1, messages [SystemMessageSchedule]"));
 			Assert.IsTrue(output.Contains("MyVipo 'b' ticks #1, messages [SystemMessageSchedule]"));
+
+			a.Detach();
+			a.Detach(); // Call Detach() on the same object twice
+			b.Detach();
+			Sleep();
+			Assert.AreEqual(VM.ViposCount, 0);
+
+			a.Schedule();
+			b.Schedule();
+			Sleep();
+			Assert.AreEqual(VM.ViposCount, 2);
+
+			output = GetCustomOutput();
+			Assert.IsTrue(output.Contains("MyVipo 'a' ticks #2, messages [SystemMessageSchedule]"));
+			Assert.IsTrue(output.Contains("MyVipo 'b' ticks #2, messages [SystemMessageSchedule]"));
 		}
 
 		class MyVipo : Vipo
 		{
 			int m_tickedCount;
 
-			public MyVipo(VirtualMachine vm, string name)
-				: base(vm, name)
+			public MyVipo(VirtualMachine vm, string symbol)
+				: base(vm, symbol)
 			{
 			}
 

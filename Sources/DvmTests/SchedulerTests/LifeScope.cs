@@ -8,7 +8,7 @@ namespace DvmTests.SchedulerTests
 	public class LifeScope : TestBase
 	{
 		[TestMethod]
-		public void Normal()
+		public void Dispose()
 		{
 			using var cts = new CancellationTokenSource();
 			var vm = new VirtualMachine(4, 10, cts.Token);
@@ -18,12 +18,12 @@ namespace DvmTests.SchedulerTests
 				Sleep();
 			}
 
-			Assert.AreEqual(vm.State, VirtualMachineState.End);
+			Assert.AreEqual(vm.State, VirtualMachineState.Ended);
 			Assert.IsNull(vm.Exception);
 		}
 
 		[TestMethod]
-		public void NoCancellationToken()
+		public void Dispose_NoCancellationToken()
 		{
 			var vm = new VirtualMachine(4, 10, CancellationToken.None);
 			using (vm)
@@ -32,29 +32,12 @@ namespace DvmTests.SchedulerTests
 				Sleep();
 			}
 
-			Assert.AreEqual(vm.State, VirtualMachineState.End);
+			Assert.AreEqual(vm.State, VirtualMachineState.Ended);
 			Assert.IsNull(vm.Exception);
 		}
 
 		[TestMethod]
-		public void ExplicitCancel()
-		{
-			using var cts = new CancellationTokenSource();
-			var vm = new VirtualMachine(4, 10, cts.Token);
-			using (vm)
-			{
-				Assert.AreEqual(vm.State, VirtualMachineState.Running);
-
-				Sleep();
-				cts.Cancel();
-			}
-
-			Assert.AreEqual(vm.State, VirtualMachineState.End);
-			Assert.IsNull(vm.Exception);
-		}
-
-		[TestMethod]
-		public void ExplicitCancelImmediately()
+		public void Cancel()
 		{
 			using var cts = new CancellationTokenSource();
 			var vm = new VirtualMachine(4, 10, cts.Token);
@@ -63,10 +46,33 @@ namespace DvmTests.SchedulerTests
 				Assert.AreEqual(vm.State, VirtualMachineState.Running);
 
 				cts.Cancel();
+				// vm.State can be any state of (running, ending, ended) immediately after Cancal() call
+
+				// Sleep a while to let VM update the state
 				Sleep();
+
+				var state = vm.State;
+				Assert.IsTrue(state == VirtualMachineState.Ending || state == VirtualMachineState.Ended);
 			}
 
-			Assert.AreEqual(vm.State, VirtualMachineState.End);
+			Assert.AreEqual(vm.State, VirtualMachineState.Ended);
+			Assert.IsNull(vm.Exception);
+		}
+
+		[TestMethod]
+		public void CancelAndDispose()
+		{
+			using var cts = new CancellationTokenSource();
+			var vm = new VirtualMachine(4, 10, cts.Token);
+			using (vm)
+			{
+				Assert.AreEqual(vm.State, VirtualMachineState.Running);
+
+				cts.Cancel();
+				// vm.State can be any state of (running, ending, ended) immediately after Cancal() call
+			}
+
+			Assert.AreEqual(vm.State, VirtualMachineState.Ended);
 			Assert.IsNull(vm.Exception);
 		}
 	}

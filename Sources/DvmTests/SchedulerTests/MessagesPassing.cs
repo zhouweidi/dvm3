@@ -11,8 +11,8 @@ namespace DvmTests.SchedulerTests
 		[TestMethod]
 		public void AddNewVipos()
 		{
-			var one = new MyVipo(TheVM, "1");
-			var two = new MyVipo(TheVM, "2");
+			var one = new MyVipo(VM, "1");
+			var two = new MyVipo(VM, "2");
 
 			one.Schedule();
 			two.Schedule();

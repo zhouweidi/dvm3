@@ -12,7 +12,7 @@ namespace DvmTests.SchedulerTests
 		CancellationTokenSource m_cts;
 		readonly ManualResetEvent m_exceptionOccured = new ManualResetEvent(false);
 
-		protected VirtualMachine TheVM => m_vm;
+		protected VirtualMachine VM => m_vm;
 
 		[TestInitialize]
 		public override void Initialize()
