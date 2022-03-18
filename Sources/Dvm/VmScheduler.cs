@@ -23,6 +23,10 @@ namespace Dvm
 			m_executor = new VmExecutor(controller, this, processorsCount);
 			m_maxCircleMilliseconds = maxCircleMilliseconds;
 			m_vipos = vipos;
+
+			// Start the thread execution after everything gets initialized
+			Start();
+			m_executor.Start();
 		}
 
 		protected override void OnDispose(bool explicitCall)

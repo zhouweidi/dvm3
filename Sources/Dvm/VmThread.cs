@@ -26,7 +26,10 @@ namespace Dvm
 			{
 				Name = name
 			};
+		}
 
+		public void Start()
+		{
 			m_thread.Start();
 		}
 

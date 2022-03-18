@@ -32,6 +32,12 @@ namespace Dvm
 			m_idleProcessors = new IndexBag(processorsCount);
 		}
 
+		public void Start()
+		{
+			for (int i = 0; i < m_processors.Length; i++)
+				m_processors[i].Start();
+		}
+
 		protected override void OnDispose(bool explicitCall)
 		{
 			m_controller.RequestToEnd();
