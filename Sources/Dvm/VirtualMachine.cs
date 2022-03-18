@@ -6,7 +6,7 @@ namespace Dvm
 {
 	public enum VirtualMachineState
 	{
-		Running, EndRequested, End
+		Running, Ending, Ended
 	}
 
 	public sealed class VirtualMachine : DisposableObject
@@ -90,7 +90,7 @@ namespace Dvm
 			{
 				if (explicitCall)
 				{
-					m_state = (int)VirtualMachineState.End;
+					m_state = (int)VirtualMachineState.Ended;
 
 					m_endSource.Dispose();
 				}
@@ -117,7 +117,7 @@ namespace Dvm
 			{
 				var set = Interlocked.CompareExchange(
 					ref m_state,
-					(int)VirtualMachineState.EndRequested,
+					(int)VirtualMachineState.Ending,
 					(int)VirtualMachineState.Running) == (int)VirtualMachineState.Running;
 
 				if (set)

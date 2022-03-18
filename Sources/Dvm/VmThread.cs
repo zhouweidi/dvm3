@@ -44,8 +44,10 @@ namespace Dvm
 			{
 				ThreadEntry();
 			}
-			catch (OperationCanceledException)
+			catch (OperationCanceledException ex) when (ex.CancellationToken == EndToken)
 			{
+				// Update VM.State
+				m_controller.RequestToEnd();
 			}
 			catch (Exception ex)
 			{
