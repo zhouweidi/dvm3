@@ -12,8 +12,8 @@ namespace DvmTests.SchedulerTests
 		[TestMethod]
 		public void RunVipos()
 		{
-			var a = new MyVipo(VM, "a");
-			var b = new MyVipo(VM, "b");
+			var a = new MyVipo(this, "a");
+			var b = new MyVipo(this, "b");
 
 			Assert.AreEqual(VM.ViposCount, 0);
 
@@ -42,29 +42,29 @@ namespace DvmTests.SchedulerTests
 			Assert.IsTrue(output.Contains("'b' ticks #2, messages [SystemMessageSchedule]"));
 		}
 
-		class MyVipo : Vipo
+		class MyVipo : TestVipo
 		{
 			int m_tickedCount;
 
-			public MyVipo(VirtualMachine vm, string symbol)
-				: base(vm, symbol)
+			public MyVipo(VmTestBase test, string symbol)
+				: base(test, symbol)
 			{
 			}
 
-			protected override void Run(IReadOnlyList<VipoMessage> messages)
+			protected override void Run(IReadOnlyList<VipoMessage> vipoMessages)
 			{
 				++m_tickedCount;
 
-				var text = $"'{Symbol}' ticks #{m_tickedCount}, messages [{JoinMessageBodies(messages)}]";
-				PrintLineStatic(text);
+				var text = $"'{Symbol}' ticks #{m_tickedCount}, messages [{JoinMessageBodies(vipoMessages)}]";
+				Print(text);
 			}
 		}
 
 		[TestMethod]
 		public void DisposeVipo()
 		{
-			var a = new MyVipo(VM, "a");
-			var b = new MyVipoWithOnDispose(VM, "b");
+			var a = new MyVipo(this, "a");
+			var b = new MyVipoWithOnDispose(this, "b");
 
 			Assert.AreEqual(VM.ViposCount, 0);
 
@@ -102,15 +102,15 @@ namespace DvmTests.SchedulerTests
 
 		class MyVipoWithOnDispose : MyVipo
 		{
-			public MyVipoWithOnDispose(VirtualMachine vm, string symbol)
-				: base(vm, symbol)
+			public MyVipoWithOnDispose(VmTestBase test, string symbol)
+				: base(test, symbol)
 			{
 			}
 
 			protected override void OnDispose()
 			{
 				var text = $"'{Symbol}' OnDispose()";
-				PrintLineStatic(text);
+				Print(text);
 
 				base.OnDispose();
 			}

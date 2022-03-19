@@ -11,8 +11,8 @@ namespace DvmTests.SchedulerTests
 		[TestMethod]
 		public void AddNewVipos()
 		{
-			var one = new MyVipo(VM, "1");
-			var two = new MyVipo(VM, "2");
+			var one = new MyVipo(this, "1");
+			var two = new MyVipo(this, "2");
 
 			one.Schedule();
 			two.Schedule();
@@ -32,21 +32,21 @@ namespace DvmTests.SchedulerTests
 			Assert.IsTrue(index3 > index1 && index3 > index2);
 		}
 
-		class MyVipo : Vipo
+		class MyVipo : TestVipo
 		{
 			int m_tickedCount;
 
-			public MyVipo(VirtualMachine vm, string name)
-				: base(vm, name)
+			public MyVipo(VmTestBase test, string name)
+				: base(test, name)
 			{
 			}
 
-			protected override void Run(IReadOnlyList<VipoMessage> messages)
+			protected override void Run(IReadOnlyList<VipoMessage> vipoMessages)
 			{
 				++m_tickedCount;
 
-				var text = $"MyVipo '{Symbol}' ticks #{m_tickedCount}, messages [{JoinMessageBodies(messages)}]";
-				PrintLineStatic(text);
+				var text = $"MyVipo '{Symbol}' ticks #{m_tickedCount}, messages [{JoinMessageBodies(vipoMessages)}]";
+				Print(text);
 
 				if (Vid == new Vid(1, 1, null))
 					Send(new Vid(1, 2, null), new TestMessage());

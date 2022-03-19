@@ -2,7 +2,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -16,8 +15,6 @@ namespace DvmTests
 
 		static TestBase s_currentTest;
 
-		StringWriter m_consoleOutput;
-
 		[TestInitialize]
 		public virtual void Initialize()
 		{
@@ -27,9 +24,6 @@ namespace DvmTests
 		[TestCleanup]
 		public virtual void Cleanup()
 		{
-			if (DisposableObject.SafeDispose(ref m_consoleOutput))
-				ResetConsoleOutput();
-
 			s_currentTest = null;
 		}
 
@@ -49,62 +43,28 @@ namespace DvmTests
 
 		#endregion
 
-		#region Console output
-
-		protected void HookConsoleOutput()
-		{
-			if (m_consoleOutput != null)
-				throw new InvalidOperationException("Console output has been already hooked");
-
-			m_consoleOutput = new StringWriter();
-			Console.SetOut(m_consoleOutput);
-		}
-
-		void ResetConsoleOutput()
-		{
-			var sw = new StreamWriter(Console.OpenStandardOutput())
-			{
-				AutoFlush = true
-			};
-
-			Console.SetOut(sw);
-		}
+		#region Output
 
 		static readonly char[] NewlineCharacters = new[] { '\n', '\r' };
 
-		protected string[] GetConsoleOutput()
-		{
-			if (m_consoleOutput == null)
-				throw new InvalidOperationException("Need to hood console output first");
-
-			m_consoleOutput.Flush();
-
-			return m_consoleOutput
-				.ToString()
-				.Split(NewlineCharacters, StringSplitOptions.RemoveEmptyEntries);
-		}
-
-		#endregion
-
-		#region Custom output
-
 		readonly object m_customOutputLock = new object();
 		readonly StringBuilder m_customOutput = new StringBuilder();
+		TestContext m_testContextInstance;
 
-		protected void Print(string content)
+		public TestContext TestContext
 		{
-			lock (m_customOutputLock)
-				m_customOutput.Append(content);
+			set { m_testContextInstance = value; }
 		}
 
-		protected void PrintLine(string content)
+		internal void Print(string content)
 		{
 			lock (m_customOutputLock)
 				m_customOutput.AppendLine(content);
+
+			m_testContextInstance.WriteLine(content);
 		}
 
 		protected static void PrintStatic(string content) => s_currentTest.Print(content);
-		protected static void PrintLineStatic(string content) => s_currentTest.PrintLine(content);
 
 		protected string[] GetCustomOutput(bool reset = true)
 		{

@@ -12,7 +12,7 @@ namespace DvmTests.VipoTests
 		public void ExceptionDuringRun()
 		{
 			// Caught exception
-			var a = new MyVipo(VM, "a", false);
+			var a = new MyVipo(this, "a", false);
 
 			a.Schedule();
 			Sleep();
@@ -28,7 +28,7 @@ namespace DvmTests.VipoTests
 			Assert.IsFalse(a.IsAttached);
 
 			// Uncaught exception
-			var b = new MyVipo(VM, "b", true);
+			var b = new MyVipo(this, "b", true);
 
 			b.Schedule();
 			Sleep();
@@ -52,20 +52,20 @@ namespace DvmTests.VipoTests
 
 		protected override void OnError(Exception e)
 		{
-			PrintLine($"VM.OnError: {e.Message}");
+			Print($"VM.OnError: {e.Message}");
 		}
 
-		class MyVipo : Vipo
+		class MyVipo : TestVipo
 		{
 			readonly bool m_throwInOnError;
 
-			public MyVipo(VirtualMachine vm, string symbol, bool throwInOnError)
-				: base(vm, symbol)
+			public MyVipo(VmTestBase test, string symbol, bool throwInOnError)
+				: base(test, symbol)
 			{
 				m_throwInOnError = throwInOnError;
 			}
 
-			protected override void Run(IReadOnlyList<VipoMessage> messages)
+			protected override void Run(IReadOnlyList<VipoMessage> vipoMessages)
 			{
 				throw new Exception("Original error in Vipo.Run()");
 			}

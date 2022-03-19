@@ -109,7 +109,7 @@ namespace Dvm
 
 		// All handlers are called in VmProcessor threads
 
-		protected abstract void Run(IReadOnlyList<VipoMessage> messages);
+		protected abstract void Run(IReadOnlyList<VipoMessage> vipoMessages);
 
 		// OnError should not raise an exception; if it does, the VM event OnError can be invoked.
 		protected virtual void OnError(Exception e)
