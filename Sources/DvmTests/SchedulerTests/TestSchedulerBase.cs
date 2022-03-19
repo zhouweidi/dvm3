@@ -31,11 +31,16 @@ namespace DvmTests.SchedulerTests
 		public override void Cleanup()
 		{
 			Assert.IsNull(m_vm.Exception);
-			Assert.AreEqual(m_vm.State, VirtualMachineState.Running);
 
-			m_cts.Cancel();
+			if (!m_vm.Disposed)
+			{
+				Assert.AreEqual(m_vm.State, VirtualMachineState.Running);
 
-			DisposableObject.SafeDispose(ref m_vm);
+				m_cts.Cancel();
+
+				DisposableObject.SafeDispose(ref m_vm);
+			}
+
 			DisposableObject.SafeDispose(ref m_cts);
 
 			base.Cleanup();

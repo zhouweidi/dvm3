@@ -59,6 +59,14 @@ namespace Dvm
 				m_scheduler.Dispose();
 
 				m_controller.Dispose();
+
+				if (m_vipos.Count > 0)
+				{
+					foreach (var vipo in m_vipos.Values)
+						vipo.Dispose();
+
+					m_vipos.Clear();
+				}
 			}
 		}
 

@@ -37,4 +37,14 @@ namespace Dvm
 			Vipo = vipo;
 		}
 	}
+
+	class VipoDispose : ScheduleRequest
+	{
+		public Vipo Vipo { get; private set; }
+
+		public VipoDispose(Vipo vipo)
+		{
+			Vipo = vipo;
+		}
+	}
 }

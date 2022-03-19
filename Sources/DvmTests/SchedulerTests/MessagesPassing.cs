@@ -1,6 +1,7 @@
 using Dvm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
 
 namespace DvmTests.SchedulerTests
 {
@@ -40,11 +41,11 @@ namespace DvmTests.SchedulerTests
 			{
 			}
 
-			protected override void Run(VipoJob job)
+			protected override void Run(IReadOnlyList<VipoMessage> messages)
 			{
 				++m_tickedCount;
 
-				var text = $"MyVipo '{Symbol}' ticks #{m_tickedCount}, messages [{JoinMessageBodies(job.Messages)}]";
+				var text = $"MyVipo '{Symbol}' ticks #{m_tickedCount}, messages [{JoinMessageBodies(messages)}]";
 				PrintLineStatic(text);
 
 				if (Vid == new Vid(1, 1, null))

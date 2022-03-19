@@ -105,7 +105,11 @@ namespace Dvm
 					break;
 
 				case VipoDetach detach:
-					ProcessRequest_VipoDetach(detach);
+					ProcessRequest_VipoDetach(detach.Vipo, null);
+					break;
+
+				case VipoDispose dispose:
+					ProcessRequest_VipoDetach(dispose.Vipo, vipoJobs);
 					break;
 
 				default:
@@ -146,6 +150,9 @@ namespace Dvm
 				if (vipo.IsAttached)
 					throw new KernelFaultException($"The vipo '{vid}' is attached, but doesn't exist in the vipos list");
 
+				if (vipo.Disposed)
+					return;
+
 				// Add to the vipos list
 				if (!m_vipos.TryAdd(vid, vipo))
 					throw new KernelFaultException($"Failed to add the vipo '{vid}' to the vipos list");
@@ -159,27 +166,34 @@ namespace Dvm
 			job.AddMessage(message);
 		}
 
-		void ProcessRequest_VipoDetach(VipoDetach request)
+		void ProcessRequest_VipoDetach(Vipo vipo, Dictionary<Vid, VipoJob> vipoJobs)
 		{
-			var vipo = request.Vipo;
 			var vid = vipo.Vid;
 
-			if (!vipo.IsAttached)
+			if (vipo.IsAttached)
+			{
+				// Remove from the vipos list
+				if (!m_vipos.TryRemove(vid, out Vipo removedVipo))
+					throw new KernelFaultException($"Failed to remove the vipo '{vid}' from the vipos list");
+
+				if (removedVipo != vipo)
+					throw new KernelFaultException($"Unmatched vipo '{vid}' being detached");
+
+				vipo.IsAttached = false;
+			}
+			else
 			{
 				if (m_vipos.ContainsKey(vid))
 					throw new KernelFaultException($"The vipo '{vid}' to detach is not attached, but exists in the vipos list");
-
-				return;
 			}
 
-			// Remove from the vipos list
-			if (!m_vipos.TryRemove(vid, out Vipo removedVipo))
-				throw new KernelFaultException($"Failed to remove the vipo '{vid}' from the vipos list");
+			// Dispose job
+			if (vipoJobs != null && vipo.OnDisposeOverridden)
+			{
+				var job = GetOrAddVipoJob(vipoJobs, vipo);
 
-			if (removedVipo != vipo)
-				throw new KernelFaultException($"Unmatched vipo '{vid}' being detached");
-
-			vipo.IsAttached = false;
+				job.SetDisposeFlag();
+			}
 		}
 
 		static VipoJob GetOrAddVipoJob(Dictionary<Vid, VipoJob> vipoJobs, Vipo vipo)

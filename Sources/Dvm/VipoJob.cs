@@ -3,28 +3,30 @@ using System.Collections.Generic;
 
 namespace Dvm
 {
-	public sealed class VipoJob
+	class VipoJob
 	{
-		static readonly VipoMessage[] NoMessages = new VipoMessage[0];
-
 		readonly Vipo m_vipo;
 		List<VipoMessage> m_messages;
+		bool m_disposeFlag;
 
-		internal Vipo Vipo => m_vipo;
-		internal bool IsEmpty => m_messages == null;
-		public IReadOnlyList<VipoMessage> Messages => m_messages ?? (IReadOnlyList<VipoMessage>)NoMessages;
+		public Vipo Vipo => m_vipo;
+		public IReadOnlyList<VipoMessage> Messages => m_messages;
+		public bool DisposeFlag => m_disposeFlag;
+		public bool IsEmpty => m_messages == null && !m_disposeFlag;
 
-		internal VipoJob(Vipo vipo)
+		public VipoJob(Vipo vipo)
 		{
 			m_vipo = vipo ?? throw new ArgumentNullException(nameof(vipo));
 		}
 
-		internal void AddMessage(VipoMessage message)
+		public void AddMessage(VipoMessage message)
 		{
 			if (m_messages == null)
 				m_messages = new List<VipoMessage>();
 
 			m_messages.Add(message);
 		}
+
+		public void SetDisposeFlag() => m_disposeFlag = true;
 	}
 }
