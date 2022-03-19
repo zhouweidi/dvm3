@@ -12,7 +12,7 @@ namespace DvmTests
 			m_test = test;
 		}
 
-		protected void Print(string content)
+		protected void Print(string content = "")
 		{
 			m_test.Print(content);
 		}

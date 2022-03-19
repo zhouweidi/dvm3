@@ -56,7 +56,7 @@ namespace DvmTests
 			set { m_testContextInstance = value; }
 		}
 
-		internal void Print(string content)
+		internal void Print(string content = "")
 		{
 			lock (m_customOutputLock)
 				m_customOutput.AppendLine(content);
