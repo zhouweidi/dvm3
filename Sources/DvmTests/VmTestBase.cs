@@ -13,6 +13,8 @@ namespace DvmTests
 		readonly ManualResetEvent m_exceptionOccured = new ManualResetEvent(false);
 
 		internal VirtualMachine VM => m_vm;
+		protected virtual int VmProcessorsCount => 4;
+		protected virtual int MaxSchedulerCircleMilliseconds => 10;
 
 		[TestInitialize]
 		public override void Initialize()
@@ -20,7 +22,7 @@ namespace DvmTests
 			base.Initialize();
 
 			m_cts = new CancellationTokenSource();
-			m_vm = new VirtualMachine(4, 10, m_cts.Token);
+			m_vm = new VirtualMachine(VmProcessorsCount, MaxSchedulerCircleMilliseconds, m_cts.Token);
 
 			m_vm.OnError += OnError;
 
