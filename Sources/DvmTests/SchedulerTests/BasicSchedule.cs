@@ -7,7 +7,7 @@ using System.Linq;
 namespace DvmTests.SchedulerTests
 {
 	[TestClass]
-	public class BasicSchedule : TestSchedulerBase
+	public class BasicSchedule : VmTestBase
 	{
 		[TestMethod]
 		public void RunVipos()

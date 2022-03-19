@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace DvmTests.SchedulerTests
 {
 	[TestClass]
-	public class MessagesPassing : TestSchedulerBase
+	public class MessagesPassing : VmTestBase
 	{
 		[TestMethod]
 		public void AddNewVipos()
