@@ -65,9 +65,9 @@ namespace DvmTests.SchedulerTests
 			VM.Dispose();
 
 			// Final report
-			var startDuration = (from ant in m_ants
-								 select ant.StartDuration.TotalMilliseconds).Average();
-			Print($"Start duration (avg): {TimeSpan.FromMilliseconds(startDuration)}");
+			var startScheduleDuration = (from ant in m_ants
+										 select ant.StartScheduleDuration.TotalMilliseconds).Average();
+			Print($"Start schedule (avg): {startScheduleDuration:N0} ms");
 			Print();
 
 			var greetingSent = (from ant in m_ants
@@ -98,9 +98,9 @@ namespace DvmTests.SchedulerTests
 						  select rtt.TotalMilliseconds).Max();
 			var minRTT = (from rtt in greetingRTTs
 						  select rtt.TotalMilliseconds).Min();
-			Print($"Greeting RTT (avg): {TimeSpan.FromMilliseconds(avgRTT)}");
-			Print($"Greeting RTT (max): {TimeSpan.FromMilliseconds(maxRTT)}");
-			Print($"Greeting RTT (min): {TimeSpan.FromMilliseconds(minRTT)}");
+			Print($"Greeting RTT (avg): {avgRTT:N0} ms");
+			Print($"Greeting RTT (max): {maxRTT:N0} ms");
+			Print($"Greeting RTT (min): {minRTT:N0} ms");
 		}
 
 		static void Profile(string name, Action action)
@@ -112,7 +112,7 @@ namespace DvmTests.SchedulerTests
 			sw.Stop();
 
 			var elapsed = sw.Elapsed;
-			PrintStatic($"{name}: {elapsed}");
+			PrintStatic($"{name}: {elapsed.TotalMilliseconds:N0} ms");
 		}
 
 		Vid GetGreetingTarget(Random random)
@@ -142,7 +142,7 @@ namespace DvmTests.SchedulerTests
 
 			#region Properties
 
-			public TimeSpan StartDuration
+			public TimeSpan StartScheduleDuration
 			{
 				get
 				{
