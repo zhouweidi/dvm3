@@ -8,3 +8,5 @@
 /Sources/DvmTests/obj
 /Sources/.vs
 /Sources/TestResults
+/Sources/PerformanceTests/obj
+/Sources/PerformanceTests/bin
