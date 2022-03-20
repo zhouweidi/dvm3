@@ -6,7 +6,7 @@ using System.Threading;
 namespace DvmTests
 {
 	[TestClass]
-	public class VmTestBase : TestBase
+	public abstract class VmTestBase : TestBase
 	{
 		VirtualMachine m_vm;
 		CancellationTokenSource m_cts;

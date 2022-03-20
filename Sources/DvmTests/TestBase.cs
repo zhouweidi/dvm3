@@ -9,7 +9,7 @@ using System.Threading;
 namespace DvmTests
 {
 	[TestClass]
-	public class TestBase
+	public abstract class TestBase
 	{
 		#region Basic
 
