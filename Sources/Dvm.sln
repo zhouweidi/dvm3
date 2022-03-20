@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.29306.81
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dvm", "Dvm\Dvm.csproj", "{BABDF392-C02A-4C00-B493-06B71CF58CDD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DvmTests", "DvmTests\DvmTests.csproj", "{61DFAD0A-1EB2-4CC9-A70E-0750B4DD73D1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DvmTests", "DvmTests\DvmTests.csproj", "{61DFAD0A-1EB2-4CC9-A70E-0750B4DD73D1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerformanceTests", "PerformanceTests\PerformanceTests.csproj", "{964F424E-64FC-47C6-9F74-805FC9A6E820}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{61DFAD0A-1EB2-4CC9-A70E-0750B4DD73D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{61DFAD0A-1EB2-4CC9-A70E-0750B4DD73D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{61DFAD0A-1EB2-4CC9-A70E-0750B4DD73D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{964F424E-64FC-47C6-9F74-805FC9A6E820}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{964F424E-64FC-47C6-9F74-805FC9A6E820}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{964F424E-64FC-47C6-9F74-805FC9A6E820}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{964F424E-64FC-47C6-9F74-805FC9A6E820}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
