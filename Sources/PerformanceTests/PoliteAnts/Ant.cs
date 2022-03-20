@@ -1,6 +1,7 @@
 ﻿using Dvm;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace PerformanceTests.PoliteAnts
 {
@@ -9,6 +10,7 @@ namespace PerformanceTests.PoliteAnts
 		readonly PoliteAnts m_test;
 		readonly Random m_random;
 		public bool IsFamous { get; private set; }
+		readonly float m_greetingProcessingSeconds;
 
 		DateTime m_startTime;
 		DateTime m_startCompleteTime;
@@ -30,12 +32,13 @@ namespace PerformanceTests.PoliteAnts
 
 		#endregion
 
-		public Ant(PoliteAnts test, string symbol, bool famous)
+		public Ant(PoliteAnts test, string symbol, bool famous, float greetingProcessingSeconds)
 			: base(test, symbol)
 		{
 			m_test = test;
 			m_random = new Random(symbol.GetHashCode());
 			IsFamous = famous;
+			m_greetingProcessingSeconds = greetingProcessingSeconds;
 		}
 
 		public void Start(int initialGreetingCount)
@@ -74,6 +77,10 @@ namespace PerformanceTests.PoliteAnts
 						break;
 
 					case GreetingMessage greeting:
+						// Fake process
+						if (m_greetingProcessingSeconds > 0)
+							FakeProcessingWork(m_greetingProcessingSeconds);
+
 						Send(m.From, new GreetingAckMessage(greeting.Timestamp));
 						GreetingReceived++;
 
@@ -105,6 +112,20 @@ namespace PerformanceTests.PoliteAnts
 			Send(target, new GreetingMessage());
 
 			GreetingSent++;
+		}
+
+		void FakeProcessingWork(float seconds)
+		{
+			var sw = new Stopwatch();
+
+			sw.Start();
+
+			while (sw.Elapsed.TotalSeconds < seconds)
+			{
+				for (int i = 0; i < 10; i++)
+				{
+				}
+			}
 		}
 
 		public IReadOnlyList<TimeSpan> GetGreetingRTTs()

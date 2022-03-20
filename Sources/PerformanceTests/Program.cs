@@ -21,7 +21,14 @@ namespace PerformanceTests
 
 		static void RunPoliteAnts()
 		{
-			var items = GetTestItems();
+			var items = GetTestItems(
+				new[]
+				{ 
+					1, 
+					2, 
+					3, 
+					4
+				});
 
 			var output = RunTests(items);
 
@@ -29,17 +36,19 @@ namespace PerformanceTests
 			WriteAndOpenFile(outputFileName, output);
 		}
 
-		static IReadOnlyList<(string name, TestCondition condition)> GetTestItems()
+		static IReadOnlyList<(string name, TestCondition condition)> GetTestItems(IEnumerable<int> vmProcessorsCounts)
 		{
 			var items = new List<(string name, TestCondition condition)>();
 
-			for (int i = 0; i < 4; i++)
+			foreach (var processors in vmProcessorsCounts)
 			{
+				Debug.Assert(processors > 0);
+
 				var condition = TestCondition.Default;
 
-				condition.VmProcessorsCount = i + 1;
+				condition.VmProcessorsCount = processors;
 
-				items.Add(($"VmProcessor{i + 1}", condition));
+				items.Add(($"VmProcessor{processors}", condition));
 			}
 
 			return items;
@@ -52,9 +61,8 @@ namespace PerformanceTests
 			for (int i = 0; i < items.Count; i++)
 			{
 				var (name, condition) = items[i];
-				var testName = $"{name} #{i + 1}";
 
-				using var test = new PoliteAnts.PoliteAnts(condition, testName);
+				using var test = new PoliteAnts.PoliteAnts(condition, name);
 
 				test.Run();
 				test.Print("----------------------------------");
