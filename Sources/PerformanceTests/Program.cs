@@ -24,9 +24,9 @@ namespace PerformanceTests
 			var items = GetTestItems(
 				new[]
 				{ 
-					1, 
-					2, 
-					3, 
+					//1, 
+					//2, 
+					//3, 
 					4
 				});
 
