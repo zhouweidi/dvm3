@@ -33,7 +33,7 @@ namespace Dvm
 
 		public ulong Data => m_data;
 		public string Symbol => m_symbol;
-		public bool IsEmpty => this == Empty;
+		public bool IsEmpty => m_data == 0;
 
 		internal ushort NodeId => (ushort)((m_data >> NodeIdBitOffset) & MaxNodeId);
 		internal ulong Index => (m_data >> IndexBitOffset) & MaxIndex;
