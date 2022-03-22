@@ -13,6 +13,13 @@ namespace PerformanceTests
 			m_test = test;
 		}
 
+		protected override void OnError(Exception e)
+		{
+			Assert(e);
+
+			throw new Exception("Ant error", e);
+		}
+
 		protected void Print(string content = "")
 		{
 			m_test.Print(content);

@@ -73,6 +73,7 @@ namespace PerformanceTests.PoliteAnts
 
 		void Start()
 		{
+			// Create
 			Profile("Create ants", () =>
 			{
 				for (int i = 0; i < m_ants.Length; i++)
@@ -83,7 +84,18 @@ namespace PerformanceTests.PoliteAnts
 				}
 			});
 
-			Profile("Start ants", () =>
+			// Register
+			Profile("Register ants", () =>
+			{
+				for (int i = 0; i < m_ants.Length; i++)
+				{
+					var ant = m_ants[i];
+
+					ant.Register();
+				}
+			});
+
+			// Start greeting
 			{
 				int initialGreetingCount = m_condition.GreetingSeedsCount / m_famousAntsCount;
 
@@ -93,14 +105,14 @@ namespace PerformanceTests.PoliteAnts
 
 					ant.Start(ant.IsFamous ? initialGreetingCount : 0);
 				}
-			});
+			}
 		}
 
 		void FinalReport()
 		{
-			var startScheduleDuration = (from ant in m_ants
-										 select ant.StartScheduleDuration.TotalMilliseconds).Average();
-			Print($"Start schedule (avg): {startScheduleDuration:N0} ms");
+			var registerDuration = (from ant in m_ants
+									select ant.RegisterDuration.TotalMilliseconds).Average();
+			Print($"Register duration (avg): {registerDuration:N0} ms");
 			Print();
 
 			var greetingSent = (from ant in m_ants

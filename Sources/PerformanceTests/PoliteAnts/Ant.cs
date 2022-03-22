@@ -12,21 +12,21 @@ namespace PerformanceTests.PoliteAnts
 		public bool IsFamous { get; private set; }
 		readonly float m_greetingProcessingSeconds;
 
-		DateTime m_startTime;
-		DateTime m_startCompleteTime;
+		DateTime m_registerBeginTime;
+		DateTime m_registerEndTime;
 		public int GreetingSent { get; private set; }
 		public int GreetingReceived { get; private set; }
 		readonly List<TimeSpan> m_greetingRTTs = new List<TimeSpan>();
 
 		#region Properties
 
-		public TimeSpan StartScheduleDuration
+		public TimeSpan RegisterDuration
 		{
 			get
 			{
-				Assert(m_startCompleteTime != DateTime.MinValue);
+				Assert(m_registerEndTime != DateTime.MinValue);
 
-				return m_startCompleteTime - m_startTime;
+				return m_registerEndTime - m_registerBeginTime;
 			}
 		}
 
@@ -41,10 +41,15 @@ namespace PerformanceTests.PoliteAnts
 			m_greetingProcessingSeconds = greetingProcessingSeconds;
 		}
 
+		public void Register()
+		{
+			m_registerBeginTime = DateTime.Now;
+
+			Schedule();
+		}
+
 		public void Start(int initialGreetingCount)
 		{
-			m_startTime = DateTime.Now;
-
 			Schedule(new StartSignal(initialGreetingCount));
 		}
 
@@ -65,9 +70,8 @@ namespace PerformanceTests.PoliteAnts
 				switch (m.Message)
 				{
 					case SystemMessageSchedule schedule:
-						Assert(m_startCompleteTime == DateTime.MinValue);
-
-						m_startCompleteTime = DateTime.Now;
+						if (m_registerEndTime == DateTime.MinValue)
+							m_registerEndTime = DateTime.Now;
 
 						if (schedule.Context is StartSignal s)
 						{
