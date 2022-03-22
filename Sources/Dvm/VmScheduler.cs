@@ -35,9 +35,9 @@ namespace Dvm
 
 			if (explicitCall)
 			{
-				m_requestsQueue.Dispose();
-
 				m_executor.Dispose();
+
+				m_requestsQueue.Dispose();
 			}
 		}
 
@@ -55,7 +55,7 @@ namespace Dvm
 			{
 				GenerateVipoJobs(vipoJobs);
 
-				m_executor.RunJobs(vipoJobs.Values);
+				m_executor.DispatchJobs(vipoJobs.Values);
 			}
 		}
 
@@ -74,11 +74,6 @@ namespace Dvm
 					if (elapsedTime >= m_maxCircleMilliseconds)
 						break;
 				}
-
-				// Enough jobs
-				var enoughJobs = vipoJobs.Count >= m_executor.IdleProcessorsCount;
-				if (enoughJobs)
-					break;
 
 				// No more request
 				var noMoreRequest = !m_requestsQueue.TryTake(out request);

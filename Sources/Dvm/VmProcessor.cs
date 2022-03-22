@@ -8,8 +8,7 @@ namespace Dvm
 	{
 		readonly VmScheduler m_scheduler;
 		readonly int m_index;
-		readonly ManualResetEventSlim m_circleSignal = new ManualResetEventSlim(false);
-		readonly ConcurrentQueue<VipoJob> m_jobsCache = new ConcurrentQueue<VipoJob>();
+		readonly BlockingCollection<VipoJob> m_jobsCache = new BlockingCollection<VipoJob>();
 
 		static readonly LocalDataStoreSlot WorkingVipoSlot = Thread.GetNamedDataSlot("WorkingVipo");
 
@@ -17,7 +16,7 @@ namespace Dvm
 
 		VmExecutor Executor => m_scheduler.Executor;
 		public int Index => m_index;
-		public bool HasJobs => !m_jobsCache.IsEmpty;
+		public int JobsCount => m_jobsCache.Count;
 
 		#endregion
 
@@ -33,17 +32,7 @@ namespace Dvm
 			base.OnDispose(explicitCall);
 
 			if (explicitCall)
-				m_circleSignal.Dispose();
-		}
-
-		public void StartCircle(VipoJob job)
-		{
-			if (!m_jobsCache.IsEmpty)
-				throw new KernelFaultException("Can't start a VM processor since it still has jobs to run");
-
-			AddJob(job);
-
-			m_circleSignal.Set();
+				m_jobsCache.Dispose();
 		}
 
 		public void AddJob(VipoJob job)
@@ -51,40 +40,23 @@ namespace Dvm
 			if (job.Vipo == null)
 				throw new KernelFaultException("VipoJob.Vipo is null");
 
-			m_jobsCache.Enqueue(job);
+			m_jobsCache.Add(job);
 		}
 
 		protected override void ThreadEntry()
 		{
-			for (; ; )
+			for (Vipo workingVipo = null; ;)
 			{
-				m_circleSignal.Wait(EndToken);
-				m_circleSignal.Reset();
-
-				for (Vipo workingVipo = null; ;)
+				var job = m_jobsCache.Take(EndToken);
+				if (job.Vipo != workingVipo)
 				{
-					while (m_jobsCache.TryDequeue(out VipoJob job))
-					{
-						if (workingVipo == null)
-						{
-							workingVipo = job.Vipo;
-							SetWorkingVipo(workingVipo);
-						}
-						else if (job.Vipo != workingVipo)
-							throw new KernelFaultException("Different vipos in the same VM processor circle");
-
-						RunJob(job);
-					}
-
-					if (workingVipo == null)
-						throw new KernelFaultException("Empty VM processor circle");
-
-					if (Executor.FinishCircle(this, workingVipo))
-					{
-						SetWorkingVipo(null);
-						break;
-					}
+					SetWorkingVipo(job.Vipo);
+					workingVipo = job.Vipo;
 				}
+
+				RunJob(job);
+
+				Executor.FinishJob(this, workingVipo);
 			}
 		}
 
