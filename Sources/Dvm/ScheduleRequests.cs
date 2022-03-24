@@ -1,18 +1,18 @@
-﻿using System.Collections.Generic;
-
-namespace Dvm
+﻿namespace Dvm
 {
 	abstract class ScheduleRequest
 	{
 	}
 
-	class DispatchVipoMessages : ScheduleRequest
+	class VipoProcess : ScheduleRequest
 	{
-		public IReadOnlyList<VipoMessage> Messages { get; private set; }
+		public Vipo Vipo { get; private set; }
+		public int MessageIndex { get; private set; }
 
-		public DispatchVipoMessages(IReadOnlyList<VipoMessage> messages)
+		public VipoProcess(Vipo vipo, int messageIndex)
 		{
-			Messages = messages;
+			Vipo = vipo;
+			MessageIndex = messageIndex;
 		}
 	}
 

@@ -65,7 +65,7 @@ namespace DvmTests.VipoTests
 				m_throwInOnError = throwInOnError;
 			}
 
-			protected override void Run(IReadOnlyList<VipoMessage> vipoMessages)
+			protected override void Run(IEnumerable<VipoMessage> vipoMessages)
 			{
 				throw new Exception("Original error in Vipo.Run()");
 			}

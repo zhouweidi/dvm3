@@ -66,6 +66,7 @@ namespace PerformanceTests
 
 				test.Run();
 				test.Print("----------------------------------");
+				test.Print($"Discarded messages: {Dvm.Vipo.s_discardedMessages:N0}");
 
 				output.Append(test.GetPrintContent());
 			}

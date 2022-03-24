@@ -1,30 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Dvm
 {
 	class VipoJob
 	{
 		readonly Vipo m_vipo;
-		List<VipoMessage> m_messages;
+		int m_messageIndex = -1;
 		bool m_disposeFlag;
 
 		public Vipo Vipo => m_vipo;
-		public IReadOnlyList<VipoMessage> Messages => m_messages;
+		public int MessageIndex => m_messageIndex;
 		public bool DisposeFlag => m_disposeFlag;
-		public bool IsEmpty => m_messages == null && !m_disposeFlag;
+		public bool IsEmpty => m_messageIndex < 0 && !m_disposeFlag;
 
 		public VipoJob(Vipo vipo)
 		{
 			m_vipo = vipo ?? throw new ArgumentNullException(nameof(vipo));
 		}
 
-		public void AddMessage(VipoMessage message)
+		public void SetMessageIndex(int messageIndex)
 		{
-			if (m_messages == null)
-				m_messages = new List<VipoMessage>();
-
-			m_messages.Add(message);
+			if (messageIndex > m_messageIndex)
+				m_messageIndex = messageIndex;
 		}
 
 		public void SetDisposeFlag() => m_disposeFlag = true;

@@ -28,6 +28,7 @@ namespace Dvm
 		}
 		public int ProcessorsCount => m_scheduler.Executor.ProcessorsCount;
 		public int ViposCount => m_vipos.Count;
+		internal VmScheduler Scheduler => m_scheduler;
 		internal VidAllocator VidAllocator => m_vidAllocator;
 
 		#endregion
@@ -156,6 +157,12 @@ namespace Dvm
 		internal void AddScheduleRequest(ScheduleRequest request)
 		{
 			m_scheduler.AddRequest(request);
+		}
+
+		internal Vipo FindVipo(Vid vid)
+		{
+			m_vipos.TryGetValue(vid, out Vipo vipo);
+			return vipo;
 		}
 	}
 }

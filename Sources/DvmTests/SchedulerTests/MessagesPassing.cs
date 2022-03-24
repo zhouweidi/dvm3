@@ -41,7 +41,7 @@ namespace DvmTests.SchedulerTests
 			{
 			}
 
-			protected override void Run(IReadOnlyList<VipoMessage> vipoMessages)
+			protected override void Run(IEnumerable<VipoMessage> vipoMessages)
 			{
 				++m_tickedCount;
 

@@ -63,7 +63,7 @@ namespace PerformanceTests.PoliteAnts
 			}
 		}
 
-		protected override void Run(IReadOnlyList<VipoMessage> vipoMessages)
+		protected override void Run(IEnumerable<VipoMessage> vipoMessages)
 		{
 			foreach (var m in vipoMessages)
 			{

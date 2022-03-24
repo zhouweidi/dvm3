@@ -66,9 +66,9 @@ namespace Dvm
 
 			vipo.RunEntry(job);
 
-			var outMessages = vipo.TakeOutMessages();
-			if (outMessages != null && outMessages.Count > 0)
-				m_scheduler.AddRequest(new DispatchVipoMessages(outMessages));
+			//var outMessages = vipo.DispatchMessages();
+			//if (outMessages != null && outMessages.Count > 0)
+			//	m_scheduler.AddRequest(new DispatchVipoMessages(outMessages));
 		}
 
 		static void SetWorkingVipo(Vipo vipo)

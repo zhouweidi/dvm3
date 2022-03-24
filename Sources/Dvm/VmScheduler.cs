@@ -91,8 +91,8 @@ namespace Dvm
 		{
 			switch (request)
 			{
-				case DispatchVipoMessages dispatch:
-					ProcessRequest_Dispatch(dispatch, vipoJobs);
+				case VipoProcess process:
+					ProcessRequest_Process(process, vipoJobs);
 					break;
 
 				case VipoSchedule schedule:
@@ -112,21 +112,26 @@ namespace Dvm
 			}
 		}
 
-		void ProcessRequest_Dispatch(DispatchVipoMessages dispatch, Dictionary<Vid, VipoJob> vipoJobs)
+		void ProcessRequest_Process(VipoProcess request, Dictionary<Vid, VipoJob> vipoJobs)
 		{
-			for (int i = 0; i < dispatch.Messages.Count; i++)
+			var vipo = request.Vipo;
+			var vid = vipo.Vid;
+
+			// Check if the vipo exists
+			if (!m_vipos.ContainsKey(vid))
 			{
-				var message = dispatch.Messages[i];
-				var vid = message.To;
+				if (vipo.IsAttached)
+					throw new KernelFaultException($"The vipo '{vid}' is attached, but doesn't exist in the vipos list");
 
-				// Check if the vipo exists
-				if (!m_vipos.TryGetValue(vid, out Vipo vipo))
-					continue;
-
-				// Add to a job
-				var job = GetOrAddVipoJob(vipoJobs, vipo);
-				job.AddMessage(message);
+				return;
 			}
+
+			if (vipo.Disposed)
+				return;
+
+			// Get or add a job
+			var job = GetOrAddVipoJob(vipoJobs, vipo);
+			job.SetMessageIndex(request.MessageIndex);
 		}
 
 		void ProcessRequest_VipoSchedule(VipoSchedule request, Dictionary<Vid, VipoJob> vipoJobs)
@@ -157,8 +162,10 @@ namespace Dvm
 
 			// Get or add a job
 			var job = GetOrAddVipoJob(vipoJobs, vipo);
+
 			var message = SystemMessageSchedule.Create(request.Context);
-			job.AddMessage(message);
+			var messageIndex = vipo.InputMessage(message);
+			job.SetMessageIndex(messageIndex);
 		}
 
 		void ProcessRequest_VipoDetach(Vipo vipo, Dictionary<Vid, VipoJob> vipoJobs)
