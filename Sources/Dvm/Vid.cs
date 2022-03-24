@@ -2,7 +2,7 @@
 
 namespace Dvm
 {
-	public struct Vid : IFormattable, IComparable<Vid>
+	public struct Vid : IEquatable<Vid>, IComparable<Vid>, IFormattable
 	{
 		public static readonly Vid Empty = new Vid(0, null);
 
@@ -69,22 +69,27 @@ namespace Dvm
 
 		#region Equals
 
-		public override bool Equals(Object obj)
+		public bool Equals(Vid other)
 		{
-			if (!(obj is Vid))
-				return false;
+			return other.m_data == m_data;
+		}
 
-			return ((Vid)obj).Data == Data;
+		public override bool Equals(object obj)
+		{
+			if (obj is Vid)
+				return ((Vid)obj).m_data == m_data;
+			else
+				return false;
 		}
 
 		public static bool operator ==(Vid x, Vid y)
 		{
-			return x.Data == y.Data;
+			return x.m_data == y.m_data;
 		}
 
 		public static bool operator !=(Vid x, Vid y)
 		{
-			return x.Data != y.Data;
+			return x.m_data != y.m_data;
 		}
 
 		#endregion
@@ -104,7 +109,7 @@ namespace Dvm
 
 		public string ToString(string format, IFormatProvider provider = null)
 		{
-			if (Data == Empty.Data)
+			if (m_data == 0)
 				return "0.0";
 
 			switch (format)
