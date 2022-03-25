@@ -12,7 +12,7 @@ namespace Dvm
 	public sealed class VirtualMachine : DisposableObject
 	{
 		readonly ThreadController m_controller;
-		readonly VmScheduler m_scheduler;
+		readonly VmExecutor m_executor;
 
 		readonly ConcurrentDictionary<Vid, Vipo> m_vipos = new ConcurrentDictionary<Vid, Vipo>();
 		readonly VidAllocator m_vidAllocator;
@@ -26,27 +26,26 @@ namespace Dvm
 			add { m_controller.OnError += value; }
 			remove { m_controller.OnError -= value; }
 		}
-		public int ProcessorsCount => m_scheduler.Executor.ProcessorsCount;
+		public int ProcessorsCount => m_executor.ProcessorsCount;
 		public int ViposCount => m_vipos.Count;
-		internal VmScheduler Scheduler => m_scheduler;
-		internal VidAllocator VidAllocator => m_vidAllocator;
 
 		#endregion
 
 		#region Initialization
 
-		public VirtualMachine(int virtualProcessorsCount = 0, int maxSchedulerCircleMilliseconds = 10)
-			: this(virtualProcessorsCount, maxSchedulerCircleMilliseconds, CancellationToken.None)
+		public VirtualMachine(int virtualProcessorsCount = 0)
+			: this(virtualProcessorsCount, CancellationToken.None)
 		{ }
 
-		public VirtualMachine(int virtualProcessorsCount, int maxSchedulerCircleMilliseconds, CancellationToken endToken)
+		public VirtualMachine(int virtualProcessorsCount, CancellationToken endToken)
 		{
 			m_controller = new ThreadController(endToken);
 
 			if (virtualProcessorsCount == 0)
 				virtualProcessorsCount = Math.Max(Environment.ProcessorCount - 1, 1);
 
-			m_scheduler = new VmScheduler(m_controller, virtualProcessorsCount, maxSchedulerCircleMilliseconds, m_vipos);
+			m_executor = new VmExecutor(m_controller, virtualProcessorsCount);
+			m_executor.Start();
 
 			m_vidAllocator = new VidAllocator(new UsedVidQuery(this));
 		}
@@ -57,7 +56,7 @@ namespace Dvm
 
 			if (explicitCall)
 			{
-				m_scheduler.Dispose();
+				m_executor.Dispose();
 
 				m_controller.Dispose();
 
@@ -154,9 +153,40 @@ namespace Dvm
 
 		#endregion
 
-		internal void AddScheduleRequest(ScheduleRequest request)
+		#region Vipos
+
+		internal Vid Register(Vipo vipo, string symbol)
 		{
-			m_scheduler.AddRequest(request);
+			if (vipo.Disposed)
+				throw new KernelFaultException($"Register a disposed vipo '{symbol}'");
+
+			// Add to the vipos list
+			var vid = m_vidAllocator.New(symbol);
+
+			if (!m_vipos.TryAdd(vid, vipo))
+				throw new KernelFaultException($"Failed to add the vipo '{vid}' to the vipos list");
+
+			return vid;
+		}
+
+		internal void Unregister(Vipo vipo)
+		{
+			if (!vipo.Disposed)
+				throw new KernelFaultException($"Unregister an undisposed vipo");
+
+			// Remove from the vipos list
+			var vid = vipo.Vid;
+
+			if (!m_vipos.TryRemove(vid, out Vipo removedVipo))
+				throw new KernelFaultException($"Failed to remove the vipo '{vid}' from the vipos list");
+
+			if (!ReferenceEquals(removedVipo, vipo))
+				throw new KernelFaultException($"Unmatched vipo '{vid}' being unregistered");
+		}
+
+		internal void Schedule(Vipo vipo)
+		{
+			m_executor.DispatchJob(vipo);
 		}
 
 		internal Vipo FindVipo(Vid vid)
@@ -164,5 +194,7 @@ namespace Dvm
 			m_vipos.TryGetValue(vid, out Vipo vipo);
 			return vipo;
 		}
+
+		#endregion
 	}
 }

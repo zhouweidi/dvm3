@@ -15,7 +15,7 @@ namespace DvmTests.SchedulerTests
 			var a = new MyVipo(this, "a");
 			var b = new MyVipo(this, "b");
 
-			Assert.AreEqual(VM.ViposCount, 0);
+			Assert.AreEqual(VM.ViposCount, 2);
 
 			a.Schedule();
 			b.Schedule();
@@ -23,14 +23,8 @@ namespace DvmTests.SchedulerTests
 			Assert.AreEqual(VM.ViposCount, 2);
 
 			var output = GetCustomOutput();
-			Assert.IsTrue(output.Contains("'a' ticks #1, messages [SystemMessageSchedule]"));
-			Assert.IsTrue(output.Contains("'b' ticks #1, messages [SystemMessageSchedule]"));
-
-			a.Detach();
-			a.Detach(); // Call Detach() on the same object twice
-			b.Detach();
-			Sleep();
-			Assert.AreEqual(VM.ViposCount, 0);
+			Assert.IsTrue(output.Contains("'a' ticks #1, messages [UserScheduleMessage]"));
+			Assert.IsTrue(output.Contains("'b' ticks #1, messages [UserScheduleMessage]"));
 
 			a.Schedule();
 			b.Schedule();
@@ -38,8 +32,8 @@ namespace DvmTests.SchedulerTests
 			Assert.AreEqual(VM.ViposCount, 2);
 
 			output = GetCustomOutput();
-			Assert.IsTrue(output.Contains("'a' ticks #2, messages [SystemMessageSchedule]"));
-			Assert.IsTrue(output.Contains("'b' ticks #2, messages [SystemMessageSchedule]"));
+			Assert.IsTrue(output.Contains("'a' ticks #2, messages [UserScheduleMessage]"));
+			Assert.IsTrue(output.Contains("'b' ticks #2, messages [UserScheduleMessage]"));
 		}
 
 		class MyVipo : TestVipo
@@ -66,7 +60,7 @@ namespace DvmTests.SchedulerTests
 			var a = new MyVipo(this, "a");
 			var b = new MyVipoWithOnDispose(this, "b");
 
-			Assert.AreEqual(VM.ViposCount, 0);
+			Assert.AreEqual(VM.ViposCount, 2);
 
 			a.Schedule();
 			b.Schedule();
@@ -74,8 +68,8 @@ namespace DvmTests.SchedulerTests
 			Assert.AreEqual(VM.ViposCount, 2);
 
 			var output = GetCustomOutput();
-			Assert.IsTrue(output.Contains("'a' ticks #1, messages [SystemMessageSchedule]"));
-			Assert.IsTrue(output.Contains("'b' ticks #1, messages [SystemMessageSchedule]"));
+			Assert.IsTrue(output.Contains("'a' ticks #1, messages [UserScheduleMessage]"));
+			Assert.IsTrue(output.Contains("'b' ticks #1, messages [UserScheduleMessage]"));
 
 			Sleep();
 			Assert.AreEqual(VM.ViposCount, 2);
@@ -85,8 +79,6 @@ namespace DvmTests.SchedulerTests
 
 			var output2 = GetCustomOutput();
 			Assert.IsTrue(output2.Length == 1 && output2[0] == "'b' OnDispose()");
-			Assert.IsFalse(a.IsAttached);
-			Assert.IsFalse(b.IsAttached);
 
 			// After VM disposs, no side effect to call the following Dispose()
 			a.Dispose();

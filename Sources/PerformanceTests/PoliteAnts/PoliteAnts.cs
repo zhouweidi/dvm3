@@ -8,7 +8,6 @@ namespace PerformanceTests.PoliteAnts
 	struct TestCondition
 	{
 		public int VmProcessorsCount;
-		public int MaxSchedulerCircleMilliseconds;
 
 		public int AntsCount;
 		public int GreetingSeedsCount;
@@ -21,7 +20,6 @@ namespace PerformanceTests.PoliteAnts
 		public readonly static TestCondition Default = new TestCondition()
 		{
 			VmProcessorsCount = 4,
-			MaxSchedulerCircleMilliseconds = 10,
 
 			AntsCount = 10 * 1000,
 			GreetingSeedsCount = 10 * 1000,
@@ -40,7 +38,7 @@ namespace PerformanceTests.PoliteAnts
 		readonly Ant[] m_ants;
 
 		public PoliteAnts(TestCondition condition, string testName)
-			: base(condition.VmProcessorsCount, condition.MaxSchedulerCircleMilliseconds)
+			: base(condition.VmProcessorsCount)
 		{
 			m_condition = condition;
 			m_famousAntsCount = (int)(m_condition.AntsCount * m_condition.FamousPercent);
@@ -56,7 +54,6 @@ namespace PerformanceTests.PoliteAnts
 			Print($"Greeting processing: {m_condition.GreetingProcessingSeconds:N4} s");
 			Print($"Test seconds: {m_condition.TestDurationSeconds:N0}");
 			Print($"VmProcessors: {VM.ProcessorsCount}");
-			Print($"SchedulerCircle: {m_condition.MaxSchedulerCircleMilliseconds} ms");
 			Print();
 		}
 

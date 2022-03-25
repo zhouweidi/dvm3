@@ -6,24 +6,23 @@ namespace Dvm
 {
 	class VmProcessor : VmThread
 	{
-		readonly VmScheduler m_scheduler;
+		readonly VmExecutor m_executor;
 		readonly int m_index;
-		readonly BlockingCollection<VipoJob> m_jobsCache = new BlockingCollection<VipoJob>();
+		readonly BlockingCollection<Vipo> m_jobsQueue = new BlockingCollection<Vipo>();
 
 		static readonly LocalDataStoreSlot WorkingVipoSlot = Thread.GetNamedDataSlot("WorkingVipo");
 
 		#region Properties
 
-		VmExecutor Executor => m_scheduler.Executor;
 		public int Index => m_index;
-		public int JobsCount => m_jobsCache.Count;
+		public int JobsCount => m_jobsQueue.Count;
 
 		#endregion
 
-		public VmProcessor(IVmThreadController controller, VmScheduler scheduler, int index)
+		public VmProcessor(IVmThreadController controller, VmExecutor executor, int index)
 			: base(controller, $"DVM-VP{index}")
 		{
-			m_scheduler = scheduler;
+			m_executor = executor;
 			m_index = index;
 		}
 
@@ -32,43 +31,32 @@ namespace Dvm
 			base.OnDispose(explicitCall);
 
 			if (explicitCall)
-				m_jobsCache.Dispose();
+				m_jobsQueue.Dispose();
 		}
 
-		public void AddJob(VipoJob job)
+		public void AddJob(Vipo vipo)
 		{
-			if (job.Vipo == null)
+			if (vipo == null)
 				throw new KernelFaultException("VipoJob.Vipo is null");
 
-			m_jobsCache.Add(job);
+			m_jobsQueue.Add(vipo);
 		}
 
 		protected override void ThreadEntry()
 		{
 			for (Vipo workingVipo = null; ;)
 			{
-				var job = m_jobsCache.Take(EndToken);
-				if (job.Vipo != workingVipo)
+				var vipo = m_jobsQueue.Take(EndToken);
+				if (vipo != workingVipo)
 				{
-					SetWorkingVipo(job.Vipo);
-					workingVipo = job.Vipo;
+					SetWorkingVipo(vipo);
+					workingVipo = vipo;
 				}
 
-				RunJob(job);
+				vipo.RunEntry();
 
-				Executor.FinishJob(this, workingVipo);
+				m_executor.FinishJob(workingVipo);
 			}
-		}
-
-		void RunJob(VipoJob job)
-		{
-			var vipo = job.Vipo;
-
-			vipo.RunEntry(job);
-
-			//var outMessages = vipo.DispatchMessages();
-			//if (outMessages != null && outMessages.Count > 0)
-			//	m_scheduler.AddRequest(new DispatchVipoMessages(outMessages));
 		}
 
 		static void SetWorkingVipo(Vipo vipo)

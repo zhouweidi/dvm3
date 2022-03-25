@@ -21,10 +21,10 @@ namespace DvmTests.SchedulerTests
 
 			var output = GetCustomOutput();
 
-			var index1 = Array.IndexOf(output, "MyVipo '1' ticks #1, messages [SystemMessageSchedule]");
+			var index1 = Array.IndexOf(output, "MyVipo '1' ticks #1, messages [UserScheduleMessage]");
 			Assert.IsTrue(index1 >= 0);
 
-			var index2 = Array.IndexOf(output, "MyVipo '2' ticks #1, messages [SystemMessageSchedule]");
+			var index2 = Array.IndexOf(output, "MyVipo '2' ticks #1, messages [UserScheduleMessage]");
 			Assert.IsTrue(index2 >= 0);
 
 			var index3 = Array.IndexOf(output, "MyVipo '2' ticks #2, messages [TestMessage]");

@@ -69,7 +69,7 @@ namespace PerformanceTests.PoliteAnts
 			{
 				switch (m.Message)
 				{
-					case SystemMessageSchedule schedule:
+					case UserScheduleMessage schedule:
 						if (m_registerEndTime == DateTime.MinValue)
 							m_registerEndTime = DateTime.Now;
 

@@ -25,7 +25,6 @@ namespace DvmTests.VipoTests
 			Assert.IsNull(VM.Exception);
 
 			Assert.IsTrue(a.Disposed);
-			Assert.IsFalse(a.IsAttached);
 
 			// Uncaught exception
 			var b = new MyVipo(this, "b", true);
@@ -42,9 +41,7 @@ namespace DvmTests.VipoTests
 
 			// Everything is not disposed yet
 			Assert.IsFalse(VM.Disposed);
-
 			Assert.IsFalse(b.Disposed);
-			Assert.IsTrue(b.IsAttached);
 		}
 
 		public override void Cleanup()
@@ -73,7 +70,7 @@ namespace DvmTests.VipoTests
 			protected override void OnError(Exception e)
 			{
 				if (m_throwInOnError)
-					throw new Exception("Error in Vipo.OnError()");
+					throw new Exception("Error in Vipo.OnError()", e);
 
 				base.OnError(e);
 			}

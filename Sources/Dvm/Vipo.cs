@@ -25,8 +25,12 @@ namespace Dvm
 		readonly VirtualMachine m_vm;
 		readonly Vid m_vid;
 
-		public bool IsAttached { get; internal set; }
 		List<VipoMessage> m_outMessages;
+		readonly ConcurrentQueue<VipoMessage> m_inMessages = new ConcurrentQueue<VipoMessage>();
+		int m_pendingInMessagesCount;
+
+		static readonly SystemScheduleMessage SystemScheduleMessage_Dispose = new SystemScheduleMessage();
+		public static int s_discardedMessages;
 
 		#region Properties
 
@@ -34,7 +38,7 @@ namespace Dvm
 		public Vid Vid => m_vid;
 		public string Symbol => m_vid.Symbol;
 
-		internal bool OnDisposeOverridden => GetType().GetMethod(
+		bool OnDisposeOverridden => GetType().GetMethod(
 			nameof(OnDispose),
 			BindingFlags.NonPublic | BindingFlags.Instance,
 			null,
@@ -50,7 +54,7 @@ namespace Dvm
 		protected Vipo(VirtualMachine vm, string symbol)
 		{
 			m_vm = vm ?? throw new ArgumentNullException(nameof(vm));
-			m_vid = vm.VidAllocator.New(symbol);
+			m_vid = vm.Register(this, symbol);
 		}
 
 		protected sealed override void OnDispose(bool explicitCall)
@@ -58,13 +62,14 @@ namespace Dvm
 			if (explicitCall)
 			{
 				if (m_vm.Disposed)
-				{
-					IsAttached = false;
-
 					OnDispose();
-				}
 				else
-					m_vm.AddScheduleRequest(new VipoDispose(this));
+				{
+					m_vm.Unregister(this);
+
+					if (OnDisposeOverridden)
+						InputMessage(SystemScheduleMessage_Dispose.CreateVipoMessage());
+				}
 			}
 		}
 
@@ -78,39 +83,31 @@ namespace Dvm
 		{
 			CheckDisposed();
 
-			m_vm.AddScheduleRequest(new VipoSchedule(this, context));
+			InputMessage(UserScheduleMessage.CreateVipoMessage(context));
 		}
 
-		public void Detach() // Can be called in any thread
+		void InputMessage(VipoMessage vipoMessage)
 		{
-			CheckDisposed();
+			m_inMessages.Enqueue(vipoMessage);
 
-			m_vm.AddScheduleRequest(new VipoDetach(this));
+			var incrementedValue = Interlocked.Increment(ref m_pendingInMessagesCount);
+			if (incrementedValue == 1)
+				m_vm.Schedule(this);
 		}
 
-		int m_processedInMessagesCount;
-
-		internal void RunEntry(VipoJob job)
+		internal void RunEntry()
 		{
-			if (job.IsEmpty)
-				throw new KernelFaultException("Empty vipo job to run");
+			var messagesToProcess = Interlocked.Exchange(ref m_pendingInMessagesCount, 0);
+			if (messagesToProcess == 0)
+				throw new KernelFaultException("No message to process in a vipo circle");
 
 			try
 			{
-				var messagesToProcess  = job.MessageIndex - m_processedInMessagesCount;
-				if (messagesToProcess  > 0)
-				{
-					var messagess = TakeInMessages(messagesToProcess );
+				var messagess = TakeInMessages(messagesToProcess);
+				Run(messagess);
 
-					Run(messagess);
-
-					m_processedInMessagesCount += messagesToProcess ;
-
+				if (m_outMessages != null && m_outMessages.Count > 0)
 					DispatchMessages();
-				}
-
-				if (job.DisposeFlag)
-					OnDispose();
 			}
 			catch (Exception e)
 			{
@@ -122,11 +119,37 @@ namespace Dvm
 		{
 			for (int i = 0; i < count; i++)
 			{
-				if (!m_inMessages.TryDequeue(out VipoMessage message))
+				if (!m_inMessages.TryDequeue(out VipoMessage vipoMessage))
 					throw new KernelFaultException("Not enough in messages to take");
 
-				yield return message;
+				if (ReferenceEquals(vipoMessage.Message, SystemScheduleMessage_Dispose))
+				{
+					OnDispose();
+					yield break;
+					// TODO throw new EndException();
+					// TODO only one execution allowed
+				}
+
+				yield return vipoMessage;
 			}
+		}
+
+		void DispatchMessages()
+		{
+			foreach (var message in m_outMessages)
+			{
+				// TODO last vipo cache
+				var vipo = m_vm.FindVipo(message.To);
+				if (vipo == null)
+				{
+					Interlocked.Increment(ref s_discardedMessages);
+					continue;
+				}
+
+				vipo.InputMessage(message);
+			}
+
+			m_outMessages.Clear();
 		}
 
 		#region Run handlers
@@ -149,7 +172,7 @@ namespace Dvm
 
 		#endregion
 
-		#region Message I/O
+		#region Sending messages
 
 		public void Send(Vid to, Message message) // Can be called in VmProcessor threads only
 		{
@@ -182,42 +205,6 @@ namespace Dvm
 				m_outMessages = new List<VipoMessage>();
 
 			m_outMessages.Add(vipoMessage);
-		}
-
-		public static int s_discardedMessages;
-		void DispatchMessages()
-		{
-			if (m_outMessages == null || m_outMessages.Count == 0)
-				return;
-
-			foreach (var message in m_outMessages)
-			{
-				// TODO last vipo cache
-				var vipo = m_vm.FindVipo(message.To);
-				if (vipo == null)
-				{
-					Interlocked.Increment(ref s_discardedMessages);
-					continue;
-				}
-
-				var messageIndex = vipo.InputMessage(message);
-
-				// TODO combine the request to the same vipo
-				//if (messageIndex > 0)
-					m_vm.Scheduler.AddRequest(new VipoProcess(vipo, messageIndex));
-			}
-
-			m_outMessages.Clear();
-		}
-
-		readonly ConcurrentQueue<VipoMessage> m_inMessages = new ConcurrentQueue<VipoMessage>();
-		int m_inMessagesCount;
-
-		internal int InputMessage(VipoMessage vipoMessage)
-		{
-			m_inMessages.Enqueue(vipoMessage);
-
-			return Interlocked.Increment(ref m_inMessagesCount);
 		}
 
 		#endregion

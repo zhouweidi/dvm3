@@ -15,10 +15,10 @@ namespace PerformanceTests
 
 		internal VirtualMachine VM => m_vm;
 
-		protected Test(int vmProcessorsCount, int maxSchedulerCircleMilliseconds)
+		protected Test(int vmProcessorsCount)
 		{
 			m_cts = new CancellationTokenSource();
-			m_vm = new VirtualMachine(vmProcessorsCount, maxSchedulerCircleMilliseconds, m_cts.Token);
+			m_vm = new VirtualMachine(vmProcessorsCount, m_cts.Token);
 
 			m_vm.OnError += OnError;
 

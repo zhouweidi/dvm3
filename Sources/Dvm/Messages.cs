@@ -33,29 +33,35 @@ namespace Dvm
 
 	public abstract class SystemMessage : Message
 	{
-		protected static VipoMessage Create(SystemMessage message)
+		internal VipoMessage CreateVipoMessage()
 		{
-			return new VipoMessage(Vid.Empty, Vid.Empty, message);
+			return new VipoMessage(Vid.Empty, Vid.Empty, this);
 		}
 	}
 
-	public sealed class SystemMessageSchedule : SystemMessage
+	sealed class SystemScheduleMessage : SystemMessage
+	{
+	}
+
+	public sealed class UserScheduleMessage : SystemMessage
 	{
 		public object Context { get; private set; }
 
-		internal static VipoMessage Create(object context)
-		{
-			var message = new SystemMessageSchedule(context);
-
-			return SystemMessage.Create(message);
-		}
-
-		SystemMessageSchedule(object context)
+		UserScheduleMessage(object context)
 		{
 			Context = context;
 		}
 
 		protected override string BodyToString() => Context == null ? "" : Context.ToString();
+
+		static readonly VipoMessage Empty = new UserScheduleMessage(null).CreateVipoMessage();
+
+		internal static VipoMessage CreateVipoMessage(object context)
+		{
+			return context == null ?
+				Empty :
+				new UserScheduleMessage(context).CreateVipoMessage();
+		}
 	}
 
 	#endregion

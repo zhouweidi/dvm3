@@ -7,8 +7,8 @@ namespace Dvm
 		readonly IVmThreadController m_controller;
 		readonly VmProcessor[] m_processors;
 
-		readonly object m_workingProcessorsLock = new object();
-		readonly Dictionary<Vipo, Workload> m_workingProcessors = new Dictionary<Vipo, Workload>();
+		readonly object m_workloadsLock = new object();
+		readonly Dictionary<Vid, Workload> m_workloads = new Dictionary<Vid, Workload>();
 
 		#region Properties
 
@@ -16,13 +16,25 @@ namespace Dvm
 
 		#endregion
 
-		public VmExecutor(IVmThreadController controller, VmScheduler scheduler, int processorsCount)
+		#region Workload
+
+		class Workload
+		{
+			public int JobsCount;
+			public VmProcessor Processor;
+		}
+
+		#endregion
+
+		#region Initialization
+
+		public VmExecutor(IVmThreadController controller, int processorsCount)
 		{
 			m_controller = controller;
 
 			m_processors = new VmProcessor[processorsCount];
 			for (int i = 0; i < processorsCount; i++)
-				m_processors[i] = new VmProcessor(controller, scheduler, i);
+				m_processors[i] = new VmProcessor(controller, this, i);
 		}
 
 		public void Start()
@@ -42,73 +54,70 @@ namespace Dvm
 			}
 		}
 
-		#region Workload
+		#endregion
 
-		class Workload
+		#region Jobs
+
+		public void DispatchJob(Vipo vipo)
 		{
-			public int JobsCount;
-			public VmProcessor Processor;
+			var vid = vipo.Vid;
+
+			// Push to the processor already has the jobs of the vipo
+			lock (m_workloadsLock)
+			{
+				if (m_workloads.TryGetValue(vid, out Workload workload))
+				{
+					workload.JobsCount++;
+					workload.Processor.AddJob(vipo);
+					return;
+				}
+			}
+
+			// Get the idlest processor
+			VmProcessor idleProcessor = null;
+			{
+				var minJobsCount = int.MaxValue;
+				for (int i = 0; i < m_processors.Length; i++)
+				{
+					var processor = m_processors[i];
+					var jobsCount = processor.JobsCount;
+					if (jobsCount < minJobsCount)
+					{
+						idleProcessor = processor;
+						minJobsCount = jobsCount;
+					}
+				}
+			}
+
+			// Push to the idle processor
+			lock (m_workloadsLock)
+			{
+				var workload = new Workload()
+				{
+					JobsCount = 1,
+					Processor = idleProcessor
+				};
+
+				m_workloads.Add(vid, workload);
+
+				idleProcessor.AddJob(vipo);
+			}
+		}
+
+		public void FinishJob(Vipo workingVipo)
+		{
+			var vid = workingVipo.Vid;
+
+			lock (m_workloadsLock)
+			{
+				if (!m_workloads.TryGetValue(vid, out Workload workload))
+					throw new KernelFaultException($"No workload found for the working vipo '{vid}'");
+
+				if (--workload.JobsCount == 0)
+					m_workloads.Remove(vid);
+			}
 		}
 
 		#endregion
-
-		public void DispatchJobs(IEnumerable<VipoJob> jobs)
-		{
-			foreach (var job in jobs)
-			{
-				// Push to the processor already has jobs of the vipo
-				lock (m_workingProcessorsLock)
-				{
-					if (m_workingProcessors.TryGetValue(job.Vipo, out Workload workload))
-					{
-						workload.JobsCount++;
-						workload.Processor.AddJob(job);
-						continue;
-					}
-				}
-
-				// Get an idle processor
-				VmProcessor idleProcessor = null;
-				{
-					var minJobsCount = int.MaxValue;
-					for (int i = 0; i < m_processors.Length; i++)
-					{
-						var processor = m_processors[i];
-						var jobsCount = processor.JobsCount;
-						if (jobsCount < minJobsCount)
-						{
-							idleProcessor = processor;
-							minJobsCount = jobsCount;
-						}
-					}
-				}
-
-				// Push to the idle processor
-				lock (m_workingProcessorsLock)
-				{
-					var workload = new Workload()
-					{
-						JobsCount = 1,
-						Processor = idleProcessor
-					};
-
-					m_workingProcessors.Add(job.Vipo, workload);
-
-					idleProcessor.AddJob(job);
-				}
-			}
-		}
-
-		public void FinishJob(VmProcessor processor, Vipo workingVipo)
-		{
-			lock (m_workingProcessorsLock)
-			{
-				if (m_workingProcessors.TryGetValue(workingVipo, out Workload workload))
-				{
-					if (--workload.JobsCount == 0)
-						m_workingProcessors.Remove(workingVipo);
-				}
-			}
-		}
 	}
 }
