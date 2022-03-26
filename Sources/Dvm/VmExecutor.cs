@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Dvm
 {
@@ -62,28 +63,29 @@ namespace Dvm
 		{
 			var vid = vipo.Vid;
 
+			VmProcessor processor = null;
+
 			// Push to the processor already has the jobs of the vipo
 			lock (m_workloadsLock)
 			{
 				if (m_workloads.TryGetValue(vid, out Workload workload))
 				{
 					workload.JobsCount++;
-					workload.Processor.AddJob(vipo);
-					return;
+					processor = workload.Processor;
+					goto AddToProcessor;
 				}
 			}
 
 			// Get the idlest processor
-			VmProcessor idleProcessor = null;
 			{
 				var minJobsCount = int.MaxValue;
 				for (int i = 0; i < m_processors.Length; i++)
 				{
-					var processor = m_processors[i];
-					var jobsCount = processor.JobsCount;
+					var p = m_processors[i];
+					var jobsCount = p.JobsCount;
 					if (jobsCount < minJobsCount)
 					{
-						idleProcessor = processor;
+						processor = p;
 						minJobsCount = jobsCount;
 					}
 				}
@@ -95,13 +97,15 @@ namespace Dvm
 				var workload = new Workload()
 				{
 					JobsCount = 1,
-					Processor = idleProcessor
+					Processor = processor
 				};
 
 				m_workloads.Add(vid, workload);
-
-				idleProcessor.AddJob(vipo);
 			}
+
+		AddToProcessor:
+			Debug.Assert(processor != null);
+			processor.AddJob(vipo);
 		}
 
 		public void FinishJob(Vipo workingVipo)
