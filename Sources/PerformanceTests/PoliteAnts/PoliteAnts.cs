@@ -24,7 +24,7 @@ namespace PerformanceTests.PoliteAnts
 			AntsCount = 10 * 1000,
 			GreetingSeedsCount = 10 * 1000,
 			GreetingProcessingSeconds = 0, //0.0001f,
-			TestDurationSeconds = 5,
+			TestDurationSeconds = 10,
 
 			FamousPercent = 0.1f,
 			GreetingFamousPossibilty = 0.8f,
@@ -52,7 +52,7 @@ namespace PerformanceTests.PoliteAnts
 			Print($"Ants: {m_condition.AntsCount:N0}");
 			Print($"Greeting seeds: {m_condition.GreetingSeedsCount:N0}");
 			Print($"Greeting processing: {m_condition.GreetingProcessingSeconds:N4} s");
-			Print($"Test seconds: {m_condition.TestDurationSeconds:N0}");
+			Print($"Test duration: {m_condition.TestDurationSeconds:N0} s");
 			Print($"VmProcessors: {VM.ProcessorsCount}");
 			Print();
 		}
