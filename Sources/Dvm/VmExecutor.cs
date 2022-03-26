@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace Dvm
 {
@@ -9,21 +9,12 @@ namespace Dvm
 		readonly VmProcessor[] m_processors;
 
 		readonly object m_workloadsLock = new object();
-		readonly Dictionary<Vid, Workload> m_workloads = new Dictionary<Vid, Workload>();
+		readonly Dictionary<Vid, bool> m_workloads = new Dictionary<Vid, bool>(); // <Vid, PendingJobFlag>
+		readonly BlockingCollection<Vipo> m_jobsQueue = new BlockingCollection<Vipo>();
 
 		#region Properties
 
 		public int ProcessorsCount => m_processors.Length;
-
-		#endregion
-
-		#region Workload
-
-		class Workload
-		{
-			public int JobsCount;
-			public VmProcessor Processor;
-		}
 
 		#endregion
 
@@ -52,6 +43,8 @@ namespace Dvm
 			{
 				for (int i = 0; i < m_processors.Length; i++)
 					m_processors[i].Dispose();
+
+				m_jobsQueue.Dispose();
 			}
 		}
 
@@ -63,62 +56,55 @@ namespace Dvm
 		{
 			var vid = vipo.Vid;
 
-			VmProcessor processor = null;
-
-			// Push to the processor already has the jobs of the vipo
+			// Try to push to the processor that already has the same vipo working
 			lock (m_workloadsLock)
 			{
-				if (m_workloads.TryGetValue(vid, out Workload workload))
+				if (m_workloads.TryGetValue(vid, out bool pendingJob))
 				{
-					workload.JobsCount++;
-					processor = workload.Processor;
-					goto AddToProcessor;
+					if (pendingJob)
+						throw new KernelFaultException($"The working vipo '{vid}' in workload already has the pending flag set");
+
+					m_workloads[vid] = true;
+					return;
 				}
 			}
 
-			// Get the idlest processor
-			{
-				var minJobsCount = int.MaxValue;
-				for (int i = 0; i < m_processors.Length; i++)
-				{
-					var p = m_processors[i];
-					var jobsCount = p.JobsCount;
-					if (jobsCount < minJobsCount)
-					{
-						processor = p;
-						minJobsCount = jobsCount;
-					}
-				}
-			}
-
-			// Push to the idle processor
-			lock (m_workloadsLock)
-			{
-				var workload = new Workload()
-				{
-					JobsCount = 1,
-					Processor = processor
-				};
-
-				m_workloads.Add(vid, workload);
-			}
-
-		AddToProcessor:
-			Debug.Assert(processor != null);
-			processor.AddJob(vipo);
+			// Queue the job
+			m_jobsQueue.Add(vipo);
 		}
 
-		public void FinishJob(Vipo workingVipo)
+		public Vipo GetJob()
+		{
+			var vipo = m_jobsQueue.Take(m_controller.EndToken);
+
+			lock (m_workloadsLock)
+			{
+				m_workloads.Add(vipo.Vid, false);
+			}
+
+			return vipo;
+		}
+
+		public bool FinishJob(Vipo workingVipo)
 		{
 			var vid = workingVipo.Vid;
 
+			// Fetch a pending job or finish the job of the vipo
 			lock (m_workloadsLock)
 			{
-				if (!m_workloads.TryGetValue(vid, out Workload workload))
+				if (!m_workloads.TryGetValue(vid, out bool pendingJob))
 					throw new KernelFaultException($"No workload found for the working vipo '{vid}'");
 
-				if (--workload.JobsCount == 0)
+				if (pendingJob)
+				{
+					m_workloads[vid] = false;
+					return false;
+				}
+				else
+				{
 					m_workloads.Remove(vid);
+					return true;
+				}
 			}
 		}
 

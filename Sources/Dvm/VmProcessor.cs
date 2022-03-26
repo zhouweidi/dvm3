@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Threading;
 
 namespace Dvm
@@ -8,16 +7,8 @@ namespace Dvm
 	{
 		readonly VmExecutor m_executor;
 		readonly int m_index;
-		readonly BlockingCollection<Vipo> m_jobsQueue = new BlockingCollection<Vipo>();
 
 		static readonly LocalDataStoreSlot WorkingVipoSlot = Thread.GetNamedDataSlot("WorkingVipo");
-
-		#region Properties
-
-		public int Index => m_index;
-		public int JobsCount => m_jobsQueue.Count;
-
-		#endregion
 
 		public VmProcessor(IVmThreadController controller, VmExecutor executor, int index)
 			: base(controller, $"DVM-VP{index}")
@@ -26,36 +17,29 @@ namespace Dvm
 			m_index = index;
 		}
 
-		protected override void OnDispose(bool explicitCall)
-		{
-			base.OnDispose(explicitCall);
-
-			if (explicitCall)
-				m_jobsQueue.Dispose();
-		}
-
-		public void AddJob(Vipo vipo)
-		{
-			if (vipo == null)
-				throw new KernelFaultException("VipoJob.Vipo is null");
-
-			m_jobsQueue.Add(vipo);
-		}
+		public override string ToString() => $"VmProcessor{m_index}";
 
 		protected override void ThreadEntry()
 		{
 			for (Vipo workingVipo = null; ;)
 			{
-				var vipo = m_jobsQueue.Take(EndToken);
+				var vipo = m_executor.GetJob();
+
+				// Set working vipo slot
 				if (vipo != workingVipo)
 				{
 					SetWorkingVipo(vipo);
 					workingVipo = vipo;
 				}
 
-				vipo.RunEntry();
+				// Run the vipo
+				do
+				{
+					vipo.RunEntry();
+				}
+				while (!m_executor.FinishJob(vipo));
 
-				m_executor.FinishJob(workingVipo);
+				SetWorkingVipo(null);
 			}
 		}
 
