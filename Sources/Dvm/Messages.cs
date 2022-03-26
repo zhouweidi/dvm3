@@ -41,6 +41,7 @@ namespace Dvm
 
 	sealed class SystemScheduleMessage : SystemMessage
 	{
+		internal static readonly SystemScheduleMessage Dispose = new SystemScheduleMessage();
 	}
 
 	public sealed class UserScheduleMessage : SystemMessage

@@ -25,8 +25,8 @@ namespace Dvm
 		readonly ConcurrentQueue<VipoMessage> m_inMessages = new ConcurrentQueue<VipoMessage>();
 		int m_pendingInMessagesCount;
 		bool m_runningFlag;
+		bool m_disposedFlag;
 
-		static readonly SystemScheduleMessage SystemScheduleMessage_Dispose = new SystemScheduleMessage();
 		public static int s_discardedMessages;
 
 		#region Properties
@@ -56,7 +56,10 @@ namespace Dvm
 					m_vm.Unregister(this);
 
 					if (IsOnDisposeOverridden())
-						InputMessage(SystemScheduleMessage_Dispose.CreateVipoMessage());
+					{
+						var vipoMessage = SystemScheduleMessage.Dispose.CreateVipoMessage();
+						InputMessage(vipoMessage);
+					}
 				}
 			}
 		}
@@ -102,6 +105,10 @@ namespace Dvm
 			if (m_runningFlag)
 				throw new KernelFaultException("The vipo is already running");
 
+			// Any messages may come after SystemScheduleMessage.Dispose processed
+			if (m_disposedFlag)
+				return;
+
 			m_runningFlag = true;
 
 			var messagesToProcess = Interlocked.Exchange(ref m_pendingInMessagesCount, 0);
@@ -110,11 +117,22 @@ namespace Dvm
 
 			try
 			{
-				var messagess = TakeInMessages(messagesToProcess);
-				Run(messagess);
+				var messageStream = new VipoMessageStream(m_inMessages, messagesToProcess);
 
-				if (m_outMessages != null && m_outMessages.Count > 0)
-					DispatchMessages();
+				var onlyDisposeMessage = messagesToProcess == 1 && messageStream.LastIsDisposeMessage;
+				if (!onlyDisposeMessage)
+				{
+					Run(messageStream);
+
+					if (m_outMessages != null && m_outMessages.Count > 0)
+						DispatchMessages();
+				}
+
+				if (onlyDisposeMessage || messageStream.EndsWithDisposeMessage())
+				{
+					OnDispose();
+					m_disposedFlag = true;
+				}
 			}
 			catch (Exception e)
 			{
@@ -122,25 +140,6 @@ namespace Dvm
 			}
 
 			m_runningFlag = false;
-		}
-
-		IEnumerable<VipoMessage> TakeInMessages(int count)
-		{
-			for (int i = 0; i < count; i++)
-			{
-				if (!m_inMessages.TryDequeue(out VipoMessage vipoMessage))
-					throw new KernelFaultException("Not enough in messages to take");
-
-				if (ReferenceEquals(vipoMessage.Message, SystemScheduleMessage_Dispose))
-				{
-					OnDispose();
-					yield break;
-					// TODO throw new EndException();
-					// TODO only one execution allowed
-				}
-
-				yield return vipoMessage;
-			}
 		}
 
 		void DispatchMessages()
@@ -165,7 +164,7 @@ namespace Dvm
 
 		// All handlers are called in VmProcessor threads
 
-		protected abstract void Run(IEnumerable<VipoMessage> vipoMessages);
+		protected abstract void Run(VipoMessageStream messageStream);
 
 		// OnError should not raise an exception; if it does, the VM event OnError can be invoked.
 		protected virtual void OnError(Exception e)

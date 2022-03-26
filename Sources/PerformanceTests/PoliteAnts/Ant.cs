@@ -63,9 +63,9 @@ namespace PerformanceTests.PoliteAnts
 			}
 		}
 
-		protected override void Run(IEnumerable<VipoMessage> vipoMessages)
+		protected override void Run(VipoMessageStream messageStream)
 		{
-			foreach (var m in vipoMessages)
+			while (messageStream.GetNext(out VipoMessage m))
 			{
 				switch (m.Message)
 				{

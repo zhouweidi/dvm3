@@ -85,9 +85,9 @@ namespace DvmTests
 
 		#region Utilities
 
-		protected static string JoinMessageBodies(IEnumerable<VipoMessage> vipoMessages)
+		protected static string JoinMessages(VipoMessageStream messageStream)
 		{
-			return string.Join(',', from vm in vipoMessages
+			return string.Join(',', from vm in messageStream.AsEnumerable()
 									select vm.Message);
 		}
 

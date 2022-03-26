@@ -62,7 +62,7 @@ namespace DvmTests.VipoTests
 				m_throwInOnError = throwInOnError;
 			}
 
-			protected override void Run(IEnumerable<VipoMessage> vipoMessages)
+			protected override void Run(VipoMessageStream messageStream)
 			{
 				throw new Exception("Original error in Vipo.Run()");
 			}
