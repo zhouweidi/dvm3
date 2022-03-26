@@ -121,6 +121,8 @@ var Ants []*Ant
 
 func main() {
 
+	runtime.GOMAXPROCS(4)
+
 	Ants = make([]*Ant, AntsCount)
 	for vid := range Ants {
 		Ants[vid] = NewAnt(vid)
@@ -130,7 +132,7 @@ func main() {
 	fmt.Printf("Ants: %d\n", AntsCount)
 	fmt.Printf("Greeting seed: %d\n", GreetingCount)
 	fmt.Printf("Test seconds: %f(s)\n", TestDurationSeconds.Seconds())
-	fmt.Printf("Processors: %d\n", runtime.NumCPU())
+	fmt.Printf("Processors: %d\n", runtime.GOMAXPROCS(-1))
 
 	start := time.Now()
 
