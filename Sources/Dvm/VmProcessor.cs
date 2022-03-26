@@ -5,15 +5,15 @@ namespace Dvm
 {
 	class VmProcessor : VmThread
 	{
-		readonly VmExecutor m_executor;
+		readonly VmScheduler m_scheduler;
 		readonly int m_index;
 
 		static readonly LocalDataStoreSlot WorkingVipoSlot = Thread.GetNamedDataSlot("WorkingVipo");
 
-		public VmProcessor(IVmThreadController controller, VmExecutor executor, int index)
+		public VmProcessor(IVmThreadController controller, VmScheduler scheduler, int index)
 			: base(controller, $"DVM-VP{index}")
 		{
-			m_executor = executor;
+			m_scheduler = scheduler;
 			m_index = index;
 		}
 
@@ -23,7 +23,7 @@ namespace Dvm
 		{
 			for (Vipo workingVipo = null; ;)
 			{
-				var vipo = m_executor.GetJob();
+				var vipo = m_scheduler.GetJob();
 
 				// Set working vipo slot
 				if (vipo != workingVipo)
@@ -37,7 +37,7 @@ namespace Dvm
 				{
 					vipo.RunEntry();
 				}
-				while (!m_executor.FinishJob(vipo));
+				while (!m_scheduler.FinishJob(vipo));
 
 				SetWorkingVipo(null);
 			}

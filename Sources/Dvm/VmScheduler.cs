@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Dvm
 {
-	class VmExecutor : DisposableObject
+	class VmScheduler : DisposableObject
 	{
 		readonly IVmThreadController m_controller;
 		readonly VmProcessor[] m_processors;
@@ -20,7 +20,7 @@ namespace Dvm
 
 		#region Initialization
 
-		public VmExecutor(IVmThreadController controller, int processorsCount)
+		public VmScheduler(IVmThreadController controller, int processorsCount)
 		{
 			m_controller = controller;
 

@@ -12,7 +12,7 @@ namespace Dvm
 	public sealed class VirtualMachine : DisposableObject
 	{
 		readonly ThreadController m_controller;
-		readonly VmExecutor m_executor;
+		readonly VmScheduler m_scheduler;
 
 		readonly ConcurrentDictionary<Vid, Vipo> m_vipos = new ConcurrentDictionary<Vid, Vipo>();
 		readonly VidAllocator m_vidAllocator;
@@ -26,7 +26,7 @@ namespace Dvm
 			add { m_controller.OnError += value; }
 			remove { m_controller.OnError -= value; }
 		}
-		public int ProcessorsCount => m_executor.ProcessorsCount;
+		public int ProcessorsCount => m_scheduler.ProcessorsCount;
 		public int ViposCount => m_vipos.Count;
 
 		#endregion
@@ -44,8 +44,8 @@ namespace Dvm
 			if (virtualProcessorsCount == 0)
 				virtualProcessorsCount = Math.Max(Environment.ProcessorCount - 1, 1);
 
-			m_executor = new VmExecutor(m_controller, virtualProcessorsCount);
-			m_executor.Start();
+			m_scheduler = new VmScheduler(m_controller, virtualProcessorsCount);
+			m_scheduler.Start();
 
 			m_vidAllocator = new VidAllocator(new UsedVidQuery(this));
 		}
@@ -56,7 +56,7 @@ namespace Dvm
 
 			if (explicitCall)
 			{
-				m_executor.Dispose();
+				m_scheduler.Dispose();
 
 				m_controller.Dispose();
 
@@ -186,7 +186,7 @@ namespace Dvm
 
 		internal void Schedule(Vipo vipo)
 		{
-			m_executor.DispatchJob(vipo);
+			m_scheduler.DispatchJob(vipo);
 		}
 
 		internal Vipo FindVipo(Vid vid)
