@@ -8,17 +8,13 @@ namespace Dvm
 {
 	// Ending a vipo can be started with a call to IDisposable.Dispose() on a vipo in any threads.
 	// * It is an async process including 2 step:
-	//   1. Detach it from VM (by the schedule request VipoDispose).
-	//      Because we must ensure all the current/ongoing schedule requests and vipo jobs in the pipeline are processed before
-	//      disposing the vipo since these tasks may use the resources an user allocates for the vipo.
-	//   2. Dispose the resources an user allocated for it. (by the user handler OnDispose())
-	//     - OnDispose() is used to dispose user resources and the end step of the ending process. It is not the same as
-	//       DisposableObject.OnDispose(bool) which is called when the vipo ending process starts. OnDispose() runs in VmProcessor
-	//       threads during VM works or in the same thread as the one calls VM.Dispose().
-	//     - Vipo objects without OnDispose() overridden don't get the final run in VmProcessor threads while detaching it from VM.
-	//     - Vipo objects with OnDispose() overridden always do regardless of whether they were attached to VM or not.
-	// * VM ending process can end (dispose) vipos attached to it.
-	// * An unattached vipo should be explicitly disposed by a Dispose() call whether before or after VM ends.
+	//   1. Unregister it from VM.
+	//   2. Dispose the resources an user allocated for it, done by the user handler OnDispose().
+	//     - OnDispose() is used to dispose user resources and the final step of the ending process. It is not the same as
+	//       DisposableObject.OnDispose(bool) which is called when the vipo ending process starts. OnDispose() gets called:
+	//       - As the final run, in VmProcessor threads during VM works;
+	//		 - Or, along with VM disposing, in the same thread as VM.Dispose().
+	// * VM ending process can end (dispose) vipos registered to it.
 
 	public abstract class Vipo : DisposableObject
 	{
@@ -28,6 +24,7 @@ namespace Dvm
 		List<VipoMessage> m_outMessages;
 		readonly ConcurrentQueue<VipoMessage> m_inMessages = new ConcurrentQueue<VipoMessage>();
 		int m_pendingInMessagesCount;
+		bool m_runningFlag;
 
 		static readonly SystemScheduleMessage SystemScheduleMessage_Dispose = new SystemScheduleMessage();
 		public static int s_discardedMessages;
@@ -37,15 +34,6 @@ namespace Dvm
 		public VirtualMachine VM => m_vm;
 		public Vid Vid => m_vid;
 		public string Symbol => m_vid.Symbol;
-
-		bool OnDisposeOverridden => GetType().GetMethod(
-			nameof(OnDispose),
-			BindingFlags.NonPublic | BindingFlags.Instance,
-			null,
-			EmptyTypeArray,
-			null).DeclaringType != typeof(Vipo);
-
-		static readonly Type[] EmptyTypeArray = new Type[0];
 
 		#endregion
 
@@ -67,10 +55,24 @@ namespace Dvm
 				{
 					m_vm.Unregister(this);
 
-					if (OnDisposeOverridden)
+					if (IsOnDisposeOverridden())
 						InputMessage(SystemScheduleMessage_Dispose.CreateVipoMessage());
 				}
 			}
+		}
+
+		static readonly Type[] EmptyTypeArray = new Type[0];
+
+		bool IsOnDisposeOverridden()
+		{
+			var onDisposeMethod = GetType().GetMethod(
+				nameof(OnDispose),
+				BindingFlags.NonPublic | BindingFlags.Instance,
+				null,
+				EmptyTypeArray,
+				null);
+
+			return onDisposeMethod.DeclaringType != typeof(Vipo);
 		}
 
 		public override string ToString() => "Vipo " + m_vid.ToString();
@@ -97,6 +99,11 @@ namespace Dvm
 
 		internal void RunEntry()
 		{
+			if (m_runningFlag)
+				throw new KernelFaultException("The vipo is already running");
+
+			m_runningFlag = true;
+
 			var messagesToProcess = Interlocked.Exchange(ref m_pendingInMessagesCount, 0);
 			if (messagesToProcess == 0)
 				throw new KernelFaultException("No message to process in a vipo circle");
@@ -113,6 +120,8 @@ namespace Dvm
 			{
 				OnError(e);
 			}
+
+			m_runningFlag = false;
 		}
 
 		IEnumerable<VipoMessage> TakeInMessages(int count)
