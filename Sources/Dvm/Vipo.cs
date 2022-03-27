@@ -188,31 +188,19 @@ namespace Dvm
 
 		#region Sending messages
 
-		public void Send(Vid to, Message message) // Can be called in VmProcessor threads only
-		{
-			var vipoMessage = new VipoMessage(m_vid, to, message);
-
-			Send(vipoMessage);
-		}
-
-		public void Send(VipoMessage vipoMessage) // Can be called in VmProcessor threads only
+		protected void Send(Vid to, Message message) // Can be called in VmProcessor threads only
 		{
 			CheckDisposed();
 
-			if (!ReferenceEquals(VmProcessor.GetWorkingVipo(), this))
-				throw new InvalidOperationException("It is not allowed to call Send outside of OnRun");
+			VmProcessor.CheckWorkingVipo(this, "It is not allowed to call Send outside of Vipo.Run");
 
-			if (vipoMessage.From.IsEmpty)
-				throw new ArgumentException("VipoMessage.From is empty", nameof(vipoMessage));
+			if (to.IsEmpty)
+				throw new ArgumentException("To is empty", nameof(to));
 
-			if (vipoMessage.To.IsEmpty)
-				throw new ArgumentException("VipoMessage.To is empty", nameof(vipoMessage));
+			if (message == null)
+				throw new ArgumentException("Message is null", nameof(message));
 
-			if (vipoMessage.Message == null)
-				throw new ArgumentException("VipoMessage.Message is null", nameof(vipoMessage));
-
-			if (vipoMessage.From != m_vid)
-				throw new ArgumentException("VipoMessage.From is not the sender", nameof(vipoMessage));
+			var vipoMessage = new VipoMessage(m_vid, to, message);
 
 			// Add to out messages
 			if (m_outMessages == null)

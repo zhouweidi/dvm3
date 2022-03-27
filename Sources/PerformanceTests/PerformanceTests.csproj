@@ -9,8 +9,4 @@
     <ProjectReference Include="..\Dvm\Dvm.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="ProfilerReports\" />
-  </ItemGroup>
-
 </Project>

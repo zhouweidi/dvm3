@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 
 namespace Dvm
@@ -43,14 +44,19 @@ namespace Dvm
 			}
 		}
 
+		[Conditional("DEBUG")]
 		static void SetWorkingVipo(Vipo vipo)
 		{
 			Thread.SetData(WorkingVipoSlot, vipo);
 		}
 
-		public static Vipo GetWorkingVipo()
+		[Conditional("DEBUG")]
+		public static void CheckWorkingVipo(Vipo vipo, string errorMessage)
 		{
-			return (Vipo)Thread.GetData(WorkingVipoSlot);
+			var working = (Vipo)Thread.GetData(WorkingVipoSlot);
+
+			if (!ReferenceEquals(vipo, working))
+				throw new InvalidOperationException(errorMessage);
 		}
 	}
 }
