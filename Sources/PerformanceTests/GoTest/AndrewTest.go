@@ -114,7 +114,7 @@ func (ant *Ant) GetGreetingTarget() int {
 }
 
 const AntsCount = 10000
-const GreetingCount = 5000
+const GreetingCount = 5000 * 2
 const TestDurationSeconds = 10 * time.Second
 
 var Ants []*Ant
@@ -131,8 +131,9 @@ func main() {
 
 	fmt.Printf("Ants: %d\n", AntsCount)
 	fmt.Printf("Greeting seed: %d\n", GreetingCount)
-	fmt.Printf("Test seconds: %f(s)\n", TestDurationSeconds.Seconds())
+	fmt.Printf("Test duration: %d s\n", int(TestDurationSeconds.Seconds()))
 	fmt.Printf("Processors: %d\n", runtime.GOMAXPROCS(-1))
+	fmt.Printf("\n")
 
 	start := time.Now()
 
@@ -176,15 +177,21 @@ func main() {
 		messages += ant.totalMessages
 	}
 
-	fmt.Printf("Start duration (avg): %f\n", time.Duration(duration/float64(durationTotal)).Seconds())
+	fmt.Printf("Start duration (avg): %d ms\n", time.Duration(duration/float64(durationTotal)).Milliseconds())
+	fmt.Printf("\n")
+
 	fmt.Printf("Greeting sent (avg): %v\n", greetingSent/AntsCount)
 	fmt.Printf("Greeting sent (sum): %v\n", greetingSent)
 	fmt.Printf("Greeting received (avg): %v\n", greetingReceived/AntsCount)
 	fmt.Printf("Greeting received (sum): %v\n", greetingReceived)
 	fmt.Printf("Messages: %d\n", messages)
-	fmt.Printf("Message rate (m/s): %f\n", float64(messages)/runDuration)
+	fmt.Printf("Message rate (m/s): %d\n", int(float64(messages)/runDuration))
+	fmt.Printf("\n")
+
 	fmt.Printf("Greeting RTT (avg): %f\n", time.Duration(rtt/int64(rttTotal)).Seconds())
 	fmt.Printf("Greeting RTT (max): %f\n", time.Duration(rttMax).Seconds())
 	fmt.Printf("Greeting RTT (min): %f\n", time.Duration(rttMin).Seconds())
+	fmt.Printf("\n")
+	
 	fmt.Println("Completed.")
 }
