@@ -15,9 +15,6 @@ namespace PerformanceTests.PoliteAnts
 		public float GreetingFakeProcessingSeconds;
 		public int TestDurationSeconds;
 
-		public float FamousPercent;
-		public float GreetingFamousPossibilty;
-
 		public readonly static TestCondition Default = new TestCondition()
 		{
 			VmProcessorsCount = 4,
@@ -27,27 +24,22 @@ namespace PerformanceTests.PoliteAnts
 			GreetingSeedsCount = 10 * 1000,
 			GreetingFakeProcessingSeconds = 0, //0.0001f,
 			TestDurationSeconds = 10,
-
-			FamousPercent = 0.1f,
-			GreetingFamousPossibilty = 0.8f,
 		};
 	}
 
 	class PoliteAnts : Test
 	{
 		readonly TestCondition m_condition;
-		readonly int m_famousAntsCount;
 		readonly Ant[] m_ants;
 
 		public PoliteAnts(TestCondition condition, string testName)
 			: base(condition.VmProcessorsCount, condition.WithInspector)
 		{
 			m_condition = condition;
-			m_famousAntsCount = (int)(m_condition.AntsCount * m_condition.FamousPercent);
 			m_ants = new Ant[m_condition.AntsCount];
 
-			Assert(m_condition.GreetingSeedsCount / m_famousAntsCount >= 1);
-			Assert(m_condition.GreetingSeedsCount % m_famousAntsCount == 0);
+			Assert(m_condition.GreetingSeedsCount >= m_condition.AntsCount);
+			Assert(m_condition.GreetingSeedsCount % m_condition.AntsCount == 0);
 
 			Print($"{testName}");
 			Print();
@@ -76,11 +68,7 @@ namespace PerformanceTests.PoliteAnts
 			Profile("Create ants", () =>
 			{
 				for (int i = 0; i < m_ants.Length; i++)
-				{
-					bool famous = i < m_famousAntsCount;
-
-					m_ants[i] = new Ant(this, $"Ant {i + 1}", famous, m_condition.GreetingFakeProcessingSeconds);
-				}
+					m_ants[i] = new Ant(this, $"Ant {i + 1}", m_condition.GreetingFakeProcessingSeconds);
 			});
 
 			// Register
@@ -96,13 +84,13 @@ namespace PerformanceTests.PoliteAnts
 
 			// Start greeting
 			{
-				int initialGreetingCount = m_condition.GreetingSeedsCount / m_famousAntsCount;
+				int initialGreetingCount = m_condition.GreetingSeedsCount / m_condition.AntsCount;
 
 				for (int i = 0; i < m_ants.Length; i++)
 				{
 					var ant = m_ants[i];
 
-					ant.Start(ant.IsFamous ? initialGreetingCount : 0);
+					ant.Start(initialGreetingCount);
 				}
 			}
 		}
@@ -130,7 +118,7 @@ namespace PerformanceTests.PoliteAnts
 
 			var totalMessages = greetingSentSum + greetingReceivedSum;
 			Print($"Messages: {totalMessages:N0}");
-			Print($"Messages rate (m/s): {(float)totalMessages / m_condition.TestDurationSeconds:N0}");
+			Print($"Message rate (m/s): {(float)totalMessages / m_condition.TestDurationSeconds:N0}");
 			Print();
 
 			var greetingRTTs = (from ant in m_ants
@@ -161,11 +149,7 @@ namespace PerformanceTests.PoliteAnts
 
 		public Vid GetGreetingTarget(Random random)
 		{
-			var greetingFamous = random.NextDouble() < m_condition.GreetingFamousPossibilty;
-
-			var i = greetingFamous ?
-				random.Next(m_famousAntsCount) :
-				m_famousAntsCount + random.Next(m_ants.Length - m_famousAntsCount);
+			var i = random.Next(m_ants.Length);
 
 			return m_ants[i].Vid;
 		}

@@ -9,7 +9,6 @@ namespace PerformanceTests.PoliteAnts
 	{
 		readonly PoliteAnts m_test;
 		readonly Random m_random;
-		public bool IsFamous { get; private set; }
 		readonly float m_greetingFakeProcessingSeconds;
 
 		DateTime m_registerBeginTime;
@@ -32,12 +31,11 @@ namespace PerformanceTests.PoliteAnts
 
 		#endregion
 
-		public Ant(PoliteAnts test, string symbol, bool famous, float greetingFakeProcessingSeconds)
+		public Ant(PoliteAnts test, string symbol, float greetingFakeProcessingSeconds)
 			: base(test, symbol)
 		{
 			m_test = test;
 			m_random = new Random(symbol.GetHashCode());
-			IsFamous = famous;
 			m_greetingFakeProcessingSeconds = greetingFakeProcessingSeconds;
 		}
 

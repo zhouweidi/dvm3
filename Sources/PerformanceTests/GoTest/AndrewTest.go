@@ -116,12 +116,13 @@ func (ant *Ant) GetGreetingTarget() int {
 const AntsCount = 10000
 const GreetingCount = 5000 * 2
 const TestDurationSeconds = 10 * time.Second
+const ProcessorsCount = 4
 
 var Ants []*Ant
 
 func main() {
 
-	runtime.GOMAXPROCS(4)
+	runtime.GOMAXPROCS(ProcessorsCount)
 
 	Ants = make([]*Ant, AntsCount)
 	for vid := range Ants {
@@ -130,7 +131,7 @@ func main() {
 	}
 
 	fmt.Printf("Ants: %d\n", AntsCount)
-	fmt.Printf("Greeting seed: %d\n", GreetingCount)
+	fmt.Printf("Greeting seeds: %d\n", GreetingCount)
 	fmt.Printf("Test duration: %d s\n", int(TestDurationSeconds.Seconds()))
 	fmt.Printf("Processors: %d\n", runtime.GOMAXPROCS(-1))
 	fmt.Printf("\n")
