@@ -24,8 +24,7 @@ namespace Dvm
 		List<VipoMessage> m_outMessages;
 		readonly ConcurrentQueue<VipoMessage> m_inMessages = new ConcurrentQueue<VipoMessage>();
 		int m_pendingInMessagesCount;
-		bool m_runningFlag;
-		bool m_disposedFlag;
+		Status m_status;
 
 		public static int s_discardedMessages;
 
@@ -36,6 +35,13 @@ namespace Dvm
 		public string Symbol => m_vid.Symbol;
 
 		#endregion
+
+		[Flags]
+		enum Status : byte
+		{
+			Running = 1,
+			Disposed = 2,
+		}
 
 		#region Initialization
 
@@ -102,14 +108,14 @@ namespace Dvm
 
 		internal void RunEntry()
 		{
-			if (m_runningFlag)
+			if ((m_status & Status.Running) != 0)
 				throw new KernelFaultException("The vipo is already running");
 
 			// Any messages may come after SystemScheduleMessage.Dispose processed
-			if (m_disposedFlag)
+			if ((m_status & Status.Disposed) != 0)
 				return;
 
-			m_runningFlag = true;
+			m_status |= Status.Running;
 
 			var messagesToProcess = Interlocked.Exchange(ref m_pendingInMessagesCount, 0);
 			if (messagesToProcess == 0)
@@ -131,7 +137,7 @@ namespace Dvm
 				if (onlyDisposeMessage || messageStream.EndsWithDisposeMessage())
 				{
 					OnDispose();
-					m_disposedFlag = true;
+					m_status |= Status.Disposed;
 				}
 			}
 			catch (Exception e)
@@ -139,7 +145,7 @@ namespace Dvm
 				OnError(e);
 			}
 
-			m_runningFlag = false;
+			m_status &= ~Status.Running;
 		}
 
 		void DispatchMessages()

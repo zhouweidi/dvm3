@@ -17,7 +17,7 @@ namespace Dvm
 			m_index = index;
 		}
 
-		public override string ToString() => $"VmProcessor{m_index}";
+		public override string ToString() => $"VmProcessor {m_index}";
 
 		protected override void ThreadEntry()
 		{
