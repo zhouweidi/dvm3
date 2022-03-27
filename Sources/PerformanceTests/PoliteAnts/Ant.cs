@@ -10,7 +10,7 @@ namespace PerformanceTests.PoliteAnts
 		readonly PoliteAnts m_test;
 		readonly Random m_random;
 		public bool IsFamous { get; private set; }
-		readonly float m_greetingProcessingSeconds;
+		readonly float m_greetingFakeProcessingSeconds;
 
 		DateTime m_registerBeginTime;
 		DateTime m_registerEndTime;
@@ -32,13 +32,13 @@ namespace PerformanceTests.PoliteAnts
 
 		#endregion
 
-		public Ant(PoliteAnts test, string symbol, bool famous, float greetingProcessingSeconds)
+		public Ant(PoliteAnts test, string symbol, bool famous, float greetingFakeProcessingSeconds)
 			: base(test, symbol)
 		{
 			m_test = test;
 			m_random = new Random(symbol.GetHashCode());
 			IsFamous = famous;
-			m_greetingProcessingSeconds = greetingProcessingSeconds;
+			m_greetingFakeProcessingSeconds = greetingFakeProcessingSeconds;
 		}
 
 		public void Register()
@@ -82,8 +82,8 @@ namespace PerformanceTests.PoliteAnts
 
 					case GreetingMessage greeting:
 						// Fake process
-						if (m_greetingProcessingSeconds > 0)
-							FakeProcessingWork(m_greetingProcessingSeconds);
+						if (m_greetingFakeProcessingSeconds > 0)
+							FakeProcessingWork(m_greetingFakeProcessingSeconds);
 
 						Send(m.From, new GreetingAckMessage(greeting.Timestamp));
 						GreetingReceived++;

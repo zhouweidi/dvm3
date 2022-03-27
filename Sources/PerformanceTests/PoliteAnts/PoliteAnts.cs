@@ -12,7 +12,7 @@ namespace PerformanceTests.PoliteAnts
 
 		public int AntsCount;
 		public int GreetingSeedsCount;
-		public float GreetingProcessingSeconds;
+		public float GreetingFakeProcessingSeconds;
 		public int TestDurationSeconds;
 
 		public float FamousPercent;
@@ -25,7 +25,7 @@ namespace PerformanceTests.PoliteAnts
 
 			AntsCount = 10 * 1000,
 			GreetingSeedsCount = 10 * 1000,
-			GreetingProcessingSeconds = 0, //0.0001f,
+			GreetingFakeProcessingSeconds = 0, //0.0001f,
 			TestDurationSeconds = 10,
 
 			FamousPercent = 0.1f,
@@ -53,7 +53,7 @@ namespace PerformanceTests.PoliteAnts
 			Print();
 			Print($"Ants: {m_condition.AntsCount:N0}");
 			Print($"Greeting seeds: {m_condition.GreetingSeedsCount:N0}");
-			Print($"Greeting processing: {m_condition.GreetingProcessingSeconds:N4} s");
+			Print($"Greeting fake processing: {m_condition.GreetingFakeProcessingSeconds:N4} s");
 			Print($"Test duration: {m_condition.TestDurationSeconds:N0} s");
 			Print($"VmProcessors: {VM.ProcessorsCount}");
 			Print();
@@ -79,7 +79,7 @@ namespace PerformanceTests.PoliteAnts
 				{
 					bool famous = i < m_famousAntsCount;
 
-					m_ants[i] = new Ant(this, $"Ant {i + 1}", famous, m_condition.GreetingProcessingSeconds);
+					m_ants[i] = new Ant(this, $"Ant {i + 1}", famous, m_condition.GreetingFakeProcessingSeconds);
 				}
 			});
 
