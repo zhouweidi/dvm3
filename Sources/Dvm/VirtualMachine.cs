@@ -12,6 +12,7 @@ namespace Dvm
 	public sealed class VirtualMachine : DisposableObject
 	{
 		readonly ThreadController m_controller;
+		readonly Inspector m_inspector;
 		readonly VmScheduler m_scheduler;
 
 		readonly ConcurrentDictionary<Vid, Vipo> m_vipos = new ConcurrentDictionary<Vid, Vipo>();
@@ -28,23 +29,27 @@ namespace Dvm
 		}
 		public int ProcessorsCount => m_scheduler.ProcessorsCount;
 		public int ViposCount => m_vipos.Count;
+		public Inspector Inspector => m_inspector;
 
 		#endregion
 
 		#region Initialization
 
-		public VirtualMachine(int virtualProcessorsCount = 0)
-			: this(virtualProcessorsCount, CancellationToken.None)
+		public VirtualMachine(int virtualProcessorsCount = 0, bool withInspector = false)
+			: this(virtualProcessorsCount, CancellationToken.None, withInspector)
 		{ }
 
-		public VirtualMachine(int virtualProcessorsCount, CancellationToken endToken)
+		public VirtualMachine(int virtualProcessorsCount, CancellationToken endToken, bool withInspector)
 		{
 			m_controller = new ThreadController(endToken);
+
+			if (withInspector)
+				m_inspector = new Inspector();
 
 			if (virtualProcessorsCount == 0)
 				virtualProcessorsCount = Math.Max(Environment.ProcessorCount - 1, 1);
 
-			m_scheduler = new VmScheduler(m_controller, virtualProcessorsCount);
+			m_scheduler = new VmScheduler(m_controller, virtualProcessorsCount, m_inspector);
 			m_scheduler.Start();
 
 			m_vidAllocator = new VidAllocator(new UsedVidQuery(this));

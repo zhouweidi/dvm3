@@ -7,10 +7,11 @@ namespace Dvm
 	{
 		readonly IVmThreadController m_controller;
 		readonly VmProcessor[] m_processors;
+		readonly Inspector m_inspector;
 
 		readonly object m_workloadsLock = new object();
 		readonly Dictionary<Vid, bool> m_workloads = new Dictionary<Vid, bool>(); // <Vid, PendingJobFlag>
-		readonly BlockingCollection<Vipo> m_jobsQueue = new BlockingCollection<Vipo>();
+		readonly BlockingCollection<Vipo> m_jobQueue = new BlockingCollection<Vipo>();
 
 		#region Properties
 
@@ -20,13 +21,15 @@ namespace Dvm
 
 		#region Initialization
 
-		public VmScheduler(IVmThreadController controller, int processorsCount)
+		public VmScheduler(IVmThreadController controller, int processorsCount, Inspector inspector)
 		{
 			m_controller = controller;
 
 			m_processors = new VmProcessor[processorsCount];
 			for (int i = 0; i < processorsCount; i++)
 				m_processors[i] = new VmProcessor(controller, this, i);
+
+			m_inspector = inspector;
 		}
 
 		public void Start()
@@ -44,7 +47,7 @@ namespace Dvm
 				for (int i = 0; i < m_processors.Length; i++)
 					m_processors[i].Dispose();
 
-				m_jobsQueue.Dispose();
+				m_jobQueue.Dispose();
 			}
 		}
 
@@ -70,12 +73,15 @@ namespace Dvm
 			}
 
 			// Queue the job
-			m_jobsQueue.Add(vipo);
+			m_jobQueue.Add(vipo);
+
+			if (m_inspector != null)
+				m_inspector.UpdateJobQueueSize(m_jobQueue.Count);
 		}
 
 		public Vipo GetJob()
 		{
-			var vipo = m_jobsQueue.Take(m_controller.EndToken);
+			var vipo = m_jobQueue.Take(m_controller.EndToken);
 
 			lock (m_workloadsLock)
 			{

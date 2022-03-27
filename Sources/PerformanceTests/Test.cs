@@ -12,13 +12,16 @@ namespace PerformanceTests
 		CancellationTokenSource m_cts;
 		VirtualMachine m_vm;
 		readonly ManualResetEvent m_exceptionOccured = new ManualResetEvent(false);
+		readonly Inspector m_inspector;
 
-		internal VirtualMachine VM => m_vm;
+		public VirtualMachine VM => m_vm;
+		public Inspector Inspector => m_inspector;
 
-		protected Test(int vmProcessorsCount)
+		protected Test(int vmProcessorsCount, bool withInspector)
 		{
 			m_cts = new CancellationTokenSource();
-			m_vm = new VirtualMachine(vmProcessorsCount, m_cts.Token);
+			m_vm = new VirtualMachine(vmProcessorsCount, m_cts.Token, withInspector);
+			m_inspector = m_vm.Inspector;
 
 			m_vm.OnError += OnError;
 

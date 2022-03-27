@@ -21,7 +21,7 @@ namespace DvmTests
 			base.Initialize();
 
 			m_cts = new CancellationTokenSource();
-			m_vm = new VirtualMachine(VmProcessorsCount, m_cts.Token);
+			m_vm = new VirtualMachine(VmProcessorsCount, m_cts.Token, false);
 
 			m_vm.OnError += OnError;
 

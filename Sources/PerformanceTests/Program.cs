@@ -65,13 +65,24 @@ namespace PerformanceTests
 				using var test = new PoliteAnts.PoliteAnts(condition, name);
 
 				test.Run();
-				test.Print("----------------------------------");
-				test.Print($"Discarded messages: {Dvm.Vipo.s_discardedMessages:N0}");
+
+				if (test.Inspector != null)
+					PrintInspector(test);
 
 				output.Append(test.GetPrintContent());
 			}
 
 			return output.ToString();
+		}
+
+		private static void PrintInspector(Test test)
+		{
+			var inspector = test.Inspector;
+
+			test.Print();
+			test.Print("-- Inspector --");
+			test.Print($"Discarded messages: {inspector.DiscardedMessages:N0}");
+			test.Print($"JobQueue max size: {inspector.JobQueueMaxSize:N0}");
 		}
 
 		#endregion

@@ -26,8 +26,6 @@ namespace Dvm
 		int m_pendingInMessagesCount;
 		Status m_status;
 
-		public static int s_discardedMessages;
-
 		#region Properties
 
 		public VirtualMachine VM => m_vm;
@@ -156,7 +154,9 @@ namespace Dvm
 				var vipo = m_vm.FindVipo(message.To);
 				if (vipo == null)
 				{
-					Interlocked.Increment(ref s_discardedMessages);
+					if (m_vm.Inspector != null)
+						m_vm.Inspector.IncreaseDiscardedMessage();
+
 					continue;
 				}
 

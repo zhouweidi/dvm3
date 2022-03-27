@@ -8,6 +8,7 @@ namespace PerformanceTests.PoliteAnts
 	struct TestCondition
 	{
 		public int VmProcessorsCount;
+		public bool WithInspector;
 
 		public int AntsCount;
 		public int GreetingSeedsCount;
@@ -20,6 +21,7 @@ namespace PerformanceTests.PoliteAnts
 		public readonly static TestCondition Default = new TestCondition()
 		{
 			VmProcessorsCount = 4,
+			WithInspector = true,
 
 			AntsCount = 10 * 1000,
 			GreetingSeedsCount = 10 * 1000,
@@ -38,7 +40,7 @@ namespace PerformanceTests.PoliteAnts
 		readonly Ant[] m_ants;
 
 		public PoliteAnts(TestCondition condition, string testName)
-			: base(condition.VmProcessorsCount)
+			: base(condition.VmProcessorsCount, condition.WithInspector)
 		{
 			m_condition = condition;
 			m_famousAntsCount = (int)(m_condition.AntsCount * m_condition.FamousPercent);
