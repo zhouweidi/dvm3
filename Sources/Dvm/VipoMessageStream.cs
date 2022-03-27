@@ -49,7 +49,7 @@ namespace Dvm
 		}
 
 		// Forward-iteration sharing the progress with GetNext()
-		public IEnumerable<VipoMessage> AsEnumerable()
+		public IEnumerable<VipoMessage> GetConsumingEnumerable()
 		{
 			if (!m_stopReturning)
 			{

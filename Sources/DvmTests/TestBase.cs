@@ -87,7 +87,7 @@ namespace DvmTests
 
 		protected static string JoinMessages(VipoMessageStream messageStream)
 		{
-			return string.Join(',', from vm in messageStream.AsEnumerable()
+			return string.Join(',', from vm in messageStream.GetConsumingEnumerable()
 									select vm.Message);
 		}
 
