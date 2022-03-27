@@ -16,7 +16,7 @@ namespace PerformanceTests.PoliteAnts
 		public int GreetingSent { get; private set; }
 		public int GreetingReceived { get; private set; }
 		public int GreetingAckReceived { get; private set; }
-		readonly List<int> m_greetingRTTs = new List<int>();
+		readonly List<float> m_greetingRTTs = new List<float>();
 
 		#region Properties
 
@@ -92,7 +92,7 @@ namespace PerformanceTests.PoliteAnts
 						GreetingAckReceived++;
 
 						var ts = DateTime.Now - ack.Timestamp;
-						m_greetingRTTs.Add((int)ts.TotalSeconds);
+						m_greetingRTTs.Add((float)ts.TotalMilliseconds);
 						break;
 
 					default:
@@ -129,7 +129,7 @@ namespace PerformanceTests.PoliteAnts
 			}
 		}
 
-		public IReadOnlyList<int> GetGreetingRTTs()
+		public IReadOnlyList<float> GetGreetingRTTs()
 		{
 			return m_greetingRTTs.ToArray();
 		}
