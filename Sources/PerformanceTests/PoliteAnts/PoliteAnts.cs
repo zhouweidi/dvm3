@@ -71,17 +71,6 @@ namespace PerformanceTests.PoliteAnts
 					m_ants[i] = new Ant(this, $"Ant {i + 1}", m_condition.GreetingFakeProcessingSeconds);
 			});
 
-			// Register
-			Profile("Register ants", () =>
-			{
-				for (int i = 0; i < m_ants.Length; i++)
-				{
-					var ant = m_ants[i];
-
-					ant.Register();
-				}
-			});
-
 			// Start greeting
 			{
 				int initialGreetingCount = m_condition.GreetingSeedsCount / m_condition.AntsCount;
@@ -106,18 +95,18 @@ namespace PerformanceTests.PoliteAnts
 								select ant.GreetingSent).Average();
 			var greetingSentSum = (from ant in m_ants
 								   select ant.GreetingSent).Sum();
-			Print($"Greeting sent (avg): {greetingSent:N1}");
-			Print($"Greeting sent (sum): {greetingSentSum:N0}");
+			Print($"Greeting sent (avg): {greetingSent:N0}");
+			Print($"Greeting sent (sum): {greetingSentSum}");
 
 			var greetingReceived = (from ant in m_ants
 									select ant.GreetingReceived).Average();
 			var greetingReceivedSum = (from ant in m_ants
 									   select ant.GreetingReceived).Sum();
-			Print($"Greeting received (avg): {greetingReceived:N1}");
-			Print($"Greeting received (sum): {greetingReceivedSum:N0}");
+			Print($"Greeting received (avg): {greetingReceived:N0}");
+			Print($"Greeting received (sum): {greetingReceivedSum}");
 
 			var totalMessages = greetingSentSum + greetingReceivedSum;
-			Print($"Messages: {totalMessages:N0}");
+			Print($"Messages: {totalMessages}");
 			Print($"Message rate (m/s): {(float)totalMessages / m_condition.TestDurationSeconds:N0}");
 			Print();
 

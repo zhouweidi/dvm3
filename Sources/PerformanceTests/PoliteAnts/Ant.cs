@@ -39,15 +39,10 @@ namespace PerformanceTests.PoliteAnts
 			m_greetingFakeProcessingSeconds = greetingFakeProcessingSeconds;
 		}
 
-		public void Register()
+		public void Start(int initialGreetingCount)
 		{
 			m_registerBeginTime = DateTime.Now;
 
-			Schedule();
-		}
-
-		public void Start(int initialGreetingCount)
-		{
 			Schedule(new StartSignal(initialGreetingCount));
 		}
 
@@ -79,12 +74,14 @@ namespace PerformanceTests.PoliteAnts
 						break;
 
 					case GreetingMessage greeting:
+						GreetingReceived++;
+
 						// Fake process
 						if (m_greetingFakeProcessingSeconds > 0)
 							FakeProcessingWork(m_greetingFakeProcessingSeconds);
 
+						// Send ack
 						Send(m.From, new GreetingAckMessage(greeting.Timestamp));
-						GreetingReceived++;
 
 						// Forward the greeting to another
 						SendGreetingToRandomAnt();
