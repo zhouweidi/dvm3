@@ -19,6 +19,7 @@ namespace Dvm
 	public abstract class Vipo : DisposableObject
 	{
 		readonly VirtualMachine m_vm;
+		readonly string m_symbol;
 		readonly Vid m_vid;
 
 		List<VipoMessage> m_outMessages;
@@ -30,7 +31,7 @@ namespace Dvm
 
 		public VirtualMachine VM => m_vm;
 		public Vid Vid => m_vid;
-		public string Symbol => m_vid.Symbol;
+		public string Symbol => m_symbol ?? string.Empty;
 
 		#endregion
 
@@ -46,7 +47,8 @@ namespace Dvm
 		protected Vipo(VirtualMachine vm, string symbol)
 		{
 			m_vm = vm ?? throw new ArgumentNullException(nameof(vm));
-			m_vid = vm.Register(this, symbol);
+			m_symbol = symbol;
+			m_vid = vm.Register(this);
 		}
 
 		protected sealed override void OnDispose(bool explicitCall)
@@ -150,8 +152,10 @@ namespace Dvm
 		{
 			foreach (var message in m_outMessages)
 			{
-				// TODO last vipo cache
-				var vipo = m_vm.FindVipo(message.To);
+				var vipo = message.To.ResolveVipo();
+				if (vipo == null)
+					vipo = m_vm.FindVipo(message.To);
+
 				if (vipo == null)
 				{
 					if (m_vm.Inspector != null)

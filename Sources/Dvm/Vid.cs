@@ -2,12 +2,12 @@
 
 namespace Dvm
 {
-	public struct Vid : IEquatable<Vid>, IComparable<Vid>, IFormattable
+	public class Vid : IEquatable<Vid>, IComparable<Vid>, IFormattable
 	{
-		public static readonly Vid Empty = new Vid(0, null);
+		public static readonly Vid Empty = new Vid();
 
 		readonly ulong m_data;
-		readonly string m_symbol;
+		readonly WeakReference<Vipo> m_vipoRef;
 
 		#region Bits schema
 
@@ -32,7 +32,6 @@ namespace Dvm
 		#region Properties
 
 		public ulong Data => m_data;
-		public string Symbol => m_symbol;
 		public bool IsEmpty => m_data == 0;
 
 		internal ushort NodeId => (ushort)((m_data >> NodeIdBitOffset) & MaxNodeId);
@@ -42,13 +41,11 @@ namespace Dvm
 
 		#region Initialization
 
-		internal Vid(ulong data, string symbol)
+		Vid()
 		{
-			m_data = data;
-			m_symbol = symbol ?? string.Empty;
 		}
 
-		internal Vid(ushort nodeId, ulong index, string symbol)
+		internal Vid(ushort nodeId, ulong index, Vipo vipo)
 		{
 			if (nodeId == 0 || nodeId > MaxNodeId)
 				throw new ArgumentException("Invalid NodeId component for a Vid", nameof(nodeId));
@@ -57,7 +54,7 @@ namespace Dvm
 				throw new ArgumentException("Invalid index component for a Vid", nameof(index));
 
 			m_data = (((ulong)nodeId) << NodeIdBitOffset) | (index << IndexBitOffset);
-			m_symbol = symbol ?? string.Empty;
+			m_vipoRef = vipo != null ? new WeakReference<Vipo>(vipo) : null;
 		}
 
 		public override int GetHashCode()
@@ -67,29 +64,59 @@ namespace Dvm
 
 		#endregion
 
+		#region Resolve
+
+		internal Vipo ResolveVipo()
+		{
+			if (m_vipoRef == null)
+				return null;
+
+			if (!m_vipoRef.TryGetTarget(out Vipo vipo))
+				return null;
+
+			return vipo;
+		}
+
+		public string ResolveSymbol()
+		{
+			var vipo = ResolveVipo();
+
+			return vipo != null ?
+				vipo.Symbol :
+				string.Empty;
+		}
+
+		#endregion
+
 		#region Equals
 
 		public bool Equals(Vid other)
 		{
-			return other.m_data == m_data;
+			return !(other is null) && other.m_data == m_data;
 		}
 
 		public override bool Equals(object obj)
 		{
-			if (obj is Vid)
-				return ((Vid)obj).m_data == m_data;
+			if (obj is Vid vid)
+				return vid.m_data == m_data;
 			else
 				return false;
 		}
 
 		public static bool operator ==(Vid x, Vid y)
 		{
-			return x.m_data == y.m_data;
+			bool xIsNull = x is null;
+			bool yIsNull = y is null;
+
+			if (!xIsNull && !yIsNull)
+				return x.m_data == y.m_data;
+			else
+				return xIsNull && yIsNull;
 		}
 
 		public static bool operator !=(Vid x, Vid y)
 		{
-			return x.m_data != y.m_data;
+			return !(x == y);
 		}
 
 		#endregion
@@ -98,7 +125,9 @@ namespace Dvm
 
 		public int CompareTo(Vid other)
 		{
-			return m_data.CompareTo(other.m_data);
+			return other is null ?
+				1 :
+				m_data.CompareTo(other.m_data);
 		}
 
 		#endregion
@@ -112,20 +141,22 @@ namespace Dvm
 			if (m_data == 0)
 				return "0.0";
 
+			var symbol = ResolveSymbol();
+
 			switch (format)
 			{
 				case null:
 				case "":
-					if (string.IsNullOrEmpty(m_symbol))
+					if (string.IsNullOrEmpty(symbol))
 						return m_data.ToString("X");
 					else
-						return $"{m_data:X}^{m_symbol}";
+						return $"{m_data:X}^{symbol}";
 
 				case "detail":
 					// <nodeId>.<index>^<symbol>
-					return string.IsNullOrEmpty(m_symbol) ?
+					return string.IsNullOrEmpty(symbol) ?
 						$"{NodeId:X}.{Index:X}" :
-						$"{NodeId:X}.{Index:X}^{m_symbol}";
+						$"{NodeId:X}.{Index:X}^{symbol}";
 
 				default:
 					throw new FormatException($"The format string '{format}' is not supported.");

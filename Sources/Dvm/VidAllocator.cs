@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Diagnostics;
+using System.Threading;
 
 namespace Dvm
 {
@@ -20,15 +21,18 @@ namespace Dvm
 			m_index = (long)(initialIndex & maxIndex);
 		}
 
-		public Vid New(string symbol)
+		public Vid New(Vipo vipo)
 		{
+			// Test cases can pass in a null vipo
+			//Debug.Assert(vipo != null);
+
 			for (ulong loops = 0; loops < m_maxIndex; ++loops)
 			{
 				var current = (ulong)Interlocked.Increment(ref m_index) & m_maxIndex;
 				if (current == 0)
 					continue;
 
-				var vid = new Vid(1, current, symbol);
+				var vid = new Vid(1, current, vipo);
 
 				if (!m_usedVidQuery.IsUsed(vid))
 					return vid;

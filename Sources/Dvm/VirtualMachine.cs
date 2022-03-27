@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Threading;
 
 namespace Dvm
@@ -160,13 +161,15 @@ namespace Dvm
 
 		#region Vipos
 
-		internal Vid Register(Vipo vipo, string symbol)
+		internal Vid Register(Vipo vipo)
 		{
+			Debug.Assert(vipo != null);
+
 			if (vipo.Disposed)
-				throw new KernelFaultException($"Register a disposed vipo '{symbol}'");
+				throw new KernelFaultException($"Register a disposed vipo '{vipo.Symbol}'");
 
 			// Add to the vipos list
-			var vid = m_vidAllocator.New(symbol);
+			var vid = m_vidAllocator.New(vipo);
 
 			if (!m_vipos.TryAdd(vid, vipo))
 				throw new KernelFaultException($"Failed to add the vipo '{vid}' to the vipos list");
