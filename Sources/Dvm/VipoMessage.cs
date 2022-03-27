@@ -8,6 +8,8 @@ namespace Dvm
 		public Vid To { get; private set; }
 		public Message Message { get; private set; }
 
+		public readonly static VipoMessage Empty = new VipoMessage();
+
 		public VipoMessage(Vid from, Vid to, Message message)
 		{
 			From = from;

@@ -7,9 +7,9 @@ namespace Dvm
 	{
 		readonly ConcurrentQueue<VipoMessage> m_inMessages;
 		int m_remainingCount;
-		bool m_stopReturning;
-		VipoMessage m_last;
+		VipoMessage m_lastMessage;
 		bool m_lastIsDisposeMessage;
+		bool m_stopReturning;
 
 		internal bool LastIsDisposeMessage => m_lastIsDisposeMessage;
 
@@ -21,7 +21,7 @@ namespace Dvm
 			m_inMessages = inMessages;
 			m_remainingCount = count;
 
-			m_last = LoadNext(out m_lastIsDisposeMessage);
+			m_lastMessage = LoadNext(out m_lastIsDisposeMessage);
 		}
 
 		public bool GetNext(out VipoMessage vipoMessage)
@@ -31,12 +31,12 @@ namespace Dvm
 				// Stop on Dispose message
 				if (!m_lastIsDisposeMessage)
 				{
-					vipoMessage = m_last;
+					vipoMessage = m_lastMessage;
 
 					if (m_remainingCount == 0)
 						m_stopReturning = true;
 					else
-						m_last = LoadNext(out m_lastIsDisposeMessage);
+						m_lastMessage = LoadNext(out m_lastIsDisposeMessage);
 
 					return true;
 				}
@@ -44,7 +44,7 @@ namespace Dvm
 				m_stopReturning = true;
 			}
 
-			vipoMessage = new VipoMessage();
+			vipoMessage = VipoMessage.Empty;
 			return false;
 		}
 
@@ -56,12 +56,12 @@ namespace Dvm
 				// Stop on Dispose message
 				while (!m_lastIsDisposeMessage)
 				{
-					yield return m_last;
+					yield return m_lastMessage;
 
 					if (m_remainingCount == 0)
 						break;
 
-					m_last = LoadNext(out m_lastIsDisposeMessage);
+					m_lastMessage = LoadNext(out m_lastIsDisposeMessage);
 				}
 
 				m_stopReturning = true;
