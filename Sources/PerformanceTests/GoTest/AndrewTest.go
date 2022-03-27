@@ -50,7 +50,7 @@ type Ant struct {
 	startCompleteTime time.Time
 	greetingsSent     int
 	greetingsReceived int
-	totalMessages     int
+	AcksReceived      int
 	greetingRTTs      []int64
 	random            rand.Rand
 }
@@ -69,13 +69,13 @@ func (ant *Ant) Run() {
 	for {
 		msg := <-ant.ch
 		// fmt.Printf("Received %s: %d -> %d\n", msg.message.String(), msg.from, ant.vid)
-		ant.totalMessages++
 		switch msg.message {
 		case MessageGreeting:
 			ant.SendAck(msg.from)
 			ant.greetingsReceived++
 			ant.SendGreeting()
 		case MessageAck:
+			ant.AcksReceived++
 			ant.greetingRTTs = append(ant.greetingRTTs, int64(time.Now().Sub(msg.timestamp)))
 		case MessageSchedule:
 			ant.startCompleteTime = time.Now()
@@ -175,7 +175,7 @@ func main() {
 				rttMin = r
 			}
 		}
-		messages += ant.totalMessages
+		messages += ant.greetingsReceived + ant.AcksReceived
 	}
 
 	fmt.Printf("Start duration (avg): %d ms\n", time.Duration(duration/float64(durationTotal)).Milliseconds())

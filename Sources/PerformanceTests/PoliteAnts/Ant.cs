@@ -15,6 +15,7 @@ namespace PerformanceTests.PoliteAnts
 		DateTime m_registerEndTime;
 		public int GreetingSent { get; private set; }
 		public int GreetingReceived { get; private set; }
+		public int GreetingAckReceived { get; private set; }
 		readonly List<TimeSpan> m_greetingRTTs = new List<TimeSpan>();
 
 		#region Properties
@@ -88,9 +89,10 @@ namespace PerformanceTests.PoliteAnts
 						break;
 
 					case GreetingAckMessage ack:
+						GreetingAckReceived++;
+
 						var ts = DateTime.Now - ack.Timestamp;
-						lock (m_greetingRTTs)
-							m_greetingRTTs.Add(ts);
+						m_greetingRTTs.Add(ts);
 						break;
 
 					default:
@@ -129,10 +131,7 @@ namespace PerformanceTests.PoliteAnts
 
 		public IReadOnlyList<TimeSpan> GetGreetingRTTs()
 		{
-			lock (m_greetingRTTs)
-			{
-				return m_greetingRTTs.ToArray();
-			}
+			return m_greetingRTTs.ToArray();
 		}
 	}
 }

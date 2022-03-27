@@ -91,22 +91,33 @@ namespace PerformanceTests.PoliteAnts
 			Print($"Register duration (avg): {registerDuration:N0} ms");
 			Print();
 
+			// Greeting sent
 			var greetingSent = (from ant in m_ants
 								select ant.GreetingSent).Average();
 			var greetingSentSum = (from ant in m_ants
 								   select ant.GreetingSent).Sum();
 			Print($"Greeting sent (avg): {greetingSent:N0}");
-			Print($"Greeting sent (sum): {greetingSentSum}");
+			Print($"Greeting sent (sum): {greetingSentSum:N0}");
 
+			// Greeting received
 			var greetingReceived = (from ant in m_ants
 									select ant.GreetingReceived).Average();
 			var greetingReceivedSum = (from ant in m_ants
 									   select ant.GreetingReceived).Sum();
 			Print($"Greeting received (avg): {greetingReceived:N0}");
-			Print($"Greeting received (sum): {greetingReceivedSum}");
+			Print($"Greeting received (sum): {greetingReceivedSum:N0}");
 
-			var totalMessages = greetingSentSum + greetingReceivedSum;
-			Print($"Messages: {totalMessages}");
+			// GreetingAck received
+			var greetingAckReceived = (from ant in m_ants
+									   select ant.GreetingAckReceived).Average();
+			var greetingAckReceivedSum = (from ant in m_ants
+										  select ant.GreetingAckReceived).Sum();
+			Print($"GreetingAck received (avg): {greetingAckReceived:N0}");
+			Print($"GreetingAck received (sum): {greetingAckReceivedSum:N0}");
+
+			// Total
+			var totalMessages = greetingReceivedSum + greetingAckReceivedSum;
+			Print($"Messages: {totalMessages:N0}");
 			Print($"Message rate (m/s): {(float)totalMessages / m_condition.TestDurationSeconds:N0}");
 			Print();
 
