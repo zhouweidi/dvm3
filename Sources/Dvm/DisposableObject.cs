@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Dvm
@@ -34,6 +35,7 @@ namespace Dvm
 
 		protected abstract void OnDispose(bool explicitCall);
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		protected void CheckDisposed()
 		{
 			if (Disposed)
