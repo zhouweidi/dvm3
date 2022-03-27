@@ -124,12 +124,9 @@ namespace PerformanceTests.PoliteAnts
 			var greetingRTTs = (from ant in m_ants
 								from rtt in ant.GetGreetingRTTs()
 								select rtt).ToArray();
-			var avgRTT = (from rtt in greetingRTTs
-						  select rtt.TotalMilliseconds).Average();
-			var maxRTT = (from rtt in greetingRTTs
-						  select rtt.TotalMilliseconds).Max();
-			var minRTT = (from rtt in greetingRTTs
-						  select rtt.TotalMilliseconds).Min();
+			var avgRTT = greetingRTTs.Average();
+			var maxRTT = greetingRTTs.Max();
+			var minRTT = greetingRTTs.Min();
 			Print($"Greeting RTT (avg): {avgRTT:N0} ms");
 			Print($"Greeting RTT (max): {maxRTT:N0} ms");
 			Print($"Greeting RTT (min): {minRTT:N0} ms");
