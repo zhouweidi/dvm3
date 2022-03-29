@@ -94,7 +94,8 @@ namespace Dvm
 		{
 			CheckDisposed();
 
-			InputMessage(UserScheduleMessage.CreateVipoMessage(context));
+			var vipoMessage = UserScheduleMessage.CreateVipoMessage(context);
+			InputMessage(vipoMessage);
 		}
 
 		void InputMessage(VipoMessage vipoMessage)
@@ -151,8 +152,10 @@ namespace Dvm
 
 		void DispatchMessages()
 		{
-			foreach (var message in m_outMessages)
+			for (int i = 0; i < m_outMessages.Count; i++)
 			{
+				var message = m_outMessages[i];
+
 				var vipo = message.To.ResolveVipo();
 				if (vipo == null)
 					vipo = m_vm.FindVipo(message.To);

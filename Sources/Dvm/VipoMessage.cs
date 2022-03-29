@@ -10,7 +10,7 @@ namespace Dvm
 
 		public readonly static VipoMessage Empty = new VipoMessage();
 
-		public VipoMessage(Vid from, Vid to, Message message)
+		internal VipoMessage(Vid from, Vid to, Message message)
 		{
 			From = from;
 			To = to;

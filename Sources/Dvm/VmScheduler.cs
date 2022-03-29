@@ -57,17 +57,15 @@ namespace Dvm
 
 		public void DispatchJob(Vipo vipo)
 		{
-			var vid = vipo.Vid;
-
 			// Try to push to the processor that already has the same vipo working
 			lock (m_workloadsLock)
 			{
-				if (m_workloads.TryGetValue(vid, out bool pendingJob))
+				if (m_workloads.TryGetValue(vipo.Vid, out bool pendingJob))
 				{
 					if (pendingJob)
-						throw new KernelFaultException($"The working vipo '{vid}' in workload already has the pending flag set");
+						throw new KernelFaultException($"The working vipo '{vipo.Vid}' in workload already has the pending flag set");
 
-					m_workloads[vid] = true;
+					m_workloads[vipo.Vid] = true;
 					return;
 				}
 			}
