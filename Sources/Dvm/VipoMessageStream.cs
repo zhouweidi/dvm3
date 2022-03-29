@@ -7,11 +7,10 @@ namespace Dvm
 	{
 		readonly ConcurrentQueue<VipoMessage> m_inMessages;
 		int m_remainingCount;
-		VipoMessage m_lastMessage;
-		bool m_lastIsDisposeMessage;
-		bool m_stopReturning;
+		bool m_disposeMessageEncountered;
+		VipoMessage? m_lastMessage;
 
-		internal bool LastIsDisposeMessage => m_lastIsDisposeMessage;
+		internal bool DisposeMessageEncountered => m_disposeMessageEncountered;
 
 		internal VipoMessageStream(ConcurrentQueue<VipoMessage> inMessages, int count)
 		{
@@ -21,75 +20,60 @@ namespace Dvm
 			m_inMessages = inMessages;
 			m_remainingCount = count;
 
-			m_lastMessage = LoadNext(out m_lastIsDisposeMessage);
+			m_lastMessage = LoadNext();
 		}
 
 		public bool GetNext(out VipoMessage vipoMessage)
 		{
-			if (!m_stopReturning)
+			// Stop on Dispose message
+			if (m_lastMessage != null && !m_disposeMessageEncountered)
 			{
-				// Stop on Dispose message
-				if (!m_lastIsDisposeMessage)
-				{
-					vipoMessage = m_lastMessage;
+				vipoMessage = m_lastMessage.Value;
 
-					if (m_remainingCount == 0)
-						m_stopReturning = true;
-					else
-						m_lastMessage = LoadNext(out m_lastIsDisposeMessage);
+				m_lastMessage = LoadNext();
 
-					return true;
-				}
-
-				m_stopReturning = true;
+				return true;
 			}
-
-			vipoMessage = VipoMessage.Empty;
-			return false;
+			else
+			{
+				vipoMessage = VipoMessage.Empty;
+				return false;
+			}
 		}
 
 		// Forward-iteration sharing the progress with GetNext()
 		public IEnumerable<VipoMessage> GetConsumingEnumerable()
 		{
-			if (!m_stopReturning)
+			// Stop on Dispose message
+			while (m_lastMessage != null && !m_disposeMessageEncountered)
 			{
-				// Stop on Dispose message
-				while (!m_lastIsDisposeMessage)
-				{
-					yield return m_lastMessage;
+				yield return m_lastMessage.Value;
 
-					if (m_remainingCount == 0)
-						break;
-
-					m_lastMessage = LoadNext(out m_lastIsDisposeMessage);
-				}
-
-				m_stopReturning = true;
+				m_lastMessage = LoadNext();
 			}
 		}
 
-		VipoMessage LoadNext(out bool isDisposeMessage)
+		VipoMessage? LoadNext()
 		{
 			if (m_remainingCount <= 0)
-				throw new KernelFaultException("No more in message to load");
+				return null;
 
 			if (!m_inMessages.TryDequeue(out VipoMessage vipoMessage))
 				throw new KernelFaultException("Not enough in messages to dequeue");
 
 			--m_remainingCount;
 
-			isDisposeMessage = ReferenceEquals(vipoMessage.Message, SystemScheduleMessage.Dispose);
+			if (!m_disposeMessageEncountered)
+				m_disposeMessageEncountered = ReferenceEquals(vipoMessage.Message, SystemScheduleMessage.Dispose);
 
 			return vipoMessage;
 		}
 
-		internal bool EndsWithDisposeMessage()
+		internal void ConsumeRemaining()
 		{
 			// Need to dequeue all remaining
 			while (m_remainingCount > 0)
-				LoadNext(out m_lastIsDisposeMessage);
-
-			return m_lastIsDisposeMessage;
+				LoadNext();
 		}
 	}
 }

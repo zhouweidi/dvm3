@@ -125,8 +125,8 @@ namespace Dvm
 			{
 				var messageStream = new VipoMessageStream(m_inMessages, messagesToProcess);
 
-				var onlyDisposeMessage = messagesToProcess == 1 && messageStream.LastIsDisposeMessage;
-				if (!onlyDisposeMessage)
+				var firstIsDisposeMessage = messageStream.DisposeMessageEncountered;
+				if (!firstIsDisposeMessage)
 				{
 					Run(messageStream);
 
@@ -134,7 +134,8 @@ namespace Dvm
 						DispatchMessages();
 				}
 
-				if (onlyDisposeMessage || messageStream.EndsWithDisposeMessage())
+				messageStream.ConsumeRemaining();
+				if (messageStream.DisposeMessageEncountered)
 				{
 					OnDispose();
 					m_status |= Status.Disposed;
