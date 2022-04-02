@@ -8,7 +8,7 @@ namespace Dvm
 		readonly Vipo m_vipo;
 		readonly List<Timer> m_timers = new List<Timer>();
 		int m_latestTimerId;
-		long? m_lastRequestedDueTime;
+		long m_lastRequestedDueTime;
 
 		public VipoTimingComponent(Vipo vipo)
 		{
@@ -89,23 +89,20 @@ namespace Dvm
 		{
 			VipoTimerMessageStream messageStream = null;
 
-			if (trigger)
+			if (trigger && m_timers.Count > 0)
 			{
 				var localTimerMessages = TriggerTimers();
 				if (localTimerMessages != null)
 					messageStream = new VipoTimerMessageStream(localTimerMessages);
 			}
 
-			PostUpdate();
+			UpdateRequest();
 
 			return messageStream;
 		}
 
 		List<UserTimerMessage> TriggerTimers()
 		{
-			if (m_timers.Count == 0)
-				return null;
-
 			List<UserTimerMessage> timerMessages = null;
 
 			var now = VmTiming.Now;
@@ -134,34 +131,34 @@ namespace Dvm
 			return timerMessages;
 		}
 
-		void PostUpdate()
+		void UpdateRequest()
 		{
 			if (m_timers.Count == 0)
 			{
-				if (m_lastRequestedDueTime != null)
+				if (m_lastRequestedDueTime != 0)
 				{
 					m_vipo.VM.Timing.RequestToResetVipo(m_vipo);
 
-					m_lastRequestedDueTime = null;
+					m_lastRequestedDueTime = 0;
+				}
+			}
+			else
+			{
+				Timer nearestTimer = null;
+				for (int i = 0; i < m_timers.Count; i++)
+				{
+					var timer = m_timers[i];
+
+					if (nearestTimer == null || timer.DueTime < nearestTimer.DueTime)
+						nearestTimer = timer;
 				}
 
-				return;
-			}
+				if (m_lastRequestedDueTime == 0 || m_lastRequestedDueTime != nearestTimer.DueTime)
+				{
+					m_vipo.VM.Timing.RequestToUpdateVipo(m_vipo, nearestTimer.DueTime);
 
-			Timer nearestTimer = null;
-			for (int i = 0; i < m_timers.Count; i++)
-			{
-				var timer = m_timers[i];
-
-				if (nearestTimer == null || timer.DueTime < nearestTimer.DueTime)
-					nearestTimer = timer;
-			}
-
-			if (m_lastRequestedDueTime == null || m_lastRequestedDueTime.Value != nearestTimer.DueTime)
-			{
-				m_vipo.VM.Timing.RequestToUpdateVipo(m_vipo, nearestTimer.DueTime);
-
-				m_lastRequestedDueTime = nearestTimer.DueTime;
+					m_lastRequestedDueTime = nearestTimer.DueTime;
+				}
 			}
 		}
 

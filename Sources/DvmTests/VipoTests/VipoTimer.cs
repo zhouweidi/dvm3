@@ -1,6 +1,7 @@
 ﻿using Dvm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Linq;
 
 namespace DvmTests.VipoTests
 {
@@ -16,7 +17,7 @@ namespace DvmTests.VipoTests
 			a.Schedule();
 
 			var startTime = DateTime.Now;
-			var testDuration = TimeSpan.FromSeconds(2);
+			var testDuration = TimeSpan.FromSeconds(1);
 
 			do
 			{
@@ -26,10 +27,13 @@ namespace DvmTests.VipoTests
 
 			Print($"Actual used time: {DateTime.Now - startTime}");
 
-			var output = GetCustomOutput();
-			Assert.IsTrue(output.Length == 7);
+			{
+				var output = GetCustomOutput();
+				Assert.IsTrue(output.Length == 7);
 
-			// TODO Test 0ms interval
+				Assert.IsTrue(output.Count(s => s.StartsWith("One-off timer: ")) == 1);
+				Assert.IsTrue(output.Count(s => s.StartsWith("Repeated timer: #")) == 5);
+			}
 		}
 	}
 
@@ -82,7 +86,7 @@ namespace DvmTests.VipoTests
 							var repeatedInterval = now - m_repeatedTimerLastTriggeredTime;
 							m_repeatedTimerLastTriggeredTime = now;
 
-							Print($"Repeated timer: {msSinceStart}ms, {m_repeatedTimerTriggeredCount}, {(int)repeatedInterval.TotalMilliseconds}ms");
+							Print($"Repeated timer: #{m_repeatedTimerTriggeredCount}, {msSinceStart}ms, {(int)repeatedInterval.TotalMilliseconds}ms");
 
 							if (m_repeatedTimerTriggeredCount == 5)
 							{

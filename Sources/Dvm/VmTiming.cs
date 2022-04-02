@@ -8,7 +8,7 @@ namespace Dvm
 	class VmTiming : VmThread
 	{
 		readonly BlockingCollection<Request> m_requestQueue = new BlockingCollection<Request>();
-		readonly Dictionary<Vid, Request> m_vipos = new Dictionary<Vid, Request>();
+		readonly Dictionary<Vid, Request> m_requests = new Dictionary<Vid, Request>();
 
 		internal static long Now => Environment.TickCount64;
 
@@ -65,7 +65,7 @@ namespace Dvm
 		{
 			for (; ; )
 			{
-				if (m_vipos.Count == 0)
+				if (m_requests.Count == 0)
 				{
 					var request = m_requestQueue.Take(EndToken);
 					ProcessRequest(request);
@@ -102,14 +102,14 @@ namespace Dvm
 		void ProcessRequest(Request request)
 		{
 			if (request.DueTime == 0)
-				m_vipos.Remove(request.Vid);
+				m_requests.Remove(request.Vid);
 			else
-				m_vipos[request.Vid] = request;
+				m_requests[request.Vid] = request;
 		}
 
 		Request[] SortRequests()
 		{
-			return (from r in m_vipos.Values
+			return (from r in m_requests.Values
 					orderby r.DueTime
 					select r).ToArray();
 		}
@@ -129,7 +129,7 @@ namespace Dvm
 					vipo.InputMessage(SystemScheduleMessage.Timer.CreateVipoMessage());
 
 				// Remove
-				m_vipos.Remove(request.Vid);
+				m_requests.Remove(request.Vid);
 			}
 		}
 
