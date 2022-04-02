@@ -27,6 +27,13 @@ namespace Dvm
 		int m_pendingInMessagesCount;
 		Status m_status;
 
+		[Flags]
+		enum Status : byte
+		{
+			Running = 1,
+			Disposed = 2,
+		}
+
 		#region Properties
 
 		public VirtualMachine VM => m_vm;
@@ -34,13 +41,6 @@ namespace Dvm
 		public string Symbol => m_symbol ?? string.Empty;
 
 		#endregion
-
-		[Flags]
-		enum Status : byte
-		{
-			Running = 1,
-			Disposed = 2,
-		}
 
 		#region Initialization
 
@@ -112,7 +112,7 @@ namespace Dvm
 			if ((m_status & Status.Running) != 0)
 				throw new KernelFaultException("The vipo is already running");
 
-			// Any messages may come after SystemScheduleMessage.Dispose processed
+			// Messages may come after SystemScheduleMessage.Dispose processed
 			if ((m_status & Status.Disposed) != 0)
 				return;
 
@@ -200,7 +200,7 @@ namespace Dvm
 		{
 			CheckDisposed();
 
-			VmProcessor.CheckWorkingVipo(this, "It is not allowed to call Send outside of Vipo.Run");
+			VmProcessor.CheckWorkingVipo(this, "It is not allowed to call outside of Vipo.Run");
 
 			if (to.IsEmpty)
 				throw new ArgumentException("To is empty", nameof(to));
