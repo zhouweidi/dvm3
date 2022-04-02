@@ -67,9 +67,9 @@ namespace Dvm
 
 			if (explicitCall)
 			{
-				m_timing.Dispose();
-
 				m_scheduler.Dispose();
+
+				m_timing.Dispose();
 
 				m_controller.Dispose();
 

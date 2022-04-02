@@ -22,6 +22,8 @@ namespace Dvm
 
 		protected override void OnDispose(bool explicitCall)
 		{
+			base.OnDispose(explicitCall);
+
 			if (explicitCall)
 				m_requestQueue.Dispose();
 		}
@@ -38,6 +40,8 @@ namespace Dvm
 
 		public void RequestToUpdateVipo(Vipo vipo, long dueTime)
 		{
+			CheckDisposed();
+
 			var request = new Request()
 			{
 				Vid = vipo.Vid,
@@ -49,6 +53,8 @@ namespace Dvm
 
 		public void RequestToResetVipo(Vipo vipo)
 		{
+			CheckDisposed();
+
 			var request = new Request()
 			{
 				Vid = vipo.Vid,
