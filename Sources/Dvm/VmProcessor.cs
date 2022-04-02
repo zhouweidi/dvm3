@@ -22,18 +22,12 @@ namespace Dvm
 
 		protected override void ThreadEntry()
 		{
-			for (Vipo workingVipo = null; ;)
+			for (; ; )
 			{
 				var vipo = m_scheduler.GetJob();
 
-				// Set working vipo slot
-				if (vipo != workingVipo)
-				{
-					SetWorkingVipo(vipo);
-					workingVipo = vipo;
-				}
+				SetWorkingVipo(vipo);
 
-				// Run the vipo
 				do
 				{
 					vipo.RunEntry();
