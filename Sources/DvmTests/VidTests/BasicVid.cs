@@ -86,7 +86,7 @@ namespace DvmTests.VidTests
 			Assert.AreEqual(vid1.ToString("detail"), "1.2");
 			Assert.AreEqual(vid2.ToString("detail"), "1.2");
 
-			Assert.AreEqual(Vid.Empty.ToString(), "0.0");
+			Assert.AreEqual(Vid.Empty.ToString(), "Empty");
 
 			Assert.ThrowsException<FormatException>(() => vid1.ToString("???"));
 		}

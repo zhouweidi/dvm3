@@ -139,7 +139,7 @@ namespace Dvm
 		public string ToString(string format, IFormatProvider provider = null)
 		{
 			if (m_data == 0)
-				return "0.0";
+				return "Empty";
 
 			var symbol = ResolveSymbol();
 

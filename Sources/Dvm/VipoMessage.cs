@@ -27,10 +27,10 @@ namespace Dvm
 			{
 				case null:
 				case "":
-					return $"({From}, {To}, {Message})";
+					return $"{From} -> {To}, {Message}";
 
 				case "detail":
-					return $"({From:detail}, {To:detail}, {Message:detail})";
+					return $"{From:detail} -> {To:detail}, {Message:detail}";
 
 				default:
 					throw new FormatException($"The format string '{format}' is not supported.");

@@ -46,12 +46,12 @@ namespace DvmTests.MessageTests
 			var to = new Vid(3, 4, null);
 
 			var vm1 = new VipoMessage(from, to, emptyMessage);
-			Assert.AreEqual(vm1.ToString(), "(1000000000002, 3000000000004, EmptyMessage)");
-			Assert.AreEqual(vm1.ToString("detail"), "(1.2, 3.4, EmptyMessage {})");
+			Assert.AreEqual(vm1.ToString(), "1000000000002 -> 3000000000004, EmptyMessage");
+			Assert.AreEqual(vm1.ToString("detail"), "1.2 -> 3.4, EmptyMessage {}");
 
 			var vm2 = new VipoMessage(from, to, myMessage);
-			Assert.AreEqual(vm2.ToString(), "(1000000000002, 3000000000004, MyMessage)");
-			Assert.AreEqual(vm2.ToString("detail"), "(1.2, 3.4, MyMessage {888})");
+			Assert.AreEqual(vm2.ToString(), "1000000000002 -> 3000000000004, MyMessage");
+			Assert.AreEqual(vm2.ToString("detail"), "1.2 -> 3.4, MyMessage {888}");
 
 			Assert.ThrowsException<FormatException>(() => vm1.ToString("???"));
 		}
