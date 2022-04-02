@@ -160,7 +160,7 @@ namespace Dvm
 				if (vipo == null)
 					vipo = m_vm.FindVipo(message.To);
 
-				if (vipo == null)
+				if (vipo == null || vipo.Disposed)
 				{
 					if (m_vm.Inspector != null)
 						m_vm.Inspector.IncreaseDiscardedMessage();
