@@ -23,7 +23,7 @@ namespace Dvm
 
 		public VirtualMachineState State => m_controller.State;
 		public Exception Exception => m_controller.Exception;
-		public event Action<Exception> OnError
+		public event Action<Exception> OnError // Be invoked when the first exception is raised.
 		{
 			add { m_controller.OnError += value; }
 			remove { m_controller.OnError -= value; }
