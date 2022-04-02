@@ -44,7 +44,7 @@ namespace DvmTests.SchedulerTests
 			{
 			}
 
-			protected override void Run(VipoMessageStream messageStream)
+			protected override void Run(IVipoMessageStream messageStream)
 			{
 				++m_tickedCount;
 

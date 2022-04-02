@@ -42,6 +42,7 @@ namespace Dvm
 	sealed class SystemScheduleMessage : SystemMessage
 	{
 		internal static readonly SystemScheduleMessage Dispose = new SystemScheduleMessage();
+		internal static readonly SystemScheduleMessage Timer = new SystemScheduleMessage();
 	}
 
 	public sealed class UserScheduleMessage : SystemMessage
@@ -63,6 +64,23 @@ namespace Dvm
 				Empty :
 				new UserScheduleMessage(context).CreateVipoMessage();
 		}
+	}
+
+	public sealed class UserTimerMessage : SystemMessage
+	{
+		public int TimerId { get; private set; }
+		public object Context { get; private set; }
+
+		internal UserTimerMessage(int timerId, object context)
+		{
+			TimerId = timerId;
+			Context = context;
+		}
+
+		protected override string BodyToString() => 
+			Context == null ? 
+			TimerId.ToString() : 
+			$"{TimerId}, {Context}";
 	}
 
 	#endregion

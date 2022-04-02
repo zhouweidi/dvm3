@@ -26,6 +26,7 @@ namespace Dvm
 		readonly ConcurrentQueue<VipoMessage> m_inMessages = new ConcurrentQueue<VipoMessage>();
 		int m_pendingInMessagesCount;
 		Status m_status;
+		VipoTimingComponent m_timing;
 
 		[Flags]
 		enum Status : byte
@@ -98,7 +99,7 @@ namespace Dvm
 			InputMessage(vipoMessage);
 		}
 
-		void InputMessage(VipoMessage vipoMessage)
+		internal void InputMessage(VipoMessage vipoMessage)
 		{
 			m_inMessages.Enqueue(vipoMessage);
 
@@ -128,18 +129,26 @@ namespace Dvm
 
 				var firstIsDisposeMessage = messageStream.DisposeMessageEncountered;
 				if (!firstIsDisposeMessage)
-				{
-					Run(messageStream);
-
-					if (m_outMessages != null && m_outMessages.Count > 0)
-						DispatchMessages();
-				}
+					RunAndDispatch(messageStream);
 
 				messageStream.ConsumeRemaining();
 				if (messageStream.DisposeMessageEncountered)
 				{
 					OnDispose();
 					m_status |= Status.Disposed;
+				}
+				else
+				{
+					// Generate and process local timer messages
+					if (messageStream.TimerMessageEncountered && m_timing == null)
+						throw new KernelFaultException("Encountering a system timer message but no vipo timing component created");
+
+					if (m_timing != null)
+					{
+						var timerMessageStream = m_timing.Update(messageStream.TimerMessageEncountered);
+						if (timerMessageStream != null)
+							RunAndDispatch(timerMessageStream);
+					}
 				}
 			}
 			catch (Exception e)
@@ -148,6 +157,14 @@ namespace Dvm
 			}
 
 			m_status &= ~Status.Running;
+		}
+
+		void RunAndDispatch(IVipoMessageStream messageStream)
+		{
+			Run(messageStream);
+
+			if (m_outMessages != null && m_outMessages.Count > 0)
+				DispatchMessages();
 		}
 
 		void DispatchMessages()
@@ -178,7 +195,7 @@ namespace Dvm
 
 		// All handlers are called in VmProcessor threads
 
-		protected abstract void Run(VipoMessageStream messageStream);
+		protected abstract void Run(IVipoMessageStream messageStream);
 
 		// OnError should not raise an exception; if it does, the VM event OnError can be invoked.
 		protected virtual void OnError(Exception e)
@@ -196,7 +213,8 @@ namespace Dvm
 
 		#region Sending messages
 
-		protected void Send(Vid to, Message message) // Can be called in VmProcessor threads only
+		// Must be called in VmProcessor threads only
+		protected void Send(Vid to, Message message)
 		{
 			CheckDisposed();
 
@@ -215,6 +233,67 @@ namespace Dvm
 				m_outMessages = new List<VipoMessage>();
 
 			m_outMessages.Add(vipoMessage);
+		}
+
+		#endregion
+
+		#region Timer
+
+		// Must be called in VmProcessor threads only
+		protected int SetTimer(int milliseconds, object context = null)
+		{
+			CheckDisposed();
+
+			VmProcessor.CheckWorkingVipo(this, "It is not allowed to call outside of Vipo.Run");
+
+			if (milliseconds <= 0)
+				throw new ArgumentException("<= 0", nameof(milliseconds));
+
+			if (m_timing == null)
+				m_timing = new VipoTimingComponent(this);
+
+			return m_timing.CreateTimer(milliseconds, 0, context);
+		}
+
+		// Must be called in VmProcessor threads only
+		protected int SetRepeatedTimer(int intervalMilliseconds, object context = null)
+		{
+			return SetRepeatedTimer(intervalMilliseconds, intervalMilliseconds, context);
+		}
+
+		// Must be called in VmProcessor threads only
+		protected int SetRepeatedTimer(int milliseconds, int intervalMilliseconds, object context = null)
+		{
+			CheckDisposed();
+
+			VmProcessor.CheckWorkingVipo(this, "It is not allowed to call outside of Vipo.Run");
+
+			if (milliseconds <= 0)
+				throw new ArgumentException("<= 0", nameof(milliseconds));
+
+			if (intervalMilliseconds <= 0)
+				throw new ArgumentException("<= 0", nameof(intervalMilliseconds));
+
+			if (m_timing == null)
+				m_timing = new VipoTimingComponent(this);
+
+			return m_timing.CreateTimer(milliseconds, intervalMilliseconds, context);
+		}
+
+		// Must be called in VmProcessor threads only
+		protected void ResetTimer(int timerId)
+		{
+			CheckDisposed();
+
+			VmProcessor.CheckWorkingVipo(this, "It is not allowed to call outside of Vipo.Run");
+
+			if (timerId <= 0)
+				throw new ArgumentException("Invalid timer ID", nameof(timerId));
+
+			if (m_timing == null)
+				throw new InvalidOperationException("No vipo timer component");
+
+			m_timing.DestroyTimer(timerId);
 		}
 
 		#endregion

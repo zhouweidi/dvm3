@@ -15,6 +15,7 @@ namespace Dvm
 		readonly ThreadController m_controller;
 		readonly Inspector m_inspector;
 		readonly VmScheduler m_scheduler;
+		readonly VmTiming m_timing;
 
 		readonly ConcurrentDictionary<Vid, Vipo> m_vipos = new ConcurrentDictionary<Vid, Vipo>();
 		readonly VidAllocator m_vidAllocator;
@@ -31,6 +32,8 @@ namespace Dvm
 		public int ProcessorsCount => m_scheduler.ProcessorsCount;
 		public int ViposCount => m_vipos.Count;
 		public Inspector Inspector => m_inspector;
+
+		internal VmTiming Timing => m_timing;
 
 		#endregion
 
@@ -53,6 +56,8 @@ namespace Dvm
 			m_scheduler = new VmScheduler(m_controller, virtualProcessorsCount, m_inspector);
 			m_scheduler.Start();
 
+			m_timing = new VmTiming(m_controller);
+
 			m_vidAllocator = new VidAllocator(new UsedVidQuery(this));
 		}
 
@@ -62,6 +67,8 @@ namespace Dvm
 
 			if (explicitCall)
 			{
+				m_timing.Dispose();
+
 				m_scheduler.Dispose();
 
 				m_controller.Dispose();

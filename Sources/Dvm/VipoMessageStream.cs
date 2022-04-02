@@ -1,16 +1,25 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Dvm
 {
-	public sealed class VipoMessageStream
+	public interface IVipoMessageStream
+	{
+		bool GetNext(out VipoMessage vipoMessage);
+		IEnumerable<VipoMessage> GetConsumingEnumerable();
+	}
+
+	class VipoMessageStream : IVipoMessageStream
 	{
 		readonly ConcurrentQueue<VipoMessage> m_inMessages;
 		int m_remainingCount;
 		bool m_disposeMessageEncountered;
+		bool m_timerMessageEncountered;
 		VipoMessage? m_lastMessage;
 
 		internal bool DisposeMessageEncountered => m_disposeMessageEncountered;
+		internal bool TimerMessageEncountered => m_timerMessageEncountered;
 
 		internal VipoMessageStream(ConcurrentQueue<VipoMessage> inMessages, int count)
 		{
@@ -23,7 +32,7 @@ namespace Dvm
 			m_lastMessage = LoadNext();
 		}
 
-		public bool GetNext(out VipoMessage vipoMessage)
+		bool IVipoMessageStream.GetNext(out VipoMessage vipoMessage)
 		{
 			// Stop on Dispose message
 			if (m_lastMessage != null && !m_disposeMessageEncountered)
@@ -42,7 +51,7 @@ namespace Dvm
 		}
 
 		// Forward-iteration sharing the progress with GetNext()
-		public IEnumerable<VipoMessage> GetConsumingEnumerable()
+		IEnumerable<VipoMessage> IVipoMessageStream.GetConsumingEnumerable()
 		{
 			// Stop on Dispose message
 			while (m_lastMessage != null && !m_disposeMessageEncountered)
@@ -55,6 +64,7 @@ namespace Dvm
 
 		VipoMessage? LoadNext()
 		{
+		Reload:
 			if (m_remainingCount <= 0)
 				return null;
 
@@ -70,6 +80,14 @@ namespace Dvm
 
 			if (m_disposeMessageEncountered)
 				return null;
+
+			// System timer message
+			if (ReferenceEquals(vipoMessage.Message, SystemScheduleMessage.Timer))
+			{
+				Debug.Assert(!m_timerMessageEncountered); // Only one timer message expected in a batch
+				m_timerMessageEncountered = true;
+				goto Reload;
+			}
 
 			return vipoMessage;
 		}
