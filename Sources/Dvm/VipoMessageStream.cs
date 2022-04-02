@@ -58,13 +58,18 @@ namespace Dvm
 			if (m_remainingCount <= 0)
 				return null;
 
+			// Always dequeue
 			if (!m_inMessages.TryDequeue(out VipoMessage vipoMessage))
 				throw new KernelFaultException("Not enough in messages to dequeue");
 
 			--m_remainingCount;
 
+			// System dispose message
 			if (!m_disposeMessageEncountered)
 				m_disposeMessageEncountered = ReferenceEquals(vipoMessage.Message, SystemScheduleMessage.Dispose);
+
+			if (m_disposeMessageEncountered)
+				return null;
 
 			return vipoMessage;
 		}
