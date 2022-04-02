@@ -1,6 +1,7 @@
 using Dvm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Diagnostics;
 using System.Threading;
 
 namespace DvmTests
@@ -11,6 +12,7 @@ namespace DvmTests
 		VirtualMachine m_vm;
 		CancellationTokenSource m_cts;
 		readonly ManualResetEvent m_exceptionOccured = new ManualResetEvent(false);
+		Exception m_error;
 
 		internal VirtualMachine VM => m_vm;
 		protected virtual int VmProcessorsCount => 4;
@@ -49,12 +51,23 @@ namespace DvmTests
 
 		protected virtual void OnError(Exception e)
 		{
+			Debug.Assert(m_error == null);
+
+			m_error = e;
 			m_exceptionOccured.Set();
 		}
 
 		protected override void Sleep(double seconds)
 		{
-			Assert.IsFalse(m_exceptionOccured.WaitOne((int)(seconds * 1000)));
+			var ms = (int)(seconds * 1000);
+			var errorOccured = m_exceptionOccured.WaitOne(ms);
+
+			if (errorOccured)
+			{
+				Assert.IsNotNull(m_error);
+
+				Assert.Fail(m_error.ToString());
+			}
 		}
 	}
 }
