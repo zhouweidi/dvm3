@@ -147,16 +147,16 @@ namespace Dvm
 			{
 				case null:
 				case "":
-					if (string.IsNullOrEmpty(symbol))
-						return m_data.ToString("X");
-					else
-						return $"{m_data:X}^{symbol}";
-
-				case "detail":
 					// <nodeId>.<index>^<symbol>
 					return string.IsNullOrEmpty(symbol) ?
 						$"{NodeId:X}.{Index:X}" :
 						$"{NodeId:X}.{Index:X}^{symbol}";
+
+				case "compact":
+					if (string.IsNullOrEmpty(symbol))
+						return m_data.ToString("X");
+					else
+						return $"{m_data:X}^{symbol}";
 
 				default:
 					throw new FormatException($"The format string '{format}' is not supported.");

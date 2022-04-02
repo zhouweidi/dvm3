@@ -75,16 +75,13 @@ namespace DvmTests.VidTests
 			var vid1 = new Vid(1, 2, null);
 			var vid2 = new Vid(1, 2, null);
 
-			Assert.AreEqual(vid1.ToString(null), $"{vid1.Data:X}");
-			Assert.AreEqual(vid1.ToString(""), $"{vid1.Data:X}");
+			Assert.AreEqual(vid1.ToString("compact"), $"{vid1.Data:X}");
+			Assert.AreEqual(vid1.ToString(""), "1.2");
 			Assert.AreEqual(vid1.ToString(""), vid1.ToString());
 
-			Assert.AreEqual(vid2.ToString(null), $"{vid2.Data:X}");
-			Assert.AreEqual(vid2.ToString(""), $"{vid2.Data:X}");
+			Assert.AreEqual(vid2.ToString("compact"), $"{vid2.Data:X}");
+			Assert.AreEqual(vid2.ToString(""), "1.2");
 			Assert.AreEqual(vid2.ToString(""), vid2.ToString());
-
-			Assert.AreEqual(vid1.ToString("detail"), "1.2");
-			Assert.AreEqual(vid2.ToString("detail"), "1.2");
 
 			Assert.AreEqual(Vid.Empty.ToString(), "Empty");
 

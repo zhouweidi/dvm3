@@ -87,7 +87,7 @@ namespace DvmTests
 		protected static string JoinMessages(IVipoMessageStream messageStream)
 		{
 			return string.Join(',', from vm in messageStream.GetConsumingEnumerable()
-									select vm.Message);
+									select vm.Message.ToString("compact"));
 		}
 
 		#endregion

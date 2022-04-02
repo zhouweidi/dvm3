@@ -14,10 +14,10 @@ namespace Dvm
 			{
 				case null:
 				case "":
-					return GetType().Name;
-
-				case "detail":
 					return $"{GetType().Name} {{{BodyToString()}}}";
+
+				case "compact":
+					return GetType().Name;
 
 				default:
 					throw new FormatException($"The format string '{format}' is not supported.");

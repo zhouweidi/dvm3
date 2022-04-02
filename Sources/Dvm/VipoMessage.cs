@@ -29,8 +29,8 @@ namespace Dvm
 				case "":
 					return $"{From} -> {To}, {Message}";
 
-				case "detail":
-					return $"{From:detail} -> {To:detail}, {Message:detail}";
+				case "compact":
+					return $"{From:compact} -> {To:compact}, {Message:compact}";
 
 				default:
 					throw new FormatException($"The format string '{format}' is not supported.");
