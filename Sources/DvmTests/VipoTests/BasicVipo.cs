@@ -1,7 +1,6 @@
 ﻿using Dvm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections.Generic;
 
 namespace DvmTests.VipoTests
 {
@@ -72,7 +71,7 @@ namespace DvmTests.VipoTests
 				if (m_throwInOnError)
 					throw new Exception("Error in Vipo.OnError()", e);
 
-				base.OnError(e);
+				Dispose();
 			}
 		}
 	}

@@ -1,4 +1,6 @@
 ﻿using Dvm;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 
 namespace DvmTests
 {
@@ -10,6 +12,11 @@ namespace DvmTests
 			: base(test.VM, symbol)
 		{
 			m_test = test;
+		}
+
+		protected override void OnError(Exception e)
+		{
+			Assert.Fail(e.ToString());
 		}
 
 		protected void Print(string content = "")
