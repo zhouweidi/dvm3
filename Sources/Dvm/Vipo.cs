@@ -146,9 +146,14 @@ namespace Dvm
 
 					if (m_timing != null)
 					{
-						var timerMessageStream = m_timing.Update(messageStream.TimerMessageEncountered);
-						if (timerMessageStream != null)
-							RunAndDispatch(timerMessageStream);
+						if (messageStream.TimerMessageEncountered)
+						{
+							var timerMessageStream = m_timing.TriggerTimers();
+							if (timerMessageStream != null)
+								RunAndDispatch(timerMessageStream);
+						}
+
+						m_timing.UpdateRequest();
 					}
 				}
 			}

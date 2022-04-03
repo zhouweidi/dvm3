@@ -85,53 +85,43 @@ namespace Dvm
 
 		#region Run
 
-		public IVipoMessageStream Update(bool trigger)
+		public IVipoMessageStream TriggerTimers()
 		{
-			VipoTimerMessageStream messageStream = null;
+			if (m_timers.Count == 0)
+				return null;
 
-			if (trigger && m_timers.Count > 0)
-			{
-				var localTimerMessages = TriggerTimers();
-				if (localTimerMessages != null)
-					messageStream = new VipoTimerMessageStream(localTimerMessages);
-			}
-
-			UpdateRequest();
-
-			return messageStream;
-		}
-
-		List<UserTimerMessage> TriggerTimers()
-		{
 			List<UserTimerMessage> timerMessages = null;
-
-			var now = VmTiming.Now;
-
-			bool anyToDispose = false;
-			for (int i = 0; i < m_timers.Count; i++)
 			{
-				var timer = m_timers[i];
+				bool anyToDispose = false;
+				var now = VmTiming.Now;
 
-				if (timer.Trigger(now))
+				for (int i = 0; i < m_timers.Count; i++)
 				{
-					if (timer.CanDispose)
-						anyToDispose = true;
+					var timer = m_timers[i];
 
-					if (timerMessages == null)
-						timerMessages = new List<UserTimerMessage>();
+					if (timer.Trigger(now))
+					{
+						if (timer.CanDispose)
+							anyToDispose = true;
 
-					var message = new UserTimerMessage(timer.Id, timer.Context);
-					timerMessages.Add(message);
+						if (timerMessages == null)
+							timerMessages = new List<UserTimerMessage>();
+
+						var message = new UserTimerMessage(timer.Id, timer.Context);
+						timerMessages.Add(message);
+					}
 				}
+
+				if (anyToDispose)
+					m_timers.RemoveAll(timer => timer.CanDispose);
 			}
 
-			if (anyToDispose)
-				m_timers.RemoveAll(timer => timer.CanDispose);
-
-			return timerMessages;
+			return timerMessages != null ?
+				new VipoTimerMessageStream(timerMessages) :
+				null;
 		}
 
-		void UpdateRequest()
+		public void UpdateRequest()
 		{
 			if (m_timers.Count == 0)
 			{
