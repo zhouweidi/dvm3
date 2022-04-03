@@ -86,10 +86,10 @@ namespace PerformanceTests
 			}
 		}
 
-		public static void Assert(bool condition)
+		public static void Assert(bool condition, string message = null)
 		{
 			if (!condition)
-				throw new AssertException();
+				throw new AssertException(message ?? string.Empty);
 		}
 
 		public static void Assert(Exception ex)

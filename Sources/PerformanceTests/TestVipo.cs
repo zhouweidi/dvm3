@@ -25,9 +25,9 @@ namespace PerformanceTests
 			m_test.Print(content);
 		}
 
-		protected static void Assert(bool condition)
+		protected static void Assert(bool condition, string message = null)
 		{
-			Test.Assert(condition);
+			Test.Assert(condition, message);
 		}
 
 		protected static void Assert(Exception ex)

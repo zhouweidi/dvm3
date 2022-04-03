@@ -6,7 +6,8 @@ namespace PerformanceTests
 	{
 		static void Main(string[] _)
 		{
-			PoliteAnts.PoliteAnts.MainEntry();
+			//PoliteAnts.PoliteAnts.MainEntry();
+			BusyCooks.BusyCooks.MainEntry();
 
 			Console.WriteLine();
 			Console.WriteLine("Test over");
