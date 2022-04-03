@@ -6,8 +6,6 @@ namespace PerformanceTests.BusyCooks
 {
 	class Cook : TestVipo
 	{
-		readonly BusyCooks m_test;
-
 		int m_repeatedId;
 		int m_oneOffDueTime;
 		int m_oneOffId;
@@ -31,7 +29,6 @@ namespace PerformanceTests.BusyCooks
 		public Cook(BusyCooks test, string symbol)
 			: base(test, symbol)
 		{
-			m_test = test;
 		}
 
 		public void Start(int firstDueMilliseconds, int repeatedMilliseconds, int oneOffMilliseconds, int testDurationSeconds)

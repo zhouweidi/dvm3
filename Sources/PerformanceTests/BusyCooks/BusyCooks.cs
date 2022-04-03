@@ -112,9 +112,13 @@ namespace PerformanceTests.BusyCooks
 							from tt in cook.RepeatedTriggerTimes
 							select tt;
 
-				Print($"Repeated trigger time (avg): {times.Average():N0} ms");
-				Print($"Repeated trigger time (max): {times.Max():N0} ms");
-				Print($"Repeated trigger time (min): {times.Min():N0} ms");
+				var avg = times.Average();
+				var max = times.Max();
+				var min = times.Min();
+
+				Print($"Repeated trigger time (avg): {avg:N0} ms / {avg - m_condition.RepeatedInterval:N0} ms");
+				Print($"Repeated trigger time (max): {max:N0} ms / {max - m_condition.RepeatedInterval:N0} ms");
+				Print($"Repeated trigger time (min): {min:N0} ms / {min - m_condition.RepeatedInterval:N0} ms");
 			}
 
 			// One-off trigger time
@@ -123,9 +127,13 @@ namespace PerformanceTests.BusyCooks
 							from tt in cook.OneOffTriggerTimes
 							select tt;
 
-				Print($"One-off trigger time (avg): {times.Average():N0} ms");
-				Print($"One-off trigger time (max): {times.Max():N0} ms");
-				Print($"One-off trigger time (min): {times.Min():N0} ms");
+				var avg = times.Average();
+				var max = times.Max();
+				var min = times.Min();
+
+				Print($"One-off trigger time (avg): {avg:N0} ms / {avg - m_condition.OneOffDueTime:N0} ms");
+				Print($"One-off trigger time (max): {max:N0} ms / {max - m_condition.OneOffDueTime:N0} ms");
+				Print($"One-off trigger time (min): {min:N0} ms / {min - m_condition.OneOffDueTime:N0} ms");
 			}
 		}
 	}
