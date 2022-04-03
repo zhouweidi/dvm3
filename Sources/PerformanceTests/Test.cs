@@ -1,12 +1,20 @@
 ﻿using Dvm;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
 
 namespace PerformanceTests
 {
+	abstract class TestConditionBase
+	{
+		public int VmProcessorsCount;
+		public bool WithInspector;
+	}
+
 	abstract class Test : DisposableObject
 	{
 		CancellationTokenSource m_cts;
@@ -17,10 +25,10 @@ namespace PerformanceTests
 		public VirtualMachine VM => m_vm;
 		public Inspector Inspector => m_inspector;
 
-		protected Test(int vmProcessorsCount, bool withInspector)
+		protected Test(TestConditionBase condition)
 		{
 			m_cts = new CancellationTokenSource();
-			m_vm = new VirtualMachine(vmProcessorsCount, m_cts.Token, withInspector);
+			m_vm = new VirtualMachine(condition.VmProcessorsCount, m_cts.Token, condition.WithInspector);
 			m_inspector = m_vm.Inspector;
 
 			m_vm.OnError += OnError;
@@ -155,6 +163,32 @@ namespace PerformanceTests
 		{
 			return string.Join(',', from vm in vipoMessages
 									select vm.Message);
+		}
+
+		protected static void WriteAndOpenFile(string fileName, string content)
+		{
+			File.WriteAllText(fileName, content);
+
+			var proc = new Process
+			{
+				EnableRaisingEvents = false
+			};
+
+			proc.StartInfo.UseShellExecute = true;
+			proc.StartInfo.FileName = fileName;
+			proc.Start();
+
+			proc.WaitForExit();
+		}
+
+		protected static void PrintInspector(Test test)
+		{
+			var inspector = test.Inspector;
+
+			test.Print();
+			test.Print("-- Inspector --");
+			test.Print($"Discarded messages: {inspector.DiscardedMessages:N0}");
+			test.Print($"JobQueue max size: {inspector.JobQueueMaxSize:N0}");
 		}
 
 		#endregion

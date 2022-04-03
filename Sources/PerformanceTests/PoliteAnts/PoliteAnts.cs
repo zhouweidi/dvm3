@@ -5,17 +5,14 @@ using System.Linq;
 
 namespace PerformanceTests.PoliteAnts
 {
-	struct TestCondition
+	class TestCondition : TestConditionBase
 	{
-		public int VmProcessorsCount;
-		public bool WithInspector;
-
 		public int AntsCount;
 		public int GreetingSeedsCount;
 		public float GreetingFakeProcessingSeconds;
 		public int TestDurationSeconds;
 
-		public readonly static TestCondition Default = new TestCondition()
+		public static TestCondition CreateDefault() => new TestCondition()
 		{
 			VmProcessorsCount = 4,
 			WithInspector = true,
@@ -27,13 +24,13 @@ namespace PerformanceTests.PoliteAnts
 		};
 	}
 
-	class PoliteAnts : Test
+	partial class PoliteAnts : Test
 	{
 		readonly TestCondition m_condition;
 		readonly Ant[] m_ants;
 
 		public PoliteAnts(TestCondition condition, string testName)
-			: base(condition.VmProcessorsCount, condition.WithInspector)
+			: base(condition)
 		{
 			m_condition = condition;
 			m_ants = new Ant[m_condition.AntsCount];
