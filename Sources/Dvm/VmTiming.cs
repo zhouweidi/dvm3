@@ -5,6 +5,8 @@ using System.Linq;
 
 namespace Dvm
 {
+	// Vipos having timers set are weak referenced by a VmTiming object.
+	// They can be well-handled even they are disposed.
 	class VmTiming : VmThread
 	{
 		readonly BlockingCollection<Request> m_requestQueue = new BlockingCollection<Request>();

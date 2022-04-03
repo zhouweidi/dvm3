@@ -132,6 +132,7 @@ namespace Dvm
 					RunAndDispatch(messageStream);
 
 				messageStream.ConsumeRemaining();
+
 				if (messageStream.DisposeMessageEncountered)
 				{
 					OnDispose();
