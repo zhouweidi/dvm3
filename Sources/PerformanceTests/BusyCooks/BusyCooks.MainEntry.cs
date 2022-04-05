@@ -11,8 +11,13 @@ namespace PerformanceTests.BusyCooks
 		{
 			var items = GetTestItems(
 				new[]
-				{ 
-					4
+				{
+					//1 * 10000,
+					//2 * 10000,
+					//4 * 10000,
+					6 * 10000,
+					8 * 10000,
+					10 * 10000,
 				});
 
 			var output = RunTests(items);
@@ -21,20 +26,20 @@ namespace PerformanceTests.BusyCooks
 			WriteAndOpenFile(outputFileName, output);
 		}
 
-		static IReadOnlyList<(string name, TestCondition condition)> GetTestItems(IEnumerable<int> vmProcessorsCounts)
+		static IReadOnlyList<(string name, TestCondition condition)> GetTestItems(IEnumerable<int> cooksCounts)
 		{
 			var items = new List<(string name, TestCondition condition)>();
 
-			foreach (var processors in vmProcessorsCounts)
+			foreach (var cooks in cooksCounts)
 			{
-				Debug.Assert(processors > 0);
+				Debug.Assert(cooks > 0);
 
 				var condition = TestCondition.CreateDefault();
 
 				// Change
-				condition.VmProcessorsCount = processors;
+				condition.CooksCount = cooks;
 
-				items.Add(($"VmProcessor{processors}", condition));
+				items.Add(($"Cooks-{cooks:N0}", condition));
 			}
 
 			return items;
@@ -54,6 +59,8 @@ namespace PerformanceTests.BusyCooks
 
 				if (test.Inspector != null)
 					PrintInspector(test);
+
+				test.Print("-----------------");
 
 				output.Append(test.GetPrintContent());
 			}
