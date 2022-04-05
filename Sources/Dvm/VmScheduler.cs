@@ -7,6 +7,7 @@ namespace Dvm
 	{
 		readonly IVmThreadController m_controller;
 		readonly VmProcessor[] m_processors;
+		readonly VmTiming m_timing;
 		readonly Inspector m_inspector;
 
 		readonly object m_workloadsLock = new object();
@@ -16,6 +17,7 @@ namespace Dvm
 		#region Properties
 
 		public int ProcessorsCount => m_processors.Length;
+		public VmTiming Timing => m_timing;
 
 		#endregion
 
@@ -29,6 +31,8 @@ namespace Dvm
 			for (int i = 0; i < processorsCount; i++)
 				m_processors[i] = new VmProcessor(controller, this, i);
 
+			m_timing = new VmTiming(m_controller);
+
 			m_inspector = inspector;
 		}
 
@@ -36,6 +40,8 @@ namespace Dvm
 		{
 			for (int i = 0; i < m_processors.Length; i++)
 				m_processors[i].Start();
+
+			m_timing.Start();
 		}
 
 		protected override void OnDispose(bool explicitCall)
@@ -46,6 +52,8 @@ namespace Dvm
 			{
 				for (int i = 0; i < m_processors.Length; i++)
 					m_processors[i].Dispose();
+
+				m_timing.Dispose();
 
 				m_jobQueue.Dispose();
 			}

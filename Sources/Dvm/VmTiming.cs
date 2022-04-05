@@ -19,7 +19,6 @@ namespace Dvm
 		public VmTiming(IVmThreadController controller)
 			: base(controller, "DVM-Timer")
 		{
-			Start();
 		}
 
 		protected override void OnDispose(bool explicitCall)
