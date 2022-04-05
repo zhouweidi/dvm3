@@ -92,7 +92,6 @@ namespace Dvm
 
 			List<UserTimerMessage> timerMessages = null;
 			{
-				bool anyToDispose = false;
 				var now = VmTiming.Now;
 
 				for (int i = 0; i < m_timers.Count; i++)
@@ -101,9 +100,6 @@ namespace Dvm
 
 					if (timer.Trigger(now))
 					{
-						if (timer.CanDispose)
-							anyToDispose = true;
-
 						if (timerMessages == null)
 							timerMessages = new List<UserTimerMessage>();
 
@@ -111,13 +107,10 @@ namespace Dvm
 						timerMessages.Add(message);
 					}
 				}
-
-				if (anyToDispose)
-					m_timers.RemoveAll(timer => timer.CanDispose);
 			}
 
 			return timerMessages != null ?
-				new VipoTimerMessageStream(timerMessages) :
+				new VipoTimerMessageStream(timerMessages, this) :
 				null;
 		}
 
@@ -135,13 +128,17 @@ namespace Dvm
 			else
 			{
 				Timer nearestTimer = null;
-				for (int i = 0; i < m_timers.Count; i++)
+
+				m_timers.RemoveAll(timer =>
 				{
-					var timer = m_timers[i];
+					if (timer.CanDispose)
+						return true;
 
 					if (nearestTimer == null || timer.DueTime < nearestTimer.DueTime)
 						nearestTimer = timer;
-				}
+
+					return false;
+				});
 
 				if (m_lastRequestedDueTime == 0 || m_lastRequestedDueTime != nearestTimer.DueTime)
 				{
@@ -157,21 +154,27 @@ namespace Dvm
 		class VipoTimerMessageStream : IVipoMessageStream
 		{
 			readonly IReadOnlyList<UserTimerMessage> m_timerMessages;
+			readonly VipoTimingComponent m_timing;
 			int m_index;
 
-			public VipoTimerMessageStream(IReadOnlyList<UserTimerMessage> timerMessages)
+			public VipoTimerMessageStream(IReadOnlyList<UserTimerMessage> timerMessages, VipoTimingComponent timing)
 			{
 				m_timerMessages = timerMessages;
+				m_timing = timing;
 			}
 
 			bool IVipoMessageStream.GetNext(out VipoMessage vipoMessage)
 			{
+			Reload:
 				if (m_index < m_timerMessages.Count)
 				{
-					vipoMessage = m_timerMessages[m_index].CreateVipoMessage();
-
+					var message = m_timerMessages[m_index];
 					m_index++;
 
+					if (!TimerExists(message.TimerId))
+						goto Reload;
+
+					vipoMessage = message.CreateVipoMessage();
 					return true;
 				}
 				else
@@ -184,7 +187,25 @@ namespace Dvm
 			IEnumerable<VipoMessage> IVipoMessageStream.GetConsumingEnumerable()
 			{
 				for (; m_index < m_timerMessages.Count; m_index++)
-					yield return m_timerMessages[m_index].CreateVipoMessage();
+				{
+					var message = m_timerMessages[m_index];
+
+					if (!TimerExists(message.TimerId))
+						continue;
+
+					yield return message.CreateVipoMessage();
+				}
+			}
+
+			bool TimerExists(int timerId)
+			{
+				for (int i = 0; i < m_timing.m_timers.Count; i++)
+				{
+					if (m_timing.m_timers[i].Id == timerId)
+						return true;
+				}
+
+				return false;
 			}
 		}
 
