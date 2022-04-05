@@ -56,19 +56,21 @@ namespace PerformanceTests.BusyCooks
 
 		void Start()
 		{
-			for (int i = 0; i < m_cooks.Length; i++)
-				m_cooks[i] = new Cook(this, $"Cook {i + 1}");
-
 			var random = new Random(123);
 
 			for (int i = 0; i < m_cooks.Length; i++)
 			{
-				m_cooks[i].Start(
+				m_cooks[i] = new Cook(
+					this,
+					$"Cook {i + 1}",
 					random.Next() % m_condition.RepeatedInterval + 1,
 					m_condition.RepeatedInterval,
 					m_condition.OneOffDueTime,
 					m_condition.TestDurationSeconds);
 			}
+
+			for (int i = 0; i < m_cooks.Length; i++)
+				m_cooks[i].Start();
 		}
 
 		void FinalReport()
@@ -77,7 +79,7 @@ namespace PerformanceTests.BusyCooks
 			int repeatedReceived;
 			{
 				var seq = from cook in m_cooks
-						  select cook.RepeatedReceived;
+						  select cook.RepeatedTriggerTimes.Count;
 
 				repeatedReceived = seq.Sum();
 
@@ -89,7 +91,7 @@ namespace PerformanceTests.BusyCooks
 			int oneOffReceived;
 			{
 				var seq = from cook in m_cooks
-						  select cook.OneOffReceived;
+						  select cook.OneOffTriggerTimes.Count;
 
 				oneOffReceived = seq.Sum();
 
@@ -103,8 +105,8 @@ namespace PerformanceTests.BusyCooks
 
 				Print($"Messages: {totalMessages:N0}");
 				Print($"Message rate (m/s): {(float)totalMessages / m_condition.TestDurationSeconds:N0}");
-				Print();
 			}
+			Print();
 
 			// Repeated trigger time
 			{

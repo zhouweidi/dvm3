@@ -16,8 +16,8 @@ namespace PerformanceTests.BusyCooks
 					//2 * 10000,
 					//4 * 10000,
 					6 * 10000,
-					8 * 10000,
-					10 * 10000,
+					//8 * 10000,
+					//10 * 10000,
 				});
 
 			var output = RunTests(items);
