@@ -169,7 +169,7 @@ namespace Dvm
 
 		void NotifyVipos()
 		{
-			var removeList = new List<long>();
+			int removeCount = 0;
 
 			var now = Now;
 			foreach (var item in m_sortedRequests)
@@ -188,12 +188,26 @@ namespace Dvm
 					m_requests.Remove(vid);
 				}
 
-				removeList.Add(item.Key);
+				++removeCount;
 			}
 
 			// Remove
-			foreach (var item in removeList)
-				m_sortedRequests.Remove(item);
+			if (removeCount > 0)
+			{
+				var keys = new long[removeCount];
+
+				foreach (var key in m_sortedRequests.Keys)
+				{
+					keys[removeCount - 1] = key;
+
+					--removeCount;
+					if (removeCount == 0)
+						break;
+				}
+
+				foreach (var key in keys)
+					m_sortedRequests.Remove(key);
+			}
 		}
 
 		#endregion
