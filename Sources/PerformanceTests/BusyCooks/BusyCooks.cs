@@ -33,7 +33,7 @@ namespace PerformanceTests.BusyCooks
 			m_condition = condition;
 			m_cooks = new Cook[m_condition.CooksCount];
 
-			Print($"{testName}");
+			Print($"{testName} ({BuildConfiguration})");
 			Print();
 			Print($"Cooks: {m_condition.CooksCount:N0}");
 			Print($"Repeated interval: {m_condition.RepeatedInterval:N0} ms");

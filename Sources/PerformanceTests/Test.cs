@@ -191,6 +191,13 @@ namespace PerformanceTests
 			test.Print($"JobQueue max size: {inspector.JobQueueMaxSize:N0}");
 		}
 
+		protected static string BuildConfiguration =>
+#if DEBUG
+			"Debug";
+#else
+			"Release";
+#endif
+
 		#endregion
 	}
 }

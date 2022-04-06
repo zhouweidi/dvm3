@@ -38,7 +38,7 @@ namespace PerformanceTests.PoliteAnts
 			Assert(m_condition.GreetingSeedsCount >= m_condition.AntsCount);
 			Assert(m_condition.GreetingSeedsCount % m_condition.AntsCount == 0);
 
-			Print($"{testName}");
+			Print($"{testName} ({BuildConfiguration})");
 			Print();
 			Print($"Ants: {m_condition.AntsCount:N0}");
 			Print($"Greeting seeds: {m_condition.GreetingSeedsCount:N0}");
