@@ -10,7 +10,7 @@ namespace Dvm
 	class VmTiming : VmThread
 	{
 		readonly BlockingCollection<Request> m_requestQueue = new BlockingCollection<Request>();
-		readonly Dictionary<Vid, long> m_requests = new Dictionary<Vid, long>();
+		readonly Dictionary<Vid, SortedRequestLink> m_requests = new Dictionary<Vid, SortedRequestLink>();
 		readonly SortedDictionary<long, LinkedList<Vid>> m_sortedRequests = new SortedDictionary<long, LinkedList<Vid>>();
 
 		internal static long Now => Environment.TickCount64;
@@ -36,19 +36,21 @@ namespace Dvm
 
 		struct Request
 		{
-			public Vid Vid;
-			public long DueTime;
+			public readonly Vid Vid;
+			public readonly long DueTime;
+
+			public Request(Vid vid, long dueTime)
+			{
+				Vid = vid;
+				DueTime = dueTime;
+			}
 		}
 
 		public void RequestToUpdateVipo(Vipo vipo, long dueTime)
 		{
 			CheckDisposed();
 
-			var request = new Request()
-			{
-				Vid = vipo.Vid,
-				DueTime = dueTime,
-			};
+			var request = new Request(vipo.Vid, dueTime);
 
 			m_requestQueue.Add(request);
 		}
@@ -57,12 +59,25 @@ namespace Dvm
 		{
 			CheckDisposed();
 
-			var request = new Request()
-			{
-				Vid = vipo.Vid,
-			};
+			var request = new Request(vipo.Vid, 0);
 
 			m_requestQueue.Add(request);
+		}
+
+		#endregion
+
+		#region SortedRequestLink
+
+		struct SortedRequestLink
+		{
+			public readonly long DueTime;
+			public readonly LinkedListNode<Vid> Node;
+
+			public SortedRequestLink(long dueTime, LinkedListNode<Vid> node)
+			{
+				DueTime = dueTime;
+				Node = node;
+			}
 		}
 
 		#endregion
@@ -110,22 +125,22 @@ namespace Dvm
 			if (request.DueTime == 0)
 			{
 				// Remove
-				if (m_requests.TryGetValue(request.Vid, out long dueTime))
+				if (m_requests.TryGetValue(request.Vid, out SortedRequestLink link))
 				{
 					m_requests.Remove(request.Vid);
 
-					RemoveFromSorted(dueTime, request.Vid);
+					RemoveFromSorted(link);
 				}
 			}
 			else
 			{
 				// Remove existed node
-				if (m_requests.TryGetValue(request.Vid, out long dueTime))
+				if (m_requests.TryGetValue(request.Vid, out SortedRequestLink link))
 				{
-					if (dueTime == request.DueTime)
+					if (link.DueTime == request.DueTime)
 						return;
 
-					RemoveFromSorted(dueTime, request.Vid);
+					RemoveFromSorted(link);
 				}
 
 				// Add a new node
@@ -135,18 +150,21 @@ namespace Dvm
 					m_sortedRequests[request.DueTime] = vidList;
 				}
 
-				vidList.AddLast(request.Vid);
+				var node = vidList.AddLast(request.Vid);
 
-				m_requests[request.Vid] = request.DueTime;
+				m_requests[request.Vid] = new SortedRequestLink(request.DueTime, node);
 			}
 		}
 
-		void RemoveFromSorted(long dueTime, Vid vid)
+		void RemoveFromSorted(SortedRequestLink link)
 		{
-			var vidList = m_sortedRequests[dueTime];
+			if (!m_sortedRequests.TryGetValue(link.DueTime, out LinkedList<Vid> vidList))
+				throw new KernelFaultException("No sorted request found to remove");
 
-			if (vidList.Remove(vid) && vidList.Count == 0)
-				m_sortedRequests.Remove(dueTime);
+			vidList.Remove(link.Node);
+
+			if (vidList.Count == 0)
+				m_sortedRequests.Remove(link.DueTime);
 		}
 
 		void NotifyVipos()
