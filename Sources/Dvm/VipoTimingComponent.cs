@@ -77,8 +77,6 @@ namespace Dvm
 					return;
 				}
 			}
-
-			throw new ArgumentException($"No timer {id} found to destroy", nameof(id));
 		}
 
 		#endregion
@@ -116,16 +114,7 @@ namespace Dvm
 
 		public void UpdateRequest()
 		{
-			if (m_timers.Count == 0)
-			{
-				if (m_lastRequestedDueTime != 0)
-				{
-					m_vipo.VM.Timing.RequestToResetVipo(m_vipo);
-
-					m_lastRequestedDueTime = 0;
-				}
-			}
-			else
+			if (m_timers.Count > 0)
 			{
 				Timer nearestTimer = null;
 
@@ -140,12 +129,22 @@ namespace Dvm
 					return false;
 				});
 
-				if (m_lastRequestedDueTime == 0 || m_lastRequestedDueTime != nearestTimer.DueTime)
+				if (nearestTimer != null)
 				{
-					m_vipo.VM.Timing.RequestToUpdateVipo(m_vipo, nearestTimer.DueTime);
+					if (m_lastRequestedDueTime == 0 || m_lastRequestedDueTime != nearestTimer.DueTime)
+					{
+						m_vipo.VM.Timing.RequestToUpdateVipo(m_vipo, nearestTimer.DueTime);
+						m_lastRequestedDueTime = nearestTimer.DueTime;
+					}
 
-					m_lastRequestedDueTime = nearestTimer.DueTime;
+					return;
 				}
+			}
+
+			if (m_lastRequestedDueTime != 0)
+			{
+				m_vipo.VM.Timing.RequestToResetVipo(m_vipo);
+				m_lastRequestedDueTime = 0;
 			}
 		}
 
