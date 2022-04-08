@@ -8,5 +8,10 @@ namespace Dvm
 			: base(message)
 		{
 		}
+
+		public KernelFaultException(string message, Exception innerException)
+			: base(message, innerException)
+		{
+		}
 	}
 }
