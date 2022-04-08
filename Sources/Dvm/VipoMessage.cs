@@ -9,6 +9,7 @@ namespace Dvm
 		public Message Message { get; private set; }
 
 		public readonly static VipoMessage Empty = new VipoMessage();
+		public bool IsEmpty => Message == null;
 
 		internal VipoMessage(Vid from, Vid to, Message message)
 		{
@@ -23,14 +24,16 @@ namespace Dvm
 
 		public string ToString(string format, IFormatProvider provider = null)
 		{
+			var message = Message != null ? Message.ToString() : "Empty";
+
 			switch (format)
 			{
 				case null:
 				case "":
-					return $"{From} -> {To}, {Message}";
+					return $"{From} -> {To}, {message}";
 
 				case "compact":
-					return $"{From:compact} -> {To:compact}, {Message:compact}";
+					return $"{From:compact} -> {To:compact}, {message}";
 
 				default:
 					throw new FormatException($"The format string '{format}' is not supported.");
