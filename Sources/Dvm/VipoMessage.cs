@@ -24,7 +24,7 @@ namespace Dvm
 
 		public string ToString(string format, IFormatProvider provider = null)
 		{
-			var message = Message != null ? Message.ToString() : "Empty";
+			var message = Message != null ? Message.ToString(format) : "Empty";
 
 			switch (format)
 			{
