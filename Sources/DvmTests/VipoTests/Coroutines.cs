@@ -21,10 +21,11 @@ namespace DvmTests.VipoTests
 
 			{
 				var output = GetCustomOutput();
-				Assert.IsTrue(output.Length == 3);
+				Assert.IsTrue(output.Length == 4);
 				Assert.IsTrue(output[0] == "0 0");
-				Assert.IsTrue(output[1] == "1 1");
-				Assert.IsTrue(output[2] == "2 2");
+				Assert.IsTrue(output[1] == "Run2 1");
+				Assert.IsTrue(output[2] == "1 1");
+				Assert.IsTrue(output[3] == "2 2");
 			}
 		}
 
@@ -57,25 +58,16 @@ namespace DvmTests.VipoTests
 				Vid from;
 				{
 					var vipoMessage = await Receive();
-					if (vipoMessage.Message is TestMessage message)
-					{
-						Print($"0 {message.Value}");
+					Print($"0 {CheckMessage(vipoMessage)}");
 
-						from = vipoMessage.From;
-					}
-					else
-					{
-						Assert.Fail($"Unexpected message {vipoMessage}");
-						from = Vid.Empty;
-					}
+					from = vipoMessage.From;
 				}
+
+				var run2 = RunAsync2(from);
 
 				{
 					var vipoMessage = await ReceiveFrom(from, 200);
-					if (vipoMessage.Message is TestMessage message)
-						Print($"1 {message.Value}");
-					else
-						Assert.Fail($"Unexpected message {vipoMessage}");
+					Print($"1 {CheckMessage(vipoMessage)}");
 				}
 
 				{
@@ -89,11 +81,30 @@ namespace DvmTests.VipoTests
 
 				{
 					var vipoMessage = await ReceiveFrom<TestMessage>(from);
-					if (vipoMessage.Message is TestMessage message)
-						Print($"2 {message.Value}");
-					else
-						Assert.Fail($"Unexpected message {vipoMessage}");
+					Print($"2 {CheckMessage(vipoMessage)}");
 				}
+
+				await run2;
+			}
+
+			async Task RunAsync2(Vid from)
+			{
+				var vipoMessage = await ReceiveFrom<TestMessage>(from, 100);
+
+				Print($"Run2 {CheckMessage(vipoMessage)}");
+			}
+
+			int CheckMessage(VipoMessage vipoMessage)
+			{
+				if (vipoMessage.Message is TestMessage message)
+					return message.Value;
+
+				if (vipoMessage.IsEmpty)
+					Assert.Fail("Timeout");
+				else
+					Assert.Fail($"Unexpected message {vipoMessage}");
+
+				return -1;
 			}
 		}
 
@@ -116,7 +127,7 @@ namespace DvmTests.VipoTests
 					{
 						case UserScheduleMessage schedule:
 							m_targetVid = (Vid)schedule.Context;
-							m_timerId = SetRepeatedTimer(100);
+							m_timerId = SetRepeatedTimer(50);
 							break;
 
 						case UserTimerMessage _:
