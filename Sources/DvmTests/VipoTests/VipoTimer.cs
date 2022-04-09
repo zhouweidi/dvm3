@@ -55,7 +55,7 @@ namespace DvmTests.VipoTests
 			{
 			}
 
-			protected override void Run(IVipoMessageStream messageStream)
+			protected override void OnRun(IVipoMessageStream messageStream)
 			{
 				while (messageStream.GetNext(out VipoMessage m))
 				{
@@ -131,7 +131,7 @@ namespace DvmTests.VipoTests
 			{
 			}
 
-			protected override void Run(IVipoMessageStream messageStream)
+			protected override void OnRun(IVipoMessageStream messageStream)
 			{
 				while (messageStream.GetNext(out VipoMessage m))
 				{

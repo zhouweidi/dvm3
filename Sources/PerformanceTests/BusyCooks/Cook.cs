@@ -47,7 +47,7 @@ namespace PerformanceTests.BusyCooks
 			Schedule(StartSignal);
 		}
 
-		protected override void Run(IVipoMessageStream messageStream)
+		protected override void OnRun(IVipoMessageStream messageStream)
 		{
 			while (messageStream.GetNext(out VipoMessage m))
 			{

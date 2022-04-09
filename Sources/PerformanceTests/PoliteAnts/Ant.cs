@@ -57,7 +57,7 @@ namespace PerformanceTests.PoliteAnts
 			}
 		}
 
-		protected override void Run(IVipoMessageStream messageStream)
+		protected override void OnRun(IVipoMessageStream messageStream)
 		{
 			while (messageStream.GetNext(out VipoMessage m))
 			{

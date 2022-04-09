@@ -167,7 +167,7 @@ namespace Dvm
 
 		void RunAndDispatch(IVipoMessageStream messageStream)
 		{
-			Run(messageStream);
+			OnRun(messageStream);
 
 			if (m_outMessages != null && m_outMessages.Count > 0)
 				DispatchMessages();
@@ -201,7 +201,7 @@ namespace Dvm
 
 		// All handlers are called in VmProcessor threads
 
-		protected abstract void Run(IVipoMessageStream messageStream);
+		protected abstract void OnRun(IVipoMessageStream messageStream);
 
 		// OnError should not raise an exception; if it does, the VM event OnError can be invoked.
 		protected virtual void OnError(Exception e)

@@ -29,7 +29,7 @@ namespace Dvm
 
 		#region Run
 
-		protected override void Run(IVipoMessageStream messageStream)
+		protected override void OnRun(IVipoMessageStream messageStream)
 		{
 			if (m_task == null)
 				m_task = RunAsync();
