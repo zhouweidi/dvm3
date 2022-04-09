@@ -36,8 +36,12 @@ namespace Dvm
 
 			while (m_task.Exception == null && m_operations.Count > 0 && messageStream.GetNext(out VipoMessage vipoMessage))
 			{
+				var lastNode = m_operations.Last;
+
 				for (var node = m_operations.First; node != null;)
 				{
+					bool isLastNode = node == lastNode;
+
 					var op = node.Value;
 					if (op.TestCompleted(ref vipoMessage))
 					{
@@ -50,6 +54,9 @@ namespace Dvm
 					}
 					else
 						node = node.Next;
+
+					if (isLastNode)
+						break;
 				}
 			}
 
