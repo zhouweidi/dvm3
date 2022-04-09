@@ -2,6 +2,7 @@ using Dvm;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Linq;
+using System.Threading;
 
 namespace DvmTests.SchedulerTests
 {
@@ -116,6 +117,52 @@ namespace DvmTests.SchedulerTests
 				Print(text);
 
 				base.OnDispose();
+			}
+		}
+
+		[TestMethod]
+		public void ThrowExceptionInOnDispose()
+		{
+			m_checkVmExceptionOnCleanup = false;
+
+			Exception exception = null;
+			VM.OnError += e => exception = e;
+
+			var a = new MyVipoWithExceptionThrownInOnDispose(this, "a");
+
+			Assert.AreEqual(VM.ViposCount, 1);
+
+			a.Schedule();
+
+			while (exception == null)
+				Thread.Sleep(50);
+
+			Assert.IsTrue(a.Disposed);
+			Assert.AreEqual(VM.Exception, exception);
+			Assert.AreEqual(VM.Exception.Message, "An exception raised in Vipo.OnDispose");
+
+			VM.Dispose();
+		}
+
+		class MyVipoWithExceptionThrownInOnDispose : Vipo
+		{
+			public MyVipoWithExceptionThrownInOnDispose(VmTestBase test, string symbol)
+				: base(test.VM, symbol)
+			{
+			}
+
+			protected override void OnRun(IVipoMessageStream messageStream)
+			{
+				throw new Exception("Original error");
+			}
+
+			protected override void OnError(Exception e)
+			{
+			}
+
+			protected override void OnDispose()
+			{
+				throw new Exception("Error in OnDispose");
 			}
 		}
 	}

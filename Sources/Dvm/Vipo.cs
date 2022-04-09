@@ -134,10 +134,7 @@ namespace Dvm
 				messageStream.ConsumeRemaining();
 
 				if (messageStream.DisposeMessageEncountered)
-				{
-					OnDispose();
-					m_status |= Status.Disposed;
-				}
+					InvokeOnDispose();
 				else
 				{
 					// Generate and process local timer messages
@@ -157,9 +154,11 @@ namespace Dvm
 					}
 				}
 			}
-			catch (Exception e)
+			catch (Exception e) when (!(e is OnDisposeException || e is KernelFaultException))
 			{
 				OnError(e);
+
+				Dispose();
 			}
 
 			m_status &= ~Status.Running;
@@ -197,6 +196,28 @@ namespace Dvm
 			m_outMessages.Clear();
 		}
 
+		class OnDisposeException : Exception
+		{
+			public OnDisposeException(Exception innerException)
+				: base("An exception raised in Vipo.OnDispose", innerException)
+			{
+			}
+		}
+
+		void InvokeOnDispose()
+		{
+			try
+			{
+				OnDispose();
+			}
+			catch (Exception e)
+			{
+				throw new OnDisposeException(e);
+			}
+
+			m_status |= Status.Disposed;
+		}
+
 		#region Run handlers
 
 		// All handlers are called in VmProcessor threads
@@ -206,7 +227,6 @@ namespace Dvm
 		// OnError should not raise an exception; if it does, the VM event OnError can be invoked.
 		protected virtual void OnError(Exception e)
 		{
-			Dispose();
 		}
 
 		protected virtual void OnDispose()

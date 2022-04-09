@@ -17,6 +17,8 @@ namespace DvmTests
 		internal VirtualMachine VM => m_vm;
 		protected virtual int VmProcessorsCount => 4;
 
+		protected bool m_checkVmExceptionOnCleanup = true;
+
 		[TestInitialize]
 		public override void Initialize()
 		{
@@ -33,7 +35,8 @@ namespace DvmTests
 		[TestCleanup]
 		public override void Cleanup()
 		{
-			Assert.IsNull(m_vm.Exception);
+			if (m_checkVmExceptionOnCleanup)
+				Assert.IsNull(m_vm.Exception);
 
 			if (!m_vm.Disposed)
 			{

@@ -70,8 +70,6 @@ namespace DvmTests.VipoTests
 			{
 				if (m_throwInOnError)
 					throw new Exception("Error in Vipo.OnError()", e);
-
-				Dispose();
 			}
 		}
 	}
