@@ -29,12 +29,12 @@ namespace Dvm
 
 		#region Run
 
-		protected override void OnRun(IVipoMessageStream messageStream)
+		protected sealed override void OnRun(IVipoMessageStream messageStream)
 		{
 			if (m_task == null)
-				m_task = RunAsync();
+				m_task = AsyncRunEntry();
 
-			while (m_task.Exception == null && m_operations.Count > 0 && messageStream.GetNext(out VipoMessage vipoMessage))
+			while (!m_task.IsCompleted && m_operations.Count > 0 && messageStream.GetNext(out VipoMessage vipoMessage))
 			{
 				var lastNode = m_operations.Last;
 
@@ -51,6 +51,9 @@ namespace Dvm
 						m_operations.Remove(remove);
 
 						op.Continue();
+
+						if (m_task.IsCompleted)
+							break;
 					}
 					else
 						node = node.Next;
@@ -59,12 +62,23 @@ namespace Dvm
 						break;
 				}
 			}
-
-			if (m_task.Exception != null)
-				throw new Exception("RunAsync exception", m_task.Exception);
 		}
 
-		protected abstract Task RunAsync();
+		async Task AsyncRunEntry()
+		{
+			try
+			{
+				await OnAsyncRun();
+			}
+			catch (Exception e)
+			{
+				OnError(e);
+			}
+
+			Dispose();
+		}
+
+		protected abstract Task OnAsyncRun();
 
 		#endregion
 

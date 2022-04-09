@@ -11,11 +11,11 @@ namespace DvmTests.VipoTests
 		[TestMethod]
 		public void Basic()
 		{
-			var a = new MyAsyncVipo(this, "a");
-			var b = new MyVipo(this, "b");
+			var receiver = new Receiver(this, "receiver");
+			var sender = new Sender(this, "sender");
 			Assert.AreEqual(VM.ViposCount, 2);
 
-			b.Schedule(a.Vid);
+			sender.Schedule(receiver.Vid);
 
 			Sleep();
 
@@ -29,31 +29,16 @@ namespace DvmTests.VipoTests
 			}
 		}
 
-		class MyAsyncVipo : AsyncVipo
+		#region Receiver / Sender
+
+		class Receiver : TestAsyncVipo
 		{
-			readonly VmTestBase m_test;
-
-			#region Test supports
-
-			public MyAsyncVipo(VmTestBase test, string symbol)
-				: base(test.VM, symbol)
+			public Receiver(VmTestBase test, string symbol)
+				: base(test, symbol)
 			{
-				m_test = test;
 			}
 
-			protected override void OnError(Exception e)
-			{
-				Assert.Fail(e.ToString());
-			}
-
-			protected void Print(string content = "")
-			{
-				m_test.Print(content);
-			}
-
-			#endregion
-
-			protected override async Task RunAsync()
+			protected override async Task OnAsyncRun()
 			{
 				Vid from;
 				{
@@ -108,13 +93,13 @@ namespace DvmTests.VipoTests
 			}
 		}
 
-		class MyVipo : TestVipo
+		class Sender : TestVipo
 		{
 			Vid m_targetVid;
 			int m_timerId;
 			int m_value;
 
-			public MyVipo(VmTestBase test, string symbol)
+			public Sender(VmTestBase test, string symbol)
 				: base(test, symbol)
 			{
 			}
@@ -154,6 +139,39 @@ namespace DvmTests.VipoTests
 		class TestMessage : Message
 		{
 			public int Value;
+		}
+
+		#endregion
+
+		[TestMethod]
+		public void ThrowExceptionInRunAsync()
+		{
+			var a = new BadAsyncVipo(this, "a");
+			Assert.AreEqual(VM.ViposCount, 1);
+
+			a.Schedule();
+
+			Sleep();
+
+			Assert.AreEqual(VM.ViposCount, 0);
+		}
+
+		class BadAsyncVipo : TestAsyncVipo
+		{
+			public BadAsyncVipo(VmTestBase test, string symbol)
+				: base(test, symbol)
+			{
+			}
+
+			protected override void OnError(Exception e)
+			{
+			}
+
+			protected override async Task OnAsyncRun()
+			{
+				await Sleep(100);
+				throw new Exception("test");
+			}
 		}
 	}
 }
