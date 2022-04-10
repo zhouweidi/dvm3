@@ -11,13 +11,16 @@ namespace DvmTests.VipoTests
 		[TestMethod]
 		public void Basic()
 		{
-			var receiver = new Receiver(this, "receiver");
+			bool completed = false;
+
+			var receiver = new Receiver(this, "receiver", () => completed = true);
 			var sender = new Sender(this, "sender");
 			Assert.AreEqual(VM.ViposCount, 2);
 
 			sender.Schedule(receiver.Vid);
 
-			Sleep();
+			for (int i = 0; i < 5 && !completed; i++)
+				Sleep();
 
 			{
 				var output = GetCustomOutput();
@@ -33,9 +36,12 @@ namespace DvmTests.VipoTests
 
 		class Receiver : TestAsyncVipo
 		{
-			public Receiver(VmTestBase test, string symbol)
+			readonly Action m_onComplete;
+
+			public Receiver(VmTestBase test, string symbol, Action onComplete)
 				: base(test, symbol)
 			{
+				m_onComplete = onComplete;
 			}
 
 			protected override async Task OnAsyncRun()
@@ -56,20 +62,23 @@ namespace DvmTests.VipoTests
 				}
 
 				{
+					var vipoMessage = await ReceiveFrom<TestMessage>(from);
+					Print($"2 {CheckMessage(vipoMessage)}");
+				}
+
+				{
 					var now = VmTiming.Now;
 
+					// During the sleep, all the received messages (but timer) can be ignored 
 					await Sleep(50);
 
 					var duration = VmTiming.Now - now;
 					Assert.IsTrue(duration >= 50);
 				}
 
-				{
-					var vipoMessage = await ReceiveFrom<TestMessage>(from);
-					Print($"2 {CheckMessage(vipoMessage)}");
-				}
-
 				await run2;
+
+				m_onComplete();
 			}
 
 			async Task RunAsync2(Vid from)
@@ -171,6 +180,71 @@ namespace DvmTests.VipoTests
 			{
 				await Sleep(100);
 				throw new Exception("test");
+			}
+		}
+
+		[TestMethod]
+		public void DisposeRunnningAsyncVipo()
+		{
+			var a = new LongRunningAsyncVipo1(this, "a");
+			var b = new LongRunningAsyncVipo2(this, "b");
+			Assert.AreEqual(VM.ViposCount, 2);
+
+			a.Schedule();
+			b.Schedule();
+
+			Sleep();
+			Assert.AreEqual(VM.ViposCount, 2);
+
+			a.Dispose();
+			b.Dispose();
+
+			Sleep();
+			Assert.AreEqual(VM.ViposCount, 0);
+
+			{
+				var output = GetCustomOutput();
+				Assert.IsTrue(output.Length == 2);
+				Assert.IsTrue(Array.IndexOf(output, "Disposed 1") >= 0);
+				Assert.IsTrue(Array.IndexOf(output, "Disposed 2") >= 0);
+			}
+		}
+
+		class LongRunningAsyncVipo1 : TestAsyncVipo
+		{
+			public LongRunningAsyncVipo1(VmTestBase test, string symbol)
+				: base(test, symbol)
+			{
+			}
+
+			protected override void OnDispose()
+			{
+				Print("Disposed 1");
+				base.OnDispose();
+			}
+
+			protected override async Task OnAsyncRun()
+			{
+				await Task.Delay(int.MaxValue, GetAbortToken());
+			}
+		}
+
+		class LongRunningAsyncVipo2 : TestAsyncVipo
+		{
+			public LongRunningAsyncVipo2(VmTestBase test, string symbol)
+				: base(test, symbol)
+			{
+			}
+
+			protected override void OnDispose()
+			{
+				Print("Disposed 2");
+				base.OnDispose();
+			}
+
+			protected override async Task OnAsyncRun()
+			{
+				await Sleep(int.MaxValue);
 			}
 		}
 	}

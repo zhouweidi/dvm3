@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Dvm
@@ -9,6 +10,8 @@ namespace Dvm
 	{
 		Task m_task;
 		readonly LinkedList<AsyncOperation> m_operations = new LinkedList<AsyncOperation>();
+		bool m_aborted;
+		CancellationTokenSource m_cancelSource;
 
 		#region Initialization
 
@@ -20,7 +23,27 @@ namespace Dvm
 		protected override void OnDispose()
 		{
 			if (m_task != null)
+			{
+				// Set abort flags
+				m_aborted = true;
+
+				if (m_cancelSource != null)
+					m_cancelSource.Cancel();
+
+				// Run the pending operations
+				for (var node = m_operations.First; node != null && !m_task.IsCompleted; node = node.Next)
+					node.Value.Continue();
+
+				// The task can be still 'not completed' since if it doesn't block on the async operations that AsyncVipo provides or
+				// have GetToken() set for other async operatons.
+				if (!m_task.IsCompleted)
+					throw new Exception("The task has not completed before disposing it and its Vipo object.");
+
 				m_task.Dispose();
+
+				if (m_cancelSource != null)
+					m_cancelSource.Dispose();
+			}
 
 			base.OnDispose();
 		}
@@ -70,6 +93,10 @@ namespace Dvm
 			{
 				await OnAsyncRun();
 			}
+			catch (TaskCanceledException)
+			{
+				return;
+			}
 			catch (Exception e)
 			{
 				OnError(e);
@@ -80,6 +107,14 @@ namespace Dvm
 
 		protected abstract Task OnAsyncRun();
 
+		protected CancellationToken GetAbortToken()
+		{
+			if (m_cancelSource == null)
+				m_cancelSource = new CancellationTokenSource();
+
+			return m_cancelSource.Token;
+		}
+
 		#endregion
 
 		#region AsyncOperation
@@ -89,9 +124,14 @@ namespace Dvm
 			protected readonly AsyncVipo m_vipo;
 			Action m_continuation;
 
+			protected bool IsAborted => m_vipo.m_aborted;
+
 			protected AsyncOperation(AsyncVipo vipo)
 			{
 				m_vipo = vipo;
+
+				if (IsAborted)
+					throw new TaskCanceledException();
 			}
 
 			internal protected abstract bool TestCompleted(ref VipoMessage vipoMessage);
@@ -138,7 +178,13 @@ namespace Dvm
 
 			public bool IsCompleted => m_completed;
 
-			public VipoMessage GetResult() => m_vipoMessage;
+			public VipoMessage GetResult()
+			{
+				if (IsAborted)
+					throw new TaskCanceledException();
+
+				return m_vipoMessage;
+			}
 
 			#endregion
 
@@ -189,7 +235,11 @@ namespace Dvm
 
 			public bool IsCompleted => m_completed;
 
-			public void GetResult() { }
+			public void GetResult()
+			{
+				if (IsAborted)
+					throw new TaskCanceledException();
+			}
 
 			#endregion
 
